@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GFK-Kompass — Vom Vorwurf zur Verständigung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EFF0EA;
+    --panel: #E4E6DA;
+    --ink: #202B26;
+    --ink-soft: #4C594F;
+    --line: #D7D8C7;
+    --brand: #3B6E68;
+    --brand-dark: #2B534F;
+
+    --obs: #33566A;
+    --obs-tint: rgba(51, 86, 106, 0.14);
+    --feel: #954B36;
+    --feel-tint: rgba(149, 75, 54, 0.14);
+    --need: #8A6A1E;
+    --need-tint: rgba(138, 106, 30, 0.16);
+    --req: #436B49;
+    --req-tint: rgba(67, 107, 73, 0.14);
+
+    --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Work Sans', -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16.5px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 { font-family: var(--serif); font-weight: 500; margin: 0; color: var(--ink); }
+  p { margin: 0; }
+  ul, ol { margin: 0; padding: 0; list-style: none; }
+  button { font-family: var(--sans); cursor: pointer; }
+  textarea { font-family: var(--sans); }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  .page {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 48px 24px 64px;
+  }
+
+  /* Header */
+  .site-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 56px;
+  }
+
+  .compass { width: 34px; height: 34px; flex-shrink: 0; }
+  .compass .needle {
+    transform: rotate(-30deg);
+    transform-origin: 32px 32px;
+    transition: transform 1.1s cubic-bezier(.22,1,.36,1);
+  }
+  .compass.settled .needle { transform: rotate(0deg); }
+  @media (prefers-reduced-motion: reduce) {
+    .compass .needle { transition: none; transform: rotate(0deg); }
+  }
+
+  .wordmark {
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
+  /* Hero */
+  .hero { margin-bottom: 64px; }
+
+  .hero h1 {
+    font-size: clamp(32px, 6vw, 46px);
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    max-width: 26ch;
+    margin-bottom: 22px;
+  }
+
+  .hero .lead {
+    color: var(--ink-soft);
+    font-size: 17px;
+    max-width: 54ch;
+    margin-bottom: 36px;
+  }
+
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 28px;
+    border-top: 1px solid var(--line);
+    padding-top: 28px;
+  }
+
+  .legend li { display: flex; flex-direction: column; gap: 5px; }
+
+  .legend-name { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .dot.cat-obs { background: var(--obs); }
+  .dot.cat-feel { background: var(--feel); }
+  .dot.cat-need { background: var(--need); }
+  .dot.cat-req { background: var(--req); }
+
+  .legend-desc { color: var(--ink-soft); font-size: 14px; padding-left: 17px; }
+
+  /* Sections */
+  section.input-section, section.result {
+    background: var(--panel);
+    border-radius: 14px;
+    padding: 32px;
+    margin-bottom: 40px;
+  }
+
+  .input-section h2, .result h2 { font-size: 24px; margin-bottom: 10px; }
+  .result h3 { font-size: 18px; margin: 32px 0 16px; }
+
+  .hint { color: var(--ink-soft); font-size: 15px; margin-bottom: 20px; max-width: 52ch; }
+
+  textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 15.5px;
+    line-height: 1.6;
+    resize: vertical;
+  }
+
+  textarea:focus-visible {
+    border-color: var(--brand);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 110, 104, 0.18);
+  }
+
+  .field-hint {
+    color: var(--feel);
+    font-size: 13.5px;
+    margin-top: 8px;
+  }
+
+  .examples { margin-top: 24px; }
+
+  .examples-label {
+    display: block;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .chip {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13.5px;
+    color: var(--ink);
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .chip:hover { border-color: var(--brand); background: #fff; }
+
+  .primary-btn {
+    display: inline-block;
+    margin-top: 26px;
+    background: var(--brand);
+    color: var(--paper);
+    border: none;
+    border-radius: 8px;
+    padding: 14px 26px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: background 0.15s ease;
+  }
+
+  .primary-btn:hover:not(:disabled) { background: var(--brand-dark); }
+  .primary-btn:disabled { opacity: 0.7; cursor: default; }
+
+  .error-msg {
+    margin-top: 16px;
+    color: var(--feel);
+    font-size: 14.5px;
+  }
+
+  /* Result */
+  .result { opacity: 0; transform: translateY(10px); }
+  .result.visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .result { transition: none; }
+  }
+
+  .gfk-quote {
+    margin: 20px 0 14px;
+    padding: 0 0 0 20px;
+    border-left: 3px solid var(--brand);
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: clamp(19px, 3vw, 24px);
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  mark.mark {
+    background: none;
+    padding: 0 1px;
+    font-style: normal;
+  }
+  mark.cat-obs { background: var(--obs-tint); box-shadow: inset 0 -2px 0 var(--obs); }
+  mark.cat-feel { background: var(--feel-tint); box-shadow: inset 0 -2px 0 var(--feel); }
+  mark.cat-need { background: var(--need-tint); box-shadow: inset 0 -2px 0 var(--need); }
+  mark.cat-req { background: var(--req-tint); box-shadow: inset 0 -2px 0 var(--req); }
+
+  .text-btn {
+    background: none;
+    border: none;
+    color: var(--brand);
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 4px 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .breakdown-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 0 18px 18px;
+    margin-bottom: 4px;
+  }
+  .breakdown-item.cat-obs { border-left: 3px solid var(--obs); }
+  .breakdown-item.cat-feel { border-left: 3px solid var(--feel); }
+  .breakdown-item.cat-need { border-left: 3px solid var(--need); }
+  .breakdown-item.cat-req { border-left: 3px solid var(--req); }
+
+  .breakdown-cat { font-family: var(--serif); font-size: 15.5px; font-weight: 600; }
+  .cat-obs .breakdown-cat { color: var(--obs); }
+  .cat-feel .breakdown-cat { color: var(--feel); }
+  .cat-need .breakdown-cat { color: var(--need); }
+  .cat-req .breakdown-cat { color: var(--req); }
+
+  .breakdown-excerpt { font-style: italic; font-size: 15px; color: var(--ink); }
+  .breakdown-explain { font-size: 14px; color: var(--ink-soft); }
+
+  .comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+
+  .compare-col { padding-left: 2px; }
+  .compare-col + .compare-col { border-left: 1px solid var(--line); padding-left: 26px; }
+
+  .compare-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  .compare-col p { font-size: 15px; line-height: 1.6; }
+  .compare-col:first-child p { color: var(--ink-soft); }
+
+  @media (max-width: 620px) {
+    .page { padding: 32px 18px 48px; }
+    .legend { grid-template-columns: 1fr; }
+    .comparison { grid-template-columns: 1fr; }
+    .compare-col + .compare-col {
+      border-left: none;
+      border-top: 1px solid var(--line);
+      padding-left: 2px;
+      padding-top: 20px;
+      margin-top: 4px;
+    }
+    section.input-section, section.result { padding: 24px 20px; }
+  }
+
+  .site-footer {
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    line-height: 1.6;
+    max-width: 56ch;
+    padding-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <header class="site-header">
+    <svg class="compass" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="27" fill="none" stroke="var(--brand)" stroke-width="1.5"/>
+      <line x1="32" y1="5"  x2="32" y2="12" stroke="var(--obs)"  stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="59" y1="32" x2="52" y2="32" stroke="var(--feel)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="32" y1="59" x2="32" y2="52" stroke="var(--need)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="5"  y1="32" x2="12" y2="32" stroke="var(--req)"  stroke-width="2.5" stroke-linecap="round"/>
+      <g class="needle">
+        <polygon points="32,14 36,32 32,50 28,32" fill="var(--ink)" opacity="0.85"/>
+      </g>
+      <circle cx="32" cy="32" r="2.5" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.2"/>
+    </svg>
+    <span class="wordmark">GFK-Kompass</span>
+  </header>
+
+  <section class="hero">
+    <h1>Vom Vorwurf zur&nbsp;Verständigung</h1>
+    <p class="lead">Ob im Austausch mit dem anderen Elternteil oder im Kontakt zu deinem Kind – wenn die Verständigung ins Stocken gerät, wiegt jedes Wort schwerer. Dieses Werkzeug übersetzt einen Satz in gewaltfreie Kommunikation nach Marshall Rosenberg – und zeigt dir, wie sie aufgebaut ist, damit du sie dir nach und nach aneignen kannst.</p>
+
+    <ul class="legend">
+      <li>
+        <span class="legend-name"><span class="dot cat-obs"></span>Beobachtung</span>
+        <span class="legend-desc">Was wirklich passiert ist, ohne Bewertung</span>
+      </li>
+      <li>
+        <span class="legend-name"><span class="dot cat-feel"></span>Gefühl</span>
+        <span class="legend-desc">Was das in dir auslöst</span>
+      </li>
+      <li>
+        <span class="legend-name"><span class="dot cat-need"></span>Bedürfnis</span>
+        <span class="legend-desc">Was dir dabei wichtig ist</span>
+      </li>
+      <li>
+        <span class="legend-name"><span class="dot cat-req"></span>Bitte</span>
+        <span class="legend-desc">Was du dir konkret wünschst</span>
+      </li>
+    </ul>
+  </section>
+
+  <section class="input-section" aria-labelledby="input-heading">
+    <h2 id="input-heading">Dein Text</h2>
+    <p class="hint">Füge eine Nachricht, einen Kommentar oder einen Satz ein, den du schreiben möchtest – oder einen, den du bekommen hast und verstehen willst.</p>
+
+    <label class="sr-only" for="input-text">Dein Text</label>
+    <textarea id="input-text" rows="5" placeholder="z. B. „Du lässt mich einfach nicht mit meinem Kind sprechen, das machst du doch mit Absicht.“"></textarea>
+    <p class="field-hint" id="field-hint" hidden>Bitte gib zuerst einen Text ein.</p>
+
+    <div class="examples">
+      <span class="examples-label">Oder starte mit einem Beispiel:</span>
+      <div class="chips">
+        <button type="button" class="chip" data-example="0">Vorwurf ans andere Elternteil</button>
+        <button type="button" class="chip" data-example="1">Frustration über fehlenden Kontakt</button>
+        <button type="button" class="chip" data-example="2">Reaktion auf einen Vorwurf</button>
+      </div>
+    </div>
+
+    <button type="button" id="submit-btn" class="primary-btn">In GFK übersetzen</button>
+    <p class="error-msg" id="error-msg" hidden></p>
+  </section>
+
+  <section class="result" id="result" aria-live="polite" hidden>
+    <h2>So könnte es klingen</h2>
+    <blockquote class="gfk-quote" id="gfk-quote"></blockquote>
+    <button type="button" class="text-btn" id="copy-btn">Text kopieren</button>
+
+    <h3>So ist der Satz aufgebaut</h3>
+    <ol class="breakdown" id="breakdown"></ol>
+
+    <h3>Im Vergleich</h3>
+    <div class="comparison">
+      <div class="compare-col">
+        <span class="compare-label">Ursprünglicher Text</span>
+        <p id="compare-original"></p>
+      </div>
+      <div class="compare-col">
+        <span class="compare-label">In GFK</span>
+        <p id="compare-gfk"></p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <p>Dieses Werkzeug dient dem Einüben von Sprache und ersetzt keine Beratung, Mediation oder rechtliche Unterstützung. Bei akuten Konflikten rund um Umgang oder Sorgerecht können Familienberatungsstellen oder das Jugendamt weiterhelfen.</p>
+  </footer>
+
+</div>
+
+<script>
+  const EXAMPLES = [
+    "Du lässt mein Kind einfach nicht ans Telefon, das ist typisch für dich – du willst mich nur bestrafen.",
+    "Seit Wochen antwortet meine Tochter nicht mehr auf meine Nachrichten. Langsam habe ich das Gefühl, dass es keinen Sinn mehr hat, es weiter zu versuchen.",
+    "Immer wenn ich versuche, mit meinem Sohn zu reden, wirft er mir vor, ich hätte die Familie zerstört. Ich weiß nicht mehr, wie ich reagieren soll."
+  ];
+
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const textarea = document.getElementById('input-text');
+  const submitBtn = document.getElementById('submit-btn');
+  const fieldHint = document.getElementById('field-hint');
+  const errorMsg = document.getElementById('error-msg');
+  const resultSection = document.getElementById('result');
+  const gfkQuote = document.getElementById('gfk-quote');
+  const breakdownList = document.getElementById('breakdown');
+  const compareOriginal = document.getElementById('compare-original');
+  const compareGfk = document.getElementById('compare-gfk');
+  const copyBtn = document.getElementById('copy-btn');
+  const compass = document.querySelector('.compass');
+
+  window.addEventListener('DOMContentLoaded', () => {
+    if (prefersReduced) {
+      compass.classList.add('settled');
+    } else {
+      setTimeout(() => compass.classList.add('settled'), 200);
+    }
+  });
+
+  document.querySelectorAll('.chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.example);
+      textarea.value = EXAMPLES[idx];
+      fieldHint.hidden = true;
+      textarea.focus();
+    });
+  });
+
+  submitBtn.addEventListener('click', async () => {
+    const text = textarea.value.trim();
+    if (!text) {
+      fieldHint.hidden = false;
+      textarea.focus();
+      return;
+    }
+
+    fieldHint.hidden = true;
+    errorMsg.hidden = true;
+    resultSection.hidden = true;
+    resultSection.classList.remove('visible');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Wird übersetzt …';
+
+    try {
+      const data = await translateToGFK(text);
+      renderResult(text, data);
+    } catch (err) {
+      errorMsg.textContent = 'Die Übersetzung ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.';
+      errorMsg.hidden = false;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'In GFK übersetzen';
+    }
+  });
+
+  async function translateToGFK(text) {
+    const systemPrompt = `Du bist spezialisiert auf Gewaltfreie Kommunikation (GFK) nach Marshall Rosenberg, mit Erfahrung in Elternkonflikten bei Eltern-Kind-Entfremdung. Du bekommst einen Text von einem Elternteil (z. B. eine Nachricht, einen Kommentar, eine geplante Antwort).
+
+Formuliere daraus einen einzigen, natürlich klingenden GFK-Text (2 bis 4 Sätze), der alle vier Schritte enthält:
+- Beobachtung: eine konkrete, wertfreie Beschreibung dessen, was beobachtbar passiert ist, ohne Interpretation oder Vorwurf.
+- Gefühl: ein echtes Gefühl der sprechenden Person, kein verdecktes Urteil über die andere Person.
+- Bedürfnis: das universelle menschliche Bedürfnis hinter dem Gefühl.
+- Bitte: eine konkrete, machbare, positiv formulierte Bitte (keine Forderung).
+
+Bleibe dabei einfühlsam und wertneutral gegenüber beiden Elternteilen und dem Kind.
+
+Gib danach für jeden der vier Schritte den exakten Wortlaut zurück, wie er in deinem GFK-Text vorkommt, sowie eine kurze Erklärung (max. 20 Wörter), was diesen Teil zu dieser Kategorie macht bzw. was sich gegenüber der ursprünglichen Formulierung verändert hat.
+
+Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text:
+{
+  "gfkSentence": "...",
+  "steps": [
+    {"category": "Beobachtung", "text": "...", "explanation": "..."},
+    {"category": "Gefühl", "text": "...", "explanation": "..."},
+    {"category": "Bedürfnis", "text": "...", "explanation": "..."},
+    {"category": "Bitte", "text": "...", "explanation": "..."}
+  ]
+}
+Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen, ohne zusätzliche Anführungszeichen drumherum.`;
+
+    const response = await fetch("/.netlify/functions/gfk-proxy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text, system: systemPrompt })
+    });
+
+    if (!response.ok) {
+      throw new Error('API request failed');
+    }
+
+    const json = await response.json();
+    const raw = json.content.map(block => block.text || '').join('\n').trim();
+    const cleaned = raw.replace(/^```json\s*|^```\s*|```$/gim, '').trim();
+    const parsed = JSON.parse(cleaned);
+
+    if (!parsed.gfkSentence || !Array.isArray(parsed.steps)) {
+      throw new Error('Unexpected response shape');
+    }
+    return parsed;
+  }
+
+  function categoryClass(category) {
+    const map = {
+      'Beobachtung': 'cat-obs',
+      'Gefühl': 'cat-feel',
+      'Bedürfnis': 'cat-need',
+      'Bitte': 'cat-req'
+    };
+    return map[category] || '';
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function buildHighlightedSentence(sentence, steps) {
+    let matches = [];
+    steps.forEach(step => {
+      if (!step.text) return;
+      const idx = sentence.toLowerCase().indexOf(String(step.text).toLowerCase());
+      if (idx !== -1) {
+        matches.push({ start: idx, end: idx + step.text.length, category: step.category });
+      }
+    });
+
+    matches.sort((a, b) => a.start - b.start);
+    const clean = [];
+    let lastEnd = 0;
+    matches.forEach(m => {
+      if (m.start >= lastEnd) {
+        clean.push(m);
+        lastEnd = m.end;
+      }
+    });
+
+    let html = '';
+    let cursor = 0;
+    clean.forEach(m => {
+      html += escapeHtml(sentence.slice(cursor, m.start));
+      html += `<mark class="mark ${categoryClass(m.category)}">${escapeHtml(sentence.slice(m.start, m.end))}</mark>`;
+      cursor = m.end;
+    });
+    html += escapeHtml(sentence.slice(cursor));
+    return html;
+  }
+
+  function renderResult(originalText, data) {
+    gfkQuote.innerHTML = buildHighlightedSentence(data.gfkSentence, data.steps);
+
+    breakdownList.innerHTML = '';
+    data.steps.forEach(step => {
+      const li = document.createElement('li');
+      li.className = `breakdown-item ${categoryClass(step.category)}`;
+      li.innerHTML = `
+        <span class="breakdown-cat">${escapeHtml(step.category)}</span>
+        <span class="breakdown-excerpt">„${escapeHtml(step.text)}“</span>
+        <span class="breakdown-explain">${escapeHtml(step.explanation)}</span>
+      `;
+      breakdownList.appendChild(li);
+    });
+
+    compareOriginal.textContent = originalText;
+    compareGfk.textContent = data.gfkSentence;
+
+    resultSection.hidden = false;
+    requestAnimationFrame(() => {
+      resultSection.classList.add('visible');
+      resultSection.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
+    });
+  }
+
+  copyBtn.addEventListener('click', async () => {
+    const original = 'Text kopieren';
+    try {
+      await navigator.clipboard.writeText(gfkQuote.textContent);
+      copyBtn.textContent = 'Kopiert';
+    } catch (err) {
+      copyBtn.textContent = 'Kopieren nicht möglich';
+    }
+    setTimeout(() => copyBtn.textContent = original, 1600);
+  });
+</script>
+
+</body>
+</html>
