@@ -95,7 +95,7 @@
   }
 
   /* Hero */
-  .hero { margin-bottom: 64px; }
+  .hero { margin-bottom: 36px; }
 
   .hero h1 {
     font-size: clamp(32px, 6vw, 46px);
@@ -108,8 +108,8 @@
   .hero .lead {
     color: var(--ink-soft);
     font-size: 17px;
-    max-width: 54ch;
-    margin-bottom: 36px;
+    max-width: 500px;
+    margin-bottom: 28px;
   }
 
   .legend {
@@ -143,7 +143,7 @@
   .input-section h2, .result h2 { font-size: 24px; margin-bottom: 10px; }
   .result h3 { font-size: 18px; margin: 32px 0 16px; }
 
-  .hint { color: var(--ink-soft); font-size: 15px; margin-bottom: 20px; max-width: 52ch; }
+  .hint { color: var(--ink-soft); font-size: 15px; margin-bottom: 20px; max-width: 500px; }
 
   textarea {
     width: 100%;
@@ -216,6 +216,121 @@
     font-size: 14.5px;
   }
 
+  /* Everyday sentence box */
+  .everyday-box {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 4px 0 12px;
+  }
+  .everyday-box p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 4px;
+    background: var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 16px;
+    max-width: 220px;
+    display: none;
+  }
+  .progress-bar.active { display: block; }
+  .progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--brand);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .progress-bar-fill { transition: none; }
+  }
+
+  /* Character counter */
+  .char-counter {
+    display: block;
+    text-align: right;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+  .char-counter.warn { color: var(--feel); }
+
+  /* Mode toggle */
+  .mode-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 24px;
+    width: fit-content;
+  }
+  .mode-btn {
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    border-radius: 7px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .mode-btn.active { background: var(--brand); color: var(--paper); }
+
+  /* Collapsible hint boxes */
+  details.stance-hint, details.word-lists {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 18px;
+  }
+  details.stance-hint { margin-top: 28px; }
+  details.word-lists { margin-bottom: 24px; }
+  details.stance-hint summary, details.word-lists summary {
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14.5px;
+    color: var(--brand-dark);
+    list-style: none;
+  }
+  details.stance-hint summary::-webkit-details-marker,
+  details.word-lists summary::-webkit-details-marker { display: none; }
+  details.stance-hint summary::before, details.word-lists summary::before { content: '+ '; }
+  details.stance-hint[open] summary::before, details.word-lists[open] summary::before { content: '– '; }
+
+  .stance-content, .word-lists-content { margin-top: 14px; }
+  .stance-content p { font-size: 14px; color: var(--ink-soft); margin-bottom: 10px; }
+  .stance-list { margin: 10px 0; }
+  .stance-list li { margin-bottom: 6px; font-size: 14px; color: var(--ink-soft); }
+  .stance-list strong { color: var(--ink); }
+
+  .word-list-label { display: block; font-weight: 600; font-size: 13.5px; margin-bottom: 4px; color: var(--ink); }
+  .word-list { font-size: 14px; color: var(--ink-soft); line-height: 1.7; margin-bottom: 14px; }
+  .word-list-note { font-size: 12.5px; color: var(--ink-soft); font-style: italic; }
+
+  /* Practice mode */
+  .practice-label { display: block; font-size: 13.5px; font-weight: 600; color: var(--ink); margin: 16px 0 6px; }
+  .practice-label:first-of-type { margin-top: 0; }
+
+  .feedback-badge {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 999px;
+    display: inline-block;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .feedback-badge.ok { background: var(--req-tint); color: var(--req); }
+  .feedback-badge.check { background: var(--feel-tint); color: var(--feel); }
+
   /* Result */
   .result { opacity: 0; transform: translateY(10px); }
   .result.visible {
@@ -225,6 +340,13 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .result { transition: none; }
+  }
+
+  .gfk-intro {
+    margin: 18px 0;
+    color: var(--ink-soft);
+    font-size: 15px;
+    line-height: 1.5;
   }
 
   .gfk-quote {
@@ -318,7 +440,7 @@
     color: var(--ink-soft);
     font-size: 13.5px;
     line-height: 1.6;
-    max-width: 56ch;
+    max-width: 500px;
     padding-top: 8px;
   }
 
@@ -366,14 +488,35 @@
         <span class="legend-desc">Was du dir konkret wünschst</span>
       </li>
     </ul>
+
+    <details class="stance-hint">
+      <summary>Kurzer Denkanstoß vorab</summary>
+      <div class="stance-content">
+        <p>Bevor du formulierst: Wie ist deine innere Haltung gerade gegenüber der anderen Person?</p>
+        <ul class="stance-list">
+          <li><strong>Autoritär</strong> — „Er soll sich nach meinen Vorstellungen richten, ich bin im Recht."</li>
+          <li><strong>Anti-autoritär</strong> — „Damit endlich Ruhe ist, mache ich es eben, wie du willst."</li>
+          <li><strong>Laissez-faire</strong> — „Wenn wir uns nicht einig werden, bleibt eben alles wie es ist."</li>
+          <li><strong>Partnerschaftlich</strong> — Ich bin ok, du bist ok. Echtes Interesse am Standpunkt des anderen.</li>
+        </ul>
+        <p>Die partnerschaftliche Haltung erhöht die Chance, dass GFK wirklich wirkt. Frag dich: Welches eigene Bedürfnis oder welche eigene Verletzung könnte hinter dem Verhalten der anderen Person stehen – unabhängig davon, ob das Verhalten selbst in Ordnung ist? Das bedeutet nicht, es zu entschuldigen; es kann aber helfen, in der eigenen Haltung klar und ruhig zu bleiben.</p>
+      </div>
+    </details>
   </section>
 
   <section class="input-section" aria-labelledby="input-heading">
+    <div class="mode-toggle" role="tablist" aria-label="Modus wählen">
+      <button type="button" class="mode-btn active" id="mode-translate-btn" role="tab" aria-selected="true">Text übersetzen</button>
+      <button type="button" class="mode-btn" id="mode-practice-btn" role="tab" aria-selected="false">Selbst üben</button>
+    </div>
+
+    <div id="translate-panel">
     <h2 id="input-heading">Dein Text</h2>
     <p class="hint">Füge eine Nachricht, einen Kommentar oder einen Satz ein, den du schreiben möchtest – oder einen, den du bekommen hast und verstehen willst.</p>
 
     <label class="sr-only" for="input-text">Dein Text</label>
-    <textarea id="input-text" rows="5" placeholder="z. B. „Du lässt mich einfach nicht mit meinem Kind sprechen, das machst du doch mit Absicht.“"></textarea>
+    <textarea id="input-text" rows="5" maxlength="600" placeholder="z. B. „Du lässt mich einfach nicht mit meinem Kind sprechen, das machst du doch mit Absicht.“"></textarea>
+    <span class="char-counter" id="char-counter">0 / 600</span>
     <p class="field-hint" id="field-hint" hidden>Bitte gib zuerst einen Text ein.</p>
 
     <div class="examples">
@@ -382,14 +525,55 @@
         <button type="button" class="chip" data-example="0">Vorwurf ans andere Elternteil</button>
         <button type="button" class="chip" data-example="1">Frustration über fehlenden Kontakt</button>
         <button type="button" class="chip" data-example="2">Reaktion auf einen Vorwurf</button>
+        <button type="button" class="chip" data-example="3">Nachricht ans Kind</button>
       </div>
     </div>
 
     <button type="button" id="submit-btn" class="primary-btn">In GFK übersetzen</button>
+    <div class="progress-bar" id="progress-bar"><div class="progress-bar-fill" id="progress-bar-fill"></div></div>
     <p class="error-msg" id="error-msg" hidden></p>
+    </div>
+
+    <div id="practice-panel" hidden>
+      <h2>Selbst üben</h2>
+      <p class="hint">Denk an eine reale Situation und versuch, sie selbst in die vier GFK-Schritte zu fassen. Du bekommst anschließend Rückmeldung zu jedem Teil.</p>
+
+      <details class="word-lists">
+        <summary>Gefühle & Bedürfnisse zum Nachschlagen</summary>
+        <div class="word-lists-content">
+          <div>
+            <span class="word-list-label">Gefühle</span>
+            <p class="word-list">froh · erleichtert · dankbar · gelassen · zuversichtlich · gerührt · traurig · wütend · frustriert · einsam · ängstlich · überfordert · verletzt · hoffnungsvoll · erschöpft · unsicher · hilflos · sehnsüchtig · ohnmächtig · beschämt</p>
+          </div>
+          <div>
+            <span class="word-list-label">Bedürfnisse</span>
+            <p class="word-list">Nähe · Verbundenheit · Sicherheit · Geborgenheit · Verlässlichkeit · Kontinuität · Anerkennung · Autonomie · Mitsprache · Ruhe · Verständnis · Gehört werden · Fairness · Vertrauen · Wertschätzung · Klarheit · Zugehörigkeit · Halt · Selbstbestimmung · Unterstützung</p>
+          </div>
+          <p class="word-list-note">Keine vollständige Liste – nur zur Anregung.</p>
+        </div>
+      </details>
+
+      <label class="practice-label" for="practice-obs">Beobachtung — was ist konkret passiert?</label>
+      <textarea id="practice-obs" rows="2" maxlength="200" placeholder="Wenn ich sehe/höre …"></textarea>
+
+      <label class="practice-label" for="practice-feel">Gefühl — was löst das in dir aus?</label>
+      <textarea id="practice-feel" rows="2" maxlength="200" placeholder="… fühle ich …"></textarea>
+
+      <label class="practice-label" for="practice-need">Bedürfnis — was ist dir dabei wichtig?</label>
+      <textarea id="practice-need" rows="2" maxlength="200" placeholder="… weil mir wichtig ist …"></textarea>
+
+      <label class="practice-label" for="practice-req">Bitte — worum möchtest du bitten?</label>
+      <textarea id="practice-req" rows="2" maxlength="200" placeholder="Wärst du bereit …"></textarea>
+
+      <p class="field-hint" id="practice-field-hint" hidden>Bitte fülle mindestens ein Feld aus.</p>
+      <button type="button" id="practice-submit-btn" class="primary-btn">Rückmeldung holen</button>
+      <div class="progress-bar" id="practice-progress-bar"><div class="progress-bar-fill" id="practice-progress-bar-fill"></div></div>
+      <p class="error-msg" id="practice-error-msg" hidden></p>
+    </div>
   </section>
 
   <section class="result" id="result" aria-live="polite" hidden>
+    <p class="gfk-intro" id="gfk-intro"></p>
     <h2>So könnte es klingen</h2>
     <blockquote class="gfk-quote" id="gfk-quote"></blockquote>
     <button type="button" class="text-btn" id="copy-btn">Text kopieren</button>
@@ -408,6 +592,18 @@
         <p id="compare-gfk"></p>
       </div>
     </div>
+
+    <h3 id="everyday-heading">Flüssig formuliert</h3>
+    <div class="everyday-box" id="everyday-box">
+      <p id="everyday-sentence"></p>
+    </div>
+    <button type="button" class="text-btn" id="copy-everyday-btn">Text kopieren</button>
+  </section>
+
+  <section class="result" id="practice-result" aria-live="polite" hidden>
+    <h2>Deine Rückmeldung</h2>
+    <p class="gfk-intro" id="practice-overall"></p>
+    <ol class="breakdown" id="practice-breakdown"></ol>
   </section>
 
   <footer class="site-footer">
@@ -421,22 +617,65 @@
   const EXAMPLES = [
     "Du lässt mein Kind einfach nicht ans Telefon, das ist typisch für dich – du willst mich nur bestrafen.",
     "Seit Wochen antwortet meine Tochter nicht mehr auf meine Nachrichten. Langsam habe ich das Gefühl, dass es keinen Sinn mehr hat, es weiter zu versuchen.",
-    "Immer wenn ich versuche, mit meinem Sohn zu reden, wirft er mir vor, ich hätte die Familie zerstört. Ich weiß nicht mehr, wie ich reagieren soll."
+    "Immer wenn ich versuche, mit meinem Sohn zu reden, wirft er mir vor, ich hätte die Familie zerstört. Ich weiß nicht mehr, wie ich reagieren soll.",
+    "Ich vermisse dich so sehr. Es tut mir richtig weh, dass du gar nicht mehr mit mir sprechen willst."
   ];
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const textarea = document.getElementById('input-text');
+  const charCounter = document.getElementById('char-counter');
   const submitBtn = document.getElementById('submit-btn');
+  const progressBar = document.getElementById('progress-bar');
+  const progressBarFill = document.getElementById('progress-bar-fill');
   const fieldHint = document.getElementById('field-hint');
   const errorMsg = document.getElementById('error-msg');
   const resultSection = document.getElementById('result');
+  const gfkIntro = document.getElementById('gfk-intro');
   const gfkQuote = document.getElementById('gfk-quote');
   const breakdownList = document.getElementById('breakdown');
   const compareOriginal = document.getElementById('compare-original');
   const compareGfk = document.getElementById('compare-gfk');
   const copyBtn = document.getElementById('copy-btn');
+  const everydaySentence = document.getElementById('everyday-sentence');
+  const everydayHeading = document.getElementById('everyday-heading');
+  const everydayBox = document.getElementById('everyday-box');
+  const copyEverydayBtn = document.getElementById('copy-everyday-btn');
   const compass = document.querySelector('.compass');
+
+  const modeTranslateBtn = document.getElementById('mode-translate-btn');
+  const modePracticeBtn = document.getElementById('mode-practice-btn');
+  const translatePanel = document.getElementById('translate-panel');
+  const practicePanel = document.getElementById('practice-panel');
+  const practiceObs = document.getElementById('practice-obs');
+  const practiceFeel = document.getElementById('practice-feel');
+  const practiceNeed = document.getElementById('practice-need');
+  const practiceReq = document.getElementById('practice-req');
+  const practiceSubmitBtn = document.getElementById('practice-submit-btn');
+  const practiceProgressBar = document.getElementById('practice-progress-bar');
+  const practiceProgressBarFill = document.getElementById('practice-progress-bar-fill');
+  const practiceFieldHint = document.getElementById('practice-field-hint');
+  const practiceErrorMsg = document.getElementById('practice-error-msg');
+  const practiceResultSection = document.getElementById('practice-result');
+  const practiceOverall = document.getElementById('practice-overall');
+  const practiceBreakdown = document.getElementById('practice-breakdown');
+
+  function setMode(mode) {
+    const isTranslate = mode === 'translate';
+    translatePanel.hidden = !isTranslate;
+    practicePanel.hidden = isTranslate;
+    modeTranslateBtn.classList.toggle('active', isTranslate);
+    modePracticeBtn.classList.toggle('active', !isTranslate);
+    modeTranslateBtn.setAttribute('aria-selected', String(isTranslate));
+    modePracticeBtn.setAttribute('aria-selected', String(!isTranslate));
+    resultSection.hidden = true;
+    resultSection.classList.remove('visible');
+    practiceResultSection.hidden = true;
+    practiceResultSection.classList.remove('visible');
+  }
+
+  modeTranslateBtn.addEventListener('click', () => setMode('translate'));
+  modePracticeBtn.addEventListener('click', () => setMode('practice'));
 
   window.addEventListener('DOMContentLoaded', () => {
     if (prefersReduced) {
@@ -446,11 +685,22 @@
     }
   });
 
+  const MAX_CHARS = 600;
+
+  function updateCharCounter() {
+    const len = textarea.value.length;
+    charCounter.textContent = `${len} / ${MAX_CHARS}`;
+    charCounter.classList.toggle('warn', len >= MAX_CHARS * 0.9);
+  }
+
+  textarea.addEventListener('input', updateCharCounter);
+
   document.querySelectorAll('.chip').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx = Number(btn.dataset.example);
       textarea.value = EXAMPLES[idx];
       fieldHint.hidden = true;
+      updateCharCounter();
       textarea.focus();
     });
   });
@@ -469,12 +719,15 @@
     resultSection.classList.remove('visible');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Wird übersetzt …';
+    startProgress(progressBar, progressBarFill);
 
     try {
       const data = await translateToGFK(text);
+      finishProgress(progressBar, progressBarFill);
       renderResult(text, data);
     } catch (err) {
-      errorMsg.textContent = 'Die Übersetzung ist fehlgeschlagen. Prüfe deine Verbindung und versuche es erneut.';
+      stopProgress(progressBar, progressBarFill);
+      errorMsg.textContent = 'Das hat gerade nicht geklappt. Bitte versuche es in ein paar Sekunden erneut.';
       errorMsg.hidden = false;
     } finally {
       submitBtn.disabled = false;
@@ -482,28 +735,66 @@
     }
   });
 
+  let progressInterval = null;
+
+  function startProgress(bar, fill) {
+    clearInterval(progressInterval);
+    bar.classList.add('active');
+    fill.style.width = '4%';
+    let pct = 4;
+    progressInterval = setInterval(() => {
+      pct += (90 - pct) * 0.12;
+      fill.style.width = Math.min(pct, 90) + '%';
+    }, 250);
+  }
+
+  function finishProgress(bar, fill) {
+    clearInterval(progressInterval);
+    fill.style.width = '100%';
+    setTimeout(() => {
+      bar.classList.remove('active');
+      fill.style.width = '0%';
+    }, 350);
+  }
+
+  function stopProgress(bar, fill) {
+    clearInterval(progressInterval);
+    bar.classList.remove('active');
+    fill.style.width = '0%';
+  }
+
   async function translateToGFK(text) {
     const systemPrompt = `Du bist spezialisiert auf Gewaltfreie Kommunikation (GFK) nach Marshall Rosenberg, mit Erfahrung in Elternkonflikten bei Eltern-Kind-Entfremdung. Du bekommst einen Text von einem Elternteil (z. B. eine Nachricht, einen Kommentar, eine geplante Antwort).
 
-Formuliere daraus einen einzigen, natürlich klingenden GFK-Text (2 bis 4 Sätze), der alle vier Schritte enthält:
-- Beobachtung: eine konkrete, wertfreie Beschreibung dessen, was beobachtbar passiert ist, ohne Interpretation oder Vorwurf.
-- Gefühl: ein echtes Gefühl der sprechenden Person, kein verdecktes Urteil über die andere Person.
-- Bedürfnis: das universelle menschliche Bedürfnis hinter dem Gefühl.
-- Bitte: eine konkrete, machbare, positiv formulierte Bitte (keine Forderung).
+Schreibe zuerst einen kurzen, einfühlsamen Einstiegssatz (max. 15 Wörter). Sprich die Person dabei immer direkt und persönlich an ("dein Text", "deiner Nachricht" – niemals unpersönlich "dieser Text" oder "diesem Text").
+
+Prüfe zuerst, ob der Originaltext die vier GFK-Schritte bereits weitgehend selbst enthält (konkrete Beobachtung, echtes Gefühl, erkennbares Bedürfnis, klare Bitte). Falls ja: Würdige das ausdrücklich und anerkennend, z. B. in der Art von "Das ist schon ziemlich nah an gewaltfreier Kommunikation!" oder "In deinem Text steckt schon viel von dem, worum es in der GFK geht!" – die folgende Version ist dann eine Verfeinerung, keine grundlegende Korrektur.
+
+Falls der Originaltext dagegen eher wertend, vorwurfsvoll oder unstrukturiert ist: würdige stattdessen kurz den Originaltext oder den darin spürbaren Schmerz bzw. die Anstrengung – ohne zu bewerten oder zu belehren. Ton-Beispiele (nicht wörtlich übernehmen, sondern individuell zur jeweiligen Situation passend formulieren): "Das ist eine Situation, die wirklich aufwühlen kann." / "In deinem Text steckt viel Schmerz." / "Das ist eine Situation, die verständlicherweise viel Spannung erzeugt."
+
+Formuliere danach einen einzigen, natürlich und flüssig klingenden GFK-Text, der alle vier Schritte enthält. Orientiere dich in der Länge am Originaltext: Bei kurzen, einfachen Aussagen reichen 2-3 Sätze; bei komplexeren oder emotional aufgeladenen Situationen darf der Text ausführlicher sein, auch mit mehreren Sätzen pro Schritt. Vermeide steife Schablonen-Formulierungen und variiere den Satzbau – der Text soll klingen, wie ein Mensch tatsächlich sprechen würde, nicht wie eine mechanisch abgearbeitete Vorlage.
+- Beobachtung: eine konkrete, wertfreie Beschreibung dessen, was beobachtbar passiert ist, ohne Interpretation oder Vorwurf. Ist der Originaltext dafür zu pauschal (z. B. "immer", "nie", keine konkrete Situation erkennbar), formuliere stattdessen eine klar als Beispiel gekennzeichnete, plausible Beobachtung (beginnend mit "zum Beispiel..."), statt eine Tatsachenbehauptung über die reale Situation der Person aufzustellen.
+- Gefühl: ein echtes Gefühl der sprechenden Person, kein verdecktes Urteil über die andere Person (kein Pseudogefühl).
+- Bedürfnis: das universelle menschliche Bedürfnis hinter dem Gefühl – abstrakt formuliert, ohne Bezug auf eine bestimmte Person oder deren Verhalten (das gehört in die Bitte, nicht ins Bedürfnis).
+- Bitte: eine konkrete, machbare, positiv formulierte Bitte, idealerweise als offene Frage, die ein Ja oder Nein zulässt (keine Forderung).
 
 Bleibe dabei einfühlsam und wertneutral gegenüber beiden Elternteilen und dem Kind.
 
-Gib danach für jeden der vier Schritte den exakten Wortlaut zurück, wie er in deinem GFK-Text vorkommt, sowie eine kurze Erklärung (max. 20 Wörter), was diesen Teil zu dieser Kategorie macht bzw. was sich gegenüber der ursprünglichen Formulierung verändert hat.
+Gib danach für jeden der vier Schritte den exakten Wortlaut zurück, wie er in deinem GFK-Text vorkommt, sowie eine kurze Erklärung (max. 25 Wörter). Beziehe dich in der Erklärung nach Möglichkeit konkret auf die problematische Formulierung im Originaltext (z. B. ein bestimmtes Wort oder eine bestimmte Wendung), statt nur die GFK-Kategorie abstrakt zu beschreiben.
+
+Schreib abschließend eine zusätzliche, natürlich fließende Version ("everydaySentence"): eine direkt so aussprechbare Formulierung, die inhaltlich exakt dieselbe Beobachtung, dasselbe Gefühl, dasselbe Bedürfnis und dieselbe Bitte trägt wie der GFK-Text oben – nur Form und Reihenfolge dürfen sich lockern, nicht der Inhalt. Füge nichts inhaltlich Neues hinzu und lass keinen der vier Aspekte weg. Die vier Schritte müssen nicht mehr einzeln als Satzteil erkennbar sein, aber sinngemäß alle vier enthalten bleiben. Ein Satz reicht, wenn er alles Wesentliche trägt – bei Bedarf dürfen es auch mehrere Sätze sein.
 
 Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text:
 {
+  "intro": "...",
   "gfkSentence": "...",
   "steps": [
     {"category": "Beobachtung", "text": "...", "explanation": "..."},
     {"category": "Gefühl", "text": "...", "explanation": "..."},
     {"category": "Bedürfnis", "text": "...", "explanation": "..."},
     {"category": "Bitte", "text": "...", "explanation": "..."}
-  ]
+  ],
+  "everydaySentence": "..."
 }
 Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen, ohne zusätzliche Anführungszeichen drumherum.`;
 
@@ -576,6 +867,12 @@ Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen
   }
 
   function renderResult(originalText, data) {
+    if (data.intro) {
+      gfkIntro.textContent = data.intro;
+      gfkIntro.hidden = false;
+    } else {
+      gfkIntro.hidden = true;
+    }
     gfkQuote.innerHTML = buildHighlightedSentence(data.gfkSentence, data.steps);
 
     breakdownList.innerHTML = '';
@@ -592,6 +889,17 @@ Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen
 
     compareOriginal.textContent = originalText;
     compareGfk.textContent = data.gfkSentence;
+
+    if (data.everydaySentence) {
+      everydaySentence.textContent = data.everydaySentence;
+      everydayHeading.hidden = false;
+      everydayBox.hidden = false;
+      copyEverydayBtn.hidden = false;
+    } else {
+      everydayHeading.hidden = true;
+      everydayBox.hidden = true;
+      copyEverydayBtn.hidden = true;
+    }
 
     resultSection.hidden = false;
     requestAnimationFrame(() => {
@@ -610,6 +918,125 @@ Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen
     }
     setTimeout(() => copyBtn.textContent = original, 1600);
   });
+
+  copyEverydayBtn.addEventListener('click', async () => {
+    const original = 'Text kopieren';
+    try {
+      await navigator.clipboard.writeText(everydaySentence.textContent);
+      copyEverydayBtn.textContent = 'Kopiert';
+    } catch (err) {
+      copyEverydayBtn.textContent = 'Kopieren nicht möglich';
+    }
+    setTimeout(() => copyEverydayBtn.textContent = original, 1600);
+  });
+
+  practiceSubmitBtn.addEventListener('click', async () => {
+    const obs = practiceObs.value.trim();
+    const feel = practiceFeel.value.trim();
+    const need = practiceNeed.value.trim();
+    const req = practiceReq.value.trim();
+
+    if (!obs && !feel && !need && !req) {
+      practiceFieldHint.hidden = false;
+      practiceObs.focus();
+      return;
+    }
+
+    practiceFieldHint.hidden = true;
+    practiceErrorMsg.hidden = true;
+    practiceResultSection.hidden = true;
+    practiceResultSection.classList.remove('visible');
+    practiceSubmitBtn.disabled = true;
+    practiceSubmitBtn.textContent = 'Wird geprüft …';
+    startProgress(practiceProgressBar, practiceProgressBarFill);
+
+    try {
+      const data = await getPracticeFeedback(obs, feel, need, req);
+      finishProgress(practiceProgressBar, practiceProgressBarFill);
+      renderPracticeResult(data);
+    } catch (err) {
+      stopProgress(practiceProgressBar, practiceProgressBarFill);
+      practiceErrorMsg.textContent = 'Das hat gerade nicht geklappt. Bitte versuche es in ein paar Sekunden erneut.';
+      practiceErrorMsg.hidden = false;
+    } finally {
+      practiceSubmitBtn.disabled = false;
+      practiceSubmitBtn.textContent = 'Rückmeldung holen';
+    }
+  });
+
+  async function getPracticeFeedback(obs, feel, need, req) {
+    const systemPrompt = `Du bist ein GFK-Coach nach Marshall Rosenberg mit Erfahrung in Elternkonflikten bei Eltern-Kind-Entfremdung. Ein Elternteil hat versucht, eine eigene Situation selbst in die vier Schritte der Gewaltfreien Kommunikation zu fassen. Du bekommst die vier von der Person selbst geschriebenen Teile (einzelne Felder können auch leer sein).
+
+Prüfe jeden ausgefüllten Teil und gib knappes, konstruktives und ermutigendes Feedback (max. 30 Wörter pro Teil):
+- Beobachtung: wertfrei und konkret, ohne Interpretation oder Vorwurf?
+- Gefühl: ein echtes Gefühl, kein Pseudogefühl (verdecktes Urteil über die andere Person)?
+- Bedürfnis: abstrakt und universell, ohne Bezug auf eine bestimmte Person oder deren Verhalten?
+- Bitte: konkret, machbar, positiv formuliert (keine Forderung)?
+
+Setze "ok" auf true, wenn der Teil die GFK-Kriterien bereits gut erfüllt, sonst false. Formuliere das Feedback wertschätzend, auch bei Verbesserungsbedarf – benenne konkret, was schon gut ist und was noch geschärft werden könnte. Bei einem leeren Feld: "ok": false und feedback "Dieser Teil fehlt noch."
+
+Schreib außerdem einen kurzen, ermutigenden Gesamt-Kommentar (max. 25 Wörter).
+
+Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text:
+{
+  "overall": "...",
+  "steps": [
+    {"category": "Beobachtung", "ok": true, "feedback": "..."},
+    {"category": "Gefühl", "ok": true, "feedback": "..."},
+    {"category": "Bedürfnis", "ok": true, "feedback": "..."},
+    {"category": "Bitte", "ok": true, "feedback": "..."}
+  ]
+}`;
+
+    const userContent = `Beobachtung: ${obs || '(leer)'}
+Gefühl: ${feel || '(leer)'}
+Bedürfnis: ${need || '(leer)'}
+Bitte: ${req || '(leer)'}`;
+
+    const response = await fetch("/.netlify/functions/gfk-proxy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: userContent, system: systemPrompt })
+    });
+
+    if (!response.ok) {
+      throw new Error('API request failed');
+    }
+
+    const json = await response.json();
+    const raw = json.content.map(block => block.text || '').join('\n').trim();
+    const cleaned = raw.replace(/^```json\s*|^```\s*|```$/gim, '').trim();
+    const parsed = JSON.parse(cleaned);
+
+    if (!Array.isArray(parsed.steps)) {
+      throw new Error('Unexpected response shape');
+    }
+    return parsed;
+  }
+
+  function renderPracticeResult(data) {
+    practiceOverall.textContent = data.overall || '';
+    practiceOverall.hidden = !data.overall;
+
+    practiceBreakdown.innerHTML = '';
+    data.steps.forEach(step => {
+      const li = document.createElement('li');
+      li.className = `breakdown-item ${categoryClass(step.category)}`;
+      const badgeClass = step.ok ? 'ok' : 'check';
+      const badgeText = step.ok ? 'Stimmig' : 'Nochmal schauen';
+      li.innerHTML = `
+        <span class="breakdown-cat">${escapeHtml(step.category)} <span class="feedback-badge ${badgeClass}">${badgeText}</span></span>
+        <span class="breakdown-explain">${escapeHtml(step.feedback)}</span>
+      `;
+      practiceBreakdown.appendChild(li);
+    });
+
+    practiceResultSection.hidden = false;
+    requestAnimationFrame(() => {
+      practiceResultSection.classList.add('visible');
+      practiceResultSection.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
+    });
+  }
 </script>
 
 </body>
