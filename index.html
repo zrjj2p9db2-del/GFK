@@ -108,7 +108,6 @@
   .hero .lead {
     color: var(--ink-soft);
     font-size: 17px;
-    max-width: 500px;
     margin-bottom: 28px;
   }
 
@@ -143,7 +142,7 @@
   .input-section h2, .result h2 { font-size: 24px; margin-bottom: 10px; }
   .result h3 { font-size: 18px; margin: 32px 0 16px; }
 
-  .hint { color: var(--ink-soft); font-size: 15px; margin-bottom: 20px; max-width: 500px; }
+  .hint { color: var(--ink-soft); font-size: 15px; margin-bottom: 20px; }
 
   textarea {
     width: 100%;
@@ -440,7 +439,6 @@
     color: var(--ink-soft);
     font-size: 13.5px;
     line-height: 1.6;
-    max-width: 500px;
     padding-top: 8px;
   }
 
@@ -773,7 +771,7 @@ Prüfe zuerst, ob der Originaltext die vier GFK-Schritte bereits weitgehend selb
 Falls der Originaltext dagegen eher wertend, vorwurfsvoll oder unstrukturiert ist: würdige stattdessen kurz den Originaltext oder den darin spürbaren Schmerz bzw. die Anstrengung – ohne zu bewerten oder zu belehren. Ton-Beispiele (nicht wörtlich übernehmen, sondern individuell zur jeweiligen Situation passend formulieren): "Das ist eine Situation, die wirklich aufwühlen kann." / "In deinem Text steckt viel Schmerz." / "Das ist eine Situation, die verständlicherweise viel Spannung erzeugt."
 
 Formuliere danach einen einzigen, natürlich und flüssig klingenden GFK-Text, der alle vier Schritte enthält. Orientiere dich in der Länge am Originaltext: Bei kurzen, einfachen Aussagen reichen 2-3 Sätze; bei komplexeren oder emotional aufgeladenen Situationen darf der Text ausführlicher sein, auch mit mehreren Sätzen pro Schritt. Vermeide steife Schablonen-Formulierungen und variiere den Satzbau – der Text soll klingen, wie ein Mensch tatsächlich sprechen würde, nicht wie eine mechanisch abgearbeitete Vorlage.
-- Beobachtung: eine konkrete, wertfreie Beschreibung dessen, was beobachtbar passiert ist, ohne Interpretation oder Vorwurf. Ist der Originaltext dafür zu pauschal (z. B. "immer", "nie", keine konkrete Situation erkennbar), formuliere stattdessen eine klar als Beispiel gekennzeichnete, plausible Beobachtung (beginnend mit "zum Beispiel..."), statt eine Tatsachenbehauptung über die reale Situation der Person aufzustellen.
+- Beobachtung: eine konkrete, wertfreie Beschreibung dessen, was beobachtbar passiert ist, ohne Interpretation oder Vorwurf. Vermeide dabei auch wertende Einordnungs-Verben wie "vorwirft", "beschuldigt" oder "unterstellt" – auch das ist bereits eine Interpretation, keine reine Beobachtung. Gib stattdessen wörtlich oder sinngemäß wieder, was die andere Person konkret gesagt oder getan hat (z. B. als Zitat), statt die Aussage als Vorwurf zu kennzeichnen. Ist der Originaltext dafür zu pauschal (z. B. "immer", "nie", keine konkrete Situation erkennbar), formuliere stattdessen eine klar als Beispiel gekennzeichnete, plausible Beobachtung (beginnend mit "zum Beispiel..."), statt eine Tatsachenbehauptung über die reale Situation der Person aufzustellen.
 - Gefühl: ein echtes Gefühl der sprechenden Person, kein verdecktes Urteil über die andere Person (kein Pseudogefühl).
 - Bedürfnis: das universelle menschliche Bedürfnis hinter dem Gefühl – abstrakt formuliert, ohne Bezug auf eine bestimmte Person oder deren Verhalten (das gehört in die Bitte, nicht ins Bedürfnis).
 - Bitte: eine konkrete, machbare, positiv formulierte Bitte, idealerweise als offene Frage, die ein Ja oder Nein zulässt (keine Forderung).
@@ -810,8 +808,7 @@ Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen
 
     const json = await response.json();
     const raw = json.content.map(block => block.text || '').join('\n').trim();
-    const cleaned = raw.replace(/^```json\s*|^```\s*|```$/gim, '').trim();
-    const parsed = JSON.parse(cleaned);
+    const parsed = extractJson(raw);
 
     if (!parsed.gfkSentence || !Array.isArray(parsed.steps)) {
       throw new Error('Unexpected response shape');
@@ -827,6 +824,15 @@ Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen
       'Bitte': 'cat-req'
     };
     return map[category] || '';
+  }
+
+  function extractJson(raw) {
+    const start = raw.indexOf('{');
+    const end = raw.lastIndexOf('}');
+    if (start === -1 || end === -1 || end < start) {
+      throw new Error('Kein JSON-Objekt in der Antwort gefunden');
+    }
+    return JSON.parse(raw.slice(start, end + 1));
   }
 
   function escapeHtml(str) {
@@ -1005,8 +1011,7 @@ Bitte: ${req || '(leer)'}`;
 
     const json = await response.json();
     const raw = json.content.map(block => block.text || '').join('\n').trim();
-    const cleaned = raw.replace(/^```json\s*|^```\s*|```$/gim, '').trim();
-    const parsed = JSON.parse(cleaned);
+    const parsed = extractJson(raw);
 
     if (!Array.isArray(parsed.steps)) {
       throw new Error('Unexpected response shape');
