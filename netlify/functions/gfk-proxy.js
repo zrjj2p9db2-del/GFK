@@ -17,7 +17,7 @@ async function callAnthropicWithRetry(system, text, maxRetries = 2) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 2048,
+        max_tokens: 3000,
         system: system,
         messages: [{ role: 'user', content: text }]
       })
@@ -57,5 +57,17 @@ exports.handler = async (event) => {
       statusCode: 500,
       body: JSON.stringify({ error: 'Serverfehler beim Aufruf der Anthropic-API' })
     };
+  }
+};
+
+// Missbrauchsschutz: max. 10 Anfragen pro Minute pro Besucher (IP), von Netlify selbst
+// durchgesetzt, noch bevor diese Funktion überhaupt ausgeführt wird. Verhindert, dass ein
+// automatisiertes Skript das Formular umgeht und unbegrenzt Kosten verursacht.
+exports.config = {
+  path: '/.netlify/functions/gfk-proxy',
+  rateLimit: {
+    windowLimit: 10,
+    windowSize: 60,
+    aggregateBy: ['ip', 'domain']
   }
 };
