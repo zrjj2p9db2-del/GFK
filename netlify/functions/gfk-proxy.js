@@ -17,7 +17,7 @@ async function callAnthropicWithRetry(system, text, maxRetries = 2) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 1000,
+        max_tokens: 2048,
         system: system,
         messages: [{ role: 'user', content: text }]
       })
