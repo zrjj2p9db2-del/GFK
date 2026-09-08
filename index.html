@@ -264,6 +264,7 @@
   /* Mode toggle */
   .mode-toggle {
     display: flex;
+    flex-wrap: wrap;
     gap: 4px;
     background: var(--paper);
     border: 1px solid var(--line);
@@ -281,8 +282,47 @@
     color: var(--ink-soft);
     border-radius: 7px;
     transition: background 0.15s ease, color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
   }
   .mode-btn.active { background: var(--brand); color: var(--paper); }
+  .mode-btn.active .dot { box-shadow: 0 0 0 1.5px rgba(239, 240, 234, 0.65); }
+
+  /* Difficulty row (Hörübung) */
+  .diff-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .diff-btn {
+    flex: 1; font-family: var(--sans); cursor: pointer; padding: 13px 10px; border-radius: 8px;
+    font-size: 14px; font-weight: 500; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink);
+  }
+  .diff-btn.active { border-color: var(--brand); background: rgba(59,110,104,0.1); color: var(--brand-dark); }
+
+  .gone-box {
+    text-align: center; padding: 28px 20px; color: var(--ink-soft); font-style: italic;
+    font-size: 14px; border: 1px dashed var(--line); border-radius: 10px; margin-bottom: 18px;
+  }
+
+  /* Shared quiz engine (Bitte/Forderung, Perspektivwechsel, Hörübung-Fragen) */
+  .quiz-progress { font-size: 13px; color: var(--ink-soft); margin-bottom: 10px; }
+  .quiz-prompt { font-family: var(--serif); font-size: 18px; line-height: 1.5; margin-bottom: 18px; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-option {
+    text-align: left; background: var(--paper); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 16px; font-size: 14.5px; color: var(--ink);
+  }
+  .quiz-option:hover:not(:disabled) { border-color: var(--brand); }
+  .quiz-option.correct { border-color: var(--req); background: var(--req-tint); }
+  .quiz-option.incorrect { border-color: var(--feel); background: var(--feel-tint); }
+  .quiz-option:disabled { cursor: default; }
+  .quiz-feedback { font-size: 14px; margin-top: 14px; line-height: 1.5; }
+  .quiz-feedback.correct { color: var(--req); }
+  .quiz-feedback.incorrect { color: var(--feel); }
+  .quiz-next { margin-top: 16px; }
+  .score-box {
+    text-align: center; padding: 26px; background: var(--panel); border-radius: 12px;
+    font-family: var(--serif); font-size: 20px;
+  }
+  .score-box span { display: block; font-family: var(--sans); font-size: 13.5px; color: var(--ink-soft); margin-top: 6px; }
 
   /* Collapsible hint boxes */
   details.stance-hint, details.word-lists {
@@ -466,7 +506,7 @@
 
   <section class="hero">
     <h1>Vom Vorwurf zur&nbsp;Verständigung</h1>
-    <p class="lead">Ob im Austausch mit dem anderen Elternteil oder im Kontakt zu deinem Kind – wenn die Verständigung ins Stocken gerät, wiegt jedes Wort schwerer. Dieses Werkzeug übersetzt einen Satz in gewaltfreie Kommunikation nach Marshall Rosenberg – und zeigt dir, wie sie aufgebaut ist, damit du sie dir nach und nach aneignen kannst.</p>
+    <p class="lead">Ob im Austausch mit dem anderen Elternteil oder im Kontakt zu deinem Kind – wenn die Verständigung ins Stocken gerät, wiegt jedes Wort schwerer. Dieses Werkzeug übersetzt einen Satz in gewaltfreie Kommunikation nach Marshall Rosenberg – und zeigt dir, wie sie aufgebaut ist, damit du sie dir nach und nach spielerisch aneignen kannst.</p>
 
     <ul class="legend">
       <li>
@@ -506,6 +546,10 @@
     <div class="mode-toggle" role="tablist" aria-label="Modus wählen">
       <button type="button" class="mode-btn active" id="mode-translate-btn" role="tab" aria-selected="true">Text übersetzen</button>
       <button type="button" class="mode-btn" id="mode-practice-btn" role="tab" aria-selected="false">Selbst üben</button>
+      <button type="button" class="mode-btn" id="mode-fi-btn" role="tab" aria-selected="false"><span class="dot cat-obs"></span>Fakt oder Interpretation?</button>
+      <button type="button" class="mode-btn" id="mode-pg-btn" role="tab" aria-selected="false"><span class="dot cat-feel"></span>Pseudogefühl-Jäger</button>
+      <button type="button" class="mode-btn" id="mode-pw-btn" role="tab" aria-selected="false"><span class="dot cat-need"></span>Perspektivwechsel</button>
+      <button type="button" class="mode-btn" id="mode-bf-btn" role="tab" aria-selected="false"><span class="dot cat-req"></span>Bitte/Forderung</button>
     </div>
 
     <div id="translate-panel">
@@ -567,6 +611,30 @@
       <button type="button" id="practice-submit-btn" class="primary-btn">Rückmeldung holen</button>
       <div class="progress-bar" id="practice-progress-bar"><div class="progress-bar-fill" id="practice-progress-bar-fill"></div></div>
       <p class="error-msg" id="practice-error-msg" hidden></p>
+    </div>
+
+    <div id="fi-panel" hidden>
+      <h2>Fakt oder Interpretation?</h2>
+      <p class="hint">Eine reine Beobachtung könnte eine Kamera aufnehmen. Eine Interpretation enthält schon eine Bewertung, eine Unterstellung oder ein Urteil — auch wenn sie sich wie eine Tatsache anhört.</p>
+      <div id="fi-quiz-container"></div>
+    </div>
+
+    <div id="pg-panel" hidden>
+      <h2>Pseudogefühl-Jäger</h2>
+      <p class="hint">Ein echtes Gefühl beschreibt nur deinen eigenen Zustand. Ein Pseudogefühl klingt wie ein Gefühl, ist aber eigentlich ein verstecktes Urteil über die andere Person.</p>
+      <div id="pg-quiz-container"></div>
+    </div>
+
+    <div id="pw-panel" hidden>
+      <h2>Perspektivwechsel-Rätsel</h2>
+      <p class="hint">Welches Bedürfnis könnte hinter dem Verhalten stecken? Es geht ums Verstehen, nicht ums Entschuldigen.</p>
+      <div id="pw-quiz-container"></div>
+    </div>
+
+    <div id="bf-panel" hidden>
+      <h2>Bitte oder Forderung?</h2>
+      <p class="hint">Lässt der Satz ein echtes Nein zu, oder nicht? Bliebe die Reaktion respektvoll, war's eine Bitte. Käme Vorwurf oder Drohung, war's eine Forderung — auch höflich verpackt.</p>
+      <div id="bf-quiz-container"></div>
     </div>
   </section>
 
@@ -643,8 +711,16 @@
 
   const modeTranslateBtn = document.getElementById('mode-translate-btn');
   const modePracticeBtn = document.getElementById('mode-practice-btn');
+  const modeFiBtn = document.getElementById('mode-fi-btn');
+  const modePgBtn = document.getElementById('mode-pg-btn');
+  const modeBfBtn = document.getElementById('mode-bf-btn');
+  const modePwBtn = document.getElementById('mode-pw-btn');
   const translatePanel = document.getElementById('translate-panel');
   const practicePanel = document.getElementById('practice-panel');
+  const fiPanel = document.getElementById('fi-panel');
+  const pgPanel = document.getElementById('pg-panel');
+  const bfPanel = document.getElementById('bf-panel');
+  const pwPanel = document.getElementById('pw-panel');
   const practiceObs = document.getElementById('practice-obs');
   const practiceFeel = document.getElementById('practice-feel');
   const practiceNeed = document.getElementById('practice-need');
@@ -658,14 +734,22 @@
   const practiceOverall = document.getElementById('practice-overall');
   const practiceBreakdown = document.getElementById('practice-breakdown');
 
+  const MODE_PANELS = {
+    translate: { btn: modeTranslateBtn, panel: translatePanel },
+    practice: { btn: modePracticeBtn, panel: practicePanel },
+    fi: { btn: modeFiBtn, panel: fiPanel },
+    pg: { btn: modePgBtn, panel: pgPanel },
+    pw: { btn: modePwBtn, panel: pwPanel },
+    bf: { btn: modeBfBtn, panel: bfPanel }
+  };
+
   function setMode(mode) {
-    const isTranslate = mode === 'translate';
-    translatePanel.hidden = !isTranslate;
-    practicePanel.hidden = isTranslate;
-    modeTranslateBtn.classList.toggle('active', isTranslate);
-    modePracticeBtn.classList.toggle('active', !isTranslate);
-    modeTranslateBtn.setAttribute('aria-selected', String(isTranslate));
-    modePracticeBtn.setAttribute('aria-selected', String(!isTranslate));
+    Object.entries(MODE_PANELS).forEach(([key, { btn, panel }]) => {
+      const isActive = key === mode;
+      panel.hidden = !isActive;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', String(isActive));
+    });
     resultSection.hidden = true;
     resultSection.classList.remove('visible');
     practiceResultSection.hidden = true;
@@ -674,6 +758,281 @@
 
   modeTranslateBtn.addEventListener('click', () => setMode('translate'));
   modePracticeBtn.addEventListener('click', () => setMode('practice'));
+  modeFiBtn.addEventListener('click', () => setMode('fi'));
+  modePgBtn.addEventListener('click', () => setMode('pg'));
+  modePwBtn.addEventListener('click', () => setMode('pw'));
+  modeBfBtn.addEventListener('click', () => setMode('bf'));
+
+  // ---------------------------------------------------------------
+  // Gemeinsame Quiz-Engine — genutzt von Bitte/Forderung, Perspektiv-
+  // wechsel-Rätsel und den Fragen nach der Hörübung. Neue Items lassen
+  // sich einfach als weiteres Objekt in den jeweiligen Pool einfügen.
+  // ---------------------------------------------------------------
+  function createQuizGame({ containerId, pool, questionCount }) {
+    const container = document.getElementById(containerId);
+    let questions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let answered = false;
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function start() {
+      const n = questionCount ? Math.min(questionCount, pool.length) : pool.length;
+      questions = shuffle(pool).slice(0, n);
+      currentIndex = 0;
+      score = 0;
+      renderQuestion();
+    }
+
+    let currentCorrectIndex = null;
+
+    function renderQuestion() {
+      answered = false;
+      const q = questions[currentIndex];
+
+      // Antwort-Reihenfolge bei jeder Anzeige neu mischen, damit die richtige
+      // Antwort nicht immer an derselben Position steht.
+      const order = q.options.map((_, i) => i);
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      const shuffledOptions = order.map(idx => q.options[idx]);
+      currentCorrectIndex = order.indexOf(q.correct);
+
+      container.innerHTML = `
+        <p class="quiz-progress">Frage ${currentIndex + 1} von ${questions.length}</p>
+        <p class="quiz-prompt">${escapeHtml(q.prompt)}</p>
+        <div class="quiz-options">
+          ${shuffledOptions.map((opt, i) => `<button type="button" class="quiz-option" data-i="${i}">${escapeHtml(opt)}</button>`).join('')}
+        </div>
+        <p class="quiz-feedback hidden"></p>
+        <button type="button" class="primary-btn quiz-next hidden">Nächste Frage</button>
+      `;
+      container.querySelectorAll('.quiz-option').forEach(btn => {
+        btn.addEventListener('click', () => selectOption(Number(btn.dataset.i)));
+      });
+    }
+
+    function selectOption(i) {
+      if (answered) return;
+      answered = true;
+      const q = questions[currentIndex];
+      const buttons = container.querySelectorAll('.quiz-option');
+      buttons.forEach((btn, idx) => {
+        btn.disabled = true;
+        if (idx === currentCorrectIndex) btn.classList.add('correct');
+        else if (idx === i) btn.classList.add('incorrect');
+      });
+      if (i === currentCorrectIndex) score++;
+
+      const feedback = container.querySelector('.quiz-feedback');
+      feedback.textContent = q.explanation || '';
+      feedback.classList.remove('hidden');
+      feedback.classList.toggle('correct', i === currentCorrectIndex);
+      feedback.classList.toggle('incorrect', i !== currentCorrectIndex);
+
+      const nextBtn = container.querySelector('.quiz-next');
+      nextBtn.classList.remove('hidden');
+      nextBtn.textContent = currentIndex === questions.length - 1 ? 'Ergebnis anzeigen' : 'Nächste Frage';
+      nextBtn.onclick = () => {
+        currentIndex++;
+        if (currentIndex < questions.length) renderQuestion();
+        else renderResult();
+      };
+    }
+
+    function renderResult() {
+      container.innerHTML = `
+        <div class="score-box">${score} von ${questions.length} richtig
+          <span>${score === questions.length ? 'Perfekt!' : 'Gut gemacht — schau dir die Erklärungen bei Bedarf nochmal an.'}</span>
+        </div>
+        <button type="button" class="ghost-btn quiz-restart" style="margin-top:16px;">Nochmal spielen</button>
+      `;
+      container.querySelector('.quiz-restart').addEventListener('click', start);
+    }
+
+    return { start, container: () => container, questionsRef: () => questions };
+  }
+
+  // ---------------------------------------------------------------
+  // Fakt oder Interpretation
+  // ---------------------------------------------------------------
+  const FAKT_INTERPRETATION = [
+    { prompt: "„Er kam am Freitag zwanzig Minuten zu spät zur Übergabe.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Konkret, zeitlich verortet, überprüfbar — eine Kamera könnte das aufnehmen." },
+    { prompt: "„Er ist einfach unzuverlässig.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "„Unzuverlässig“ ist ein Charakterurteil, keine überprüfbare Tatsache." },
+    { prompt: "„Sie hat auf meine letzten drei Nachrichten nicht geantwortet.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Konkret, zählbar, überprüfbar — reine Beobachtung." },
+    { prompt: "„Sie ignoriert mich absichtlich.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "„Absichtlich“ unterstellt eine Absicht, die niemand von außen beobachten kann." },
+    { prompt: "„Das Kind hat gesagt, es wolle nicht zu Papa.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Wörtliche Aussage des Kindes, konkret wiedergegeben." },
+    { prompt: "„Das Kind wurde gegen mich aufgehetzt.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "„Aufgehetzt“ unterstellt eine Absicht der anderen Person, keine reine Beobachtung." },
+    { prompt: "„Sie hat den Anwalt eingeschaltet, ohne vorher mit mir zu sprechen.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Konkrete, überprüfbare Handlung." },
+    { prompt: "„Sie will mich nur fertigmachen.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "Unterstellt eine böswillige Motivation der anderen Person." },
+    { prompt: "„Er hat das Wochenende ohne Rücksprache bei den Großeltern verbringen lassen.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Konkretes, überprüfbares Ereignis." },
+    { prompt: "„Er interessiert sich nicht wirklich für unser Kind.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "Bewertung der inneren Haltung, nicht beobachtbar." },
+    { prompt: "„Sie kam zu drei von fünf vereinbarten Terminen nicht.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Konkret zählbar und überprüfbar." },
+    { prompt: "„Sie sabotiert bewusst den Kontakt.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "Unterstellt eine bewusste, böswillige Absicht." },
+    { prompt: "„Er hat im Gespräch die Stimme erhoben.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Beobachtbares, konkretes Verhalten." },
+    { prompt: "„Er ist aggressiv und respektlos.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "Wertende Charakterisierungen statt konkreter Beschreibung." },
+    { prompt: "„Das Kind hat beim letzten Wechsel geweint.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Konkretes, beobachtbares Ereignis." },
+    { prompt: "„Sie manipuliert das Kind emotional.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "Interpretation der Absicht hinter dem Verhalten." },
+    { prompt: "„Er hat den Kalender ohne Absprache geändert.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Konkrete, überprüfbare Handlung." },
+    { prompt: "„Er will einfach nur die Kontrolle behalten.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "Unterstellt eine Motivation, die nicht direkt beobachtbar ist." },
+    { prompt: "„Sie hat mir seit zwei Wochen nicht mehr geschrieben.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Konkret, zeitlich klar, überprüfbar." },
+    { prompt: "„Sie hat kein Interesse mehr an einem guten Verhältnis.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "Schlussfolgerung über eine innere Haltung, keine Beobachtung." },
+    { prompt: "„Er hat bei der Übergabe kein Wort gesagt.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Konkretes, beobachtbares Verhalten." },
+    { prompt: "„Er ist beleidigt und trägt mir was nach.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "Interpretationen des inneren Zustands der anderen Person." },
+    { prompt: "„Das Kind hat erzählt, es habe bei Mama ferngesehen, statt Hausaufgaben zu machen.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Wörtlich wiedergegebene Aussage des Kindes." },
+    { prompt: "„Bei Mama gibt es überhaupt keine Regeln.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "Pauschale Bewertung, keine konkrete Beobachtung." },
+    { prompt: "„Sie hat den Termin um eine Stunde verschoben, ohne zu fragen.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Konkrete, überprüfbare Handlung." },
+    { prompt: "„Sie nimmt keine Rücksicht auf meine Zeit.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "Bewertung der Haltung der anderen Person." },
+    { prompt: "„Er hat gesagt, er brauche noch Bedenkzeit.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Wörtliche, konkrete Aussage." },
+    { prompt: "„Er drückt sich einfach vor der Entscheidung.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "Unterstellt eine Vermeidungsabsicht." },
+    { prompt: "„Das Kind kam mit ungewaschener Kleidung von Mama zurück.“", options: ["Fakt", "Interpretation"], correct: 0, explanation: "Konkretes, beobachtbares Detail." },
+    { prompt: "„Bei Mama wird sich überhaupt nicht ordentlich gekümmert.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "Pauschale Bewertung statt konkreter Beschreibung." }
+  ];
+
+  const fiGame = createQuizGame({ containerId: 'fi-quiz-container', pool: FAKT_INTERPRETATION, questionCount: 15 });
+  fiGame.start();
+
+  // ---------------------------------------------------------------
+  // Pseudogefühl-Jäger
+  // ---------------------------------------------------------------
+  const PSEUDOGEFUEHL = [
+    { prompt: "„Ich fühle mich ignoriert.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Beschreibt, was die andere Person angeblich tut, statt einen eigenen Zustand. Echtes Gefühl wäre z. B. „traurig“ oder „einsam“." },
+    { prompt: "„Ich fühle mich manipuliert.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Unterstellt der anderen Person eine Absicht. Echtes Gefühl wäre z. B. „verunsichert“ oder „misstrauisch“." },
+    { prompt: "„Ich fühle mich im Stich gelassen.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Beschreibt eine Handlung der anderen Person, kein eigenes Gefühl. Echtes Gefühl wäre z. B. „einsam“ oder „verletzt“." },
+    { prompt: "„Ich fühle mich nicht ernst genommen.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Bewertet das Verhalten der anderen Person. Echtes Gefühl wäre z. B. „unsicher“ oder „gekränkt“." },
+    { prompt: "„Ich fühle mich hintergangen.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Unterstellt der anderen Person Verrat. Echtes Gefühl wäre z. B. „verletzt“ oder „misstrauisch“." },
+    { prompt: "„Ich fühle mich übergangen.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Beschreibt eine Handlung der anderen Person. Echtes Gefühl wäre z. B. „frustriert“ oder „verunsichert“." },
+    { prompt: "„Ich fühle mich provoziert.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Unterstellt der anderen Person Absicht. Echtes Gefühl wäre z. B. „wütend“ oder „angespannt“." },
+    { prompt: "„Ich fühle mich kontrolliert.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Beschreibt das Verhalten der anderen Person. Echtes Gefühl wäre z. B. „angespannt“ oder „unwohl“." },
+    { prompt: "„Ich fühle mich betrogen.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Ein Urteil über die Handlung der anderen Person. Echtes Gefühl wäre z. B. „enttäuscht“ oder „verletzt“." },
+    { prompt: "„Ich fühle mich bevormundet.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Bewertet das Verhalten der anderen Person. Echtes Gefühl wäre z. B. „frustriert“ oder „eingeengt“." },
+    { prompt: "„Ich fühle mich ausgenutzt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Unterstellt der anderen Person eine Absicht. Echtes Gefühl wäre z. B. „verärgert“ oder „erschöpft“." },
+    { prompt: "„Ich fühle mich angegriffen.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Beschreibt das Verhalten der anderen Person, kein eigenes Gefühl. Echtes Gefühl wäre z. B. „verletzt“ oder „ängstlich“." },
+    { prompt: "„Ich fühle mich zurückgewiesen.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Ein Urteil über das Verhalten der anderen Person. Echtes Gefühl wäre z. B. „traurig“ oder „einsam“." },
+    { prompt: "„Ich fühle mich unter Druck gesetzt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Beschreibt eine Handlung der anderen Person. Echtes Gefühl wäre z. B. „überfordert“ oder „angespannt“." },
+    { prompt: "„Ich fühle mich ausgeschlossen.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Bewertet das Verhalten anderer. Echtes Gefühl wäre z. B. „einsam“ oder „traurig“." },
+    { prompt: "„Ich fühle mich verraten.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Ein Urteil über die Handlung der anderen Person. Echtes Gefühl wäre z. B. „verletzt“ oder „enttäuscht“." },
+    { prompt: "„Ich fühle mich erpresst.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Unterstellt der anderen Person eine Absicht. Echtes Gefühl wäre z. B. „hilflos“ oder „wütend“." },
+    { prompt: "„Ich fühle mich benutzt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Beschreibt, was die andere Person angeblich getan hat. Echtes Gefühl wäre z. B. „verletzt“ oder „enttäuscht“." },
+    { prompt: "„Ich bin erleichtert.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Beschreibt einen reinen inneren Zustand, unabhängig vom Verhalten einer anderen Person." },
+    { prompt: "„Ich bin wütend.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Ein klares, unmittelbares Gefühl, ohne versteckten Vorwurf." },
+    { prompt: "„Ich bin traurig.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reiner Gefühlsausdruck, keine Bewertung von jemand anderem." },
+    { prompt: "„Ich bin unsicher.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Beschreibt den eigenen Zustand, ohne der anderen Person etwas zu unterstellen." },
+    { prompt: "„Ich bin erschöpft.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Ein echter körperlich-emotionaler Zustand, kein verstecktes Urteil." },
+    { prompt: "„Ich bin hoffnungsvoll.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reines Gefühl, unabhängig davon, was jemand anderes getan hat." },
+    { prompt: "„Ich bin einsam.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Beschreibt den eigenen inneren Zustand direkt." },
+    { prompt: "„Ich bin dankbar.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Klarer Gefühlsausdruck ohne jede Fremdzuschreibung." },
+    { prompt: "„Ich bin ängstlich.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Ein echter innerer Zustand, kein Urteil über jemand anderen." },
+    { prompt: "„Ich bin gelassen.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reines Gefühl, nichts wird der anderen Person zugeschrieben." },
+    { prompt: "„Ich bin überfordert.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Beschreibt den eigenen Zustand, ohne jemand anderen zu bewerten." },
+    { prompt: "„Ich bin verletzt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Ein echtes, unmittelbares Gefühl." },
+    { prompt: "„Ich bin zuversichtlich.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reiner innerer Zustand." },
+    { prompt: "„Ich bin beschämt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Echtes Gefühl, das den eigenen Zustand beschreibt, nicht das Verhalten anderer." },
+    { prompt: "„Ich bin ohnmächtig.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Beschreibt ein echtes Gefühl von Hilflosigkeit, kein Urteil über andere." },
+    { prompt: "„Ich bin gerührt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reiner emotionaler Zustand." },
+    { prompt: "„Ich bin frustriert.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Ein echtes Gefühl, ohne die andere Person zu beschuldigen." },
+    { prompt: "„Ich bin sehnsüchtig.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reiner innerer Zustand, direkt benannt." }
+  ];
+
+  const pgGame = createQuizGame({ containerId: 'pg-quiz-container', pool: PSEUDOGEFUEHL, questionCount: 15 });
+  pgGame.start();
+
+  // ---------------------------------------------------------------
+  // Bitte oder Forderung
+  // ---------------------------------------------------------------
+  const BITTE_FORDERUNG = [
+    { prompt: "„Wenn du das nicht machst, rede ich nicht mehr mit dir.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "Die angedrohte Konsequenz macht ein echtes Nein unmöglich — klassische Forderung, auch ohne Befehlston." },
+    { prompt: "„Wärst du bereit, mir heute Abend zu helfen?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Offene Frage, keine angedrohte Konsequenz — ein Nein wäre hier ohne Weiteres möglich." },
+    { prompt: "„Du musst das jetzt sofort erledigen.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "„Musst“ lässt grammatisch keinen Raum für ein Nein." },
+    { prompt: "„Könntest du mir sagen, wie es dir damit geht?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Eine echte Frage nach dem Befinden der anderen Person, ohne jede Bedingung." },
+    { prompt: "„Ich erwarte, dass du pünktlich bist.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "„Ich erwarte“ setzt Erfüllung voraus, statt sie offenzulassen." },
+    { prompt: "„Hättest du Lust, das gemeinsam zu besprechen?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Einladende Formulierung, die ein Nein genauso zulässt wie ein Ja." },
+    { prompt: "„Entweder du kommst mit, oder wir sind fertig miteinander.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "Ein klassisches Ultimatum — schließt ein Nein ohne Konsequenz komplett aus." },
+    { prompt: "„Magst du mir kurz Bescheid geben, wenn's später wird?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Locker formuliert, keine Bedingung erkennbar." },
+    { prompt: "„Das wirst du jetzt gefälligst tun.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "„Gefälligst“ signalisiert unmissverständlich: Widerspruch ist nicht vorgesehen." },
+    { prompt: "„Wärst du damit einverstanden, wenn wir das anders regeln?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Fragt aktiv nach Zustimmung und lässt damit explizit Raum für ein Nein." },
+    { prompt: "„Wenn du das Kind nicht pünktlich bringst, gehe ich zum Anwalt.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "Eine Drohung mit rechtlichen Schritten lässt kein echtes Nein zu." },
+    { prompt: "„Wäre es okay für dich, wenn wir den Wechseltermin einmal tauschen?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Fragt konkret nach Zustimmung, ohne jede Konsequenz anzudrohen." },
+    { prompt: "„Du hast gefälligst dafür zu sorgen, dass sie ihre Hausaufgaben macht.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "„Hast gefälligst zu“ ist eine der deutlichsten Forderungs-Formulierungen überhaupt." },
+    { prompt: "„Fändest du es machbar, mir kurz Bescheid zu geben, wenn sich was ändert?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Fragt nach Machbarkeit aus Sicht der anderen Person — echte Bitte." },
+    { prompt: "„Ich dulde es nicht, dass du ihr sowas erzählst.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "„Ich dulde es nicht“ ist eine Ansage, keine Bitte um etwas." },
+    { prompt: "„Wärst du einverstanden, dass wir das Thema gemeinsam mit einer Mediation klären?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Offene Frage nach Einverständnis zu einem gemeinsamen Vorgehen." },
+    { prompt: "„Ab jetzt läuft das so, wie ich es sage, sonst gibt's Ärger.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "Direkte Ansage plus angedrohte Konsequenz — eindeutig eine Forderung." },
+    { prompt: "„Könnten wir uns kurz zusammensetzen, um eine Lösung zu finden?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Lädt zu einem gemeinsamen Gespräch ein, ohne etwas vorauszusetzen." },
+    { prompt: "„Wehe, du kommst wieder zu spät.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "„Wehe“ ist eine unverhohlene Drohung." },
+    { prompt: "„Wärst du bereit, mir zu erklären, warum dir das wichtig ist?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Echtes Interesse am Standpunkt der anderen Person, keine Bedingung." },
+    { prompt: "„Wärst du offen dafür, das gemeinsam nochmal zu überdenken?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Offene Formulierung, die echtes Nachdenken einlädt, statt etwas vorauszusetzen." },
+    { prompt: "„Du wirst jetzt zuhören, ob du willst oder nicht.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "„Wirst jetzt“ lässt keinen Raum für ein Nein." },
+    { prompt: "„Könnten wir einen Termin finden, der für uns beide passt?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Fragt aktiv nach einem gemeinsam passenden Termin, ohne Druck." },
+    { prompt: "„Ich verlange, dass du dich sofort entschuldigst.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "„Ich verlange“ ist eine klare Forderung, keine Bitte." },
+    { prompt: "„Wäre es für dich in Ordnung, wenn ich das Kind eine halbe Stunde später bringe?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Fragt konkret nach Zustimmung zu einer kleinen Änderung." },
+    { prompt: "„Wenn du das nicht sofort änderst, sag ich es dem Anwalt.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "Die angedrohte Konsequenz macht ein echtes Nein unmöglich." },
+    { prompt: "„Magst du mir erzählen, wie dein Tag mit ihr war?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Echtes Interesse, offen formuliert, ohne jede Bedingung." },
+    { prompt: "„Du hast kein Recht, das infrage zu stellen.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "Spricht der anderen Person das Recht ab, überhaupt zu widersprechen — keine Bitte." },
+    { prompt: "„Wärst du bereit, mir eine zweite Meinung zuzugestehen?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Fragt nach Zustimmung zu einer anderen Sichtweise, ohne Druck." },
+    { prompt: "„Ich bestehe darauf, dass alles genau so bleibt, wie ich es festgelegt habe.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "„Ich bestehe darauf“ lässt keinen Verhandlungsspielraum." },
+    { prompt: "„Können wir uns diese Woche kurz austauschen?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Offene Frage nach einem gemeinsamen Austausch." },
+    { prompt: "„Du wirst dich daran gewöhnen müssen, ob's dir passt oder nicht.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "Ignoriert jede Möglichkeit eines Neins." },
+    { prompt: "„Wäre es dir recht, wenn wir einen neutralen Vermittler dazuholen?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Fragt nach Einverständnis zu einem gemeinsamen Schritt." },
+    { prompt: "„Ich erwarte absoluten Gehorsam in dieser Sache.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "„Absoluter Gehorsam“ ist das Gegenteil einer Bitte." },
+    { prompt: "„Hättest du Zeit, kurz darüber zu sprechen?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Fragt nach Zeit und Bereitschaft, ohne Bedingung." },
+    { prompt: "„Du hast gar keine andere Wahl, als mitzumachen.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "„Keine andere Wahl“ schließt ein Nein explizit aus." },
+    { prompt: "„Wärst du damit einverstanden, das erstmal auszuprobieren?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Fragt nach Einverständnis zu einem Versuch, offen formuliert." },
+    { prompt: "„Wehe, du widersprichst mir noch einmal.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "Eine unverhohlene Drohung." },
+    { prompt: "„Könntest du mir mitteilen, wenn sich deine Pläne ändern?“", options: ["Bitte", "Forderung"], correct: 0, explanation: "Bittet um Information, ohne etwas vorauszusetzen." },
+    { prompt: "„Ich werde nicht länger diskutieren, das ist beschlossene Sache.“", options: ["Bitte", "Forderung"], correct: 1, explanation: "„Beschlossene Sache“ lässt keinen Raum für Widerspruch." }
+  ];
+
+  // ---------------------------------------------------------------
+  // Perspektivwechsel-Rätsel
+  // ---------------------------------------------------------------
+  const PERSPEKTIVWECHSEL = [
+    { prompt: "Die andere Person reagiert auf jede Nachricht von dir sofort gereizt, auch bei ganz neutralen Themen. Welches Bedürfnis könnte dahinterstecken?", options: ["Sicherheit", "Abwechslung", "Anerkennung", "Ordnung"], correct: 0, explanation: "Gereiztheit auch bei neutralen Themen deutet oft auf ein Gefühl von Bedrohung hin — dahinter steckt häufig Sicherheit oder Selbstschutz." },
+    { prompt: "Die andere Person erzählt dem Kind gegenüber wiederholt schlecht über dich. Welches Bedürfnis könnte dahinterstecken?", options: ["Bedeutung", "Humor", "Ruhe", "Genauigkeit"], correct: 0, explanation: "Oft steckt dahinter die Angst, für das Kind an Bedeutung zu verlieren." },
+    { prompt: "Die andere Person besteht stur auf jedem kleinsten Detail der Umgangsvereinbarung. Welches Bedürfnis könnte dahinterstecken?", options: ["Struktur", "Spontaneität", "Anerkennung", "Nähe"], correct: 0, explanation: "Starres Beharren auf Details wirkt oft wie der Versuch, nach einer chaotisch erlebten Trennung wieder Kontrolle zu haben." },
+    { prompt: "Die andere Person reagiert seit Wochen kaum noch auf Nachrichten von dir. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstschutz", "Aufmerksamkeit", "Geselligkeit", "Kontrolle"], correct: 0, explanation: "Rückzug ist oft Selbstschutz vor weiterem Konflikt, nicht zwingend Desinteresse." },
+    { prompt: "Die andere Person sagt kurzfristig geplante Umgangstermine oft ohne klare Begründung ab. Welches Bedürfnis könnte dahinterstecken?", options: ["Entlastung", "Abenteuerlust", "Anerkennung", "Wettbewerb"], correct: 0, explanation: "Häufige kurzfristige Absagen können ein Zeichen von Überforderung sein, die so vermieden wird." },
+    { prompt: "Die andere Person postet auffällig viele „glückliche Familie“-Fotos mit dem Kind in sozialen Medien. Welches Bedürfnis könnte dahinterstecken?", options: ["Bestätigung", "Kreativität", "Humor", "Ordnung"], correct: 0, explanation: "Nach einer Trennung kann das Bedürfnis, nach außen als „gute Eltern“ zu wirken, stärker werden." },
+    { prompt: "Die andere Person besteht darauf, jede Kleinigkeit über einen Anwalt zu klären. Welches Bedürfnis könnte dahinterstecken?", options: ["Sicherheit", "Effizienz", "Geselligkeit", "Kreativität"], correct: 0, explanation: "Der Griff zu formellen Kanälen kann ein Versuch sein, sich rechtlich und emotional abgesichert zu fühlen." },
+    { prompt: "Die andere Person wechselt in Gesprächen schnell das Thema, sobald es um das Kind geht. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstschutz", "Neugier", "Humor", "Effizienz"], correct: 0, explanation: "Themenwechsel können ein Weg sein, belastende Gefühle wie Schuld nicht direkt fühlen zu müssen." },
+    { prompt: "Die andere Person kritisiert deine Erziehung öffentlich vor Familie oder Freunden. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstbestätigung", "Gerechtigkeitssinn", "Humor", "Aufmerksamkeit"], correct: 0, explanation: "Öffentliche Kritik kann ein Versuch sein, die eigene Unsicherheit als Elternteil zu kompensieren." },
+    { prompt: "Die andere Person will jedes Detail zur Freizeitgestaltung des Kindes bei dir wissen. Welches Bedürfnis könnte dahinterstecken?", options: ["Kontrolle", "Langeweile", "Geselligkeit", "Ordnungsliebe"], correct: 0, explanation: "Starkes Kontrollbedürfnis entsteht oft aus verlorenem Vertrauen, nicht aus reiner Neugier." },
+    { prompt: "Die andere Person reagiert extrem emotional auf kleine Planänderungen. Welches Bedürfnis könnte dahinterstecken?", options: ["Vorhersehbarkeit", "Abwechslung", "Anerkennung", "Geselligkeit"], correct: 0, explanation: "Wenn vieles im Leben gerade unsicher ist, wird Planbarkeit oft besonders wichtig." },
+    { prompt: "Die andere Person spricht mit dir nur noch über Anwälte oder Dritte, nie direkt. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstschutz", "Effizienz", "Humor", "Geselligkeit"], correct: 0, explanation: "Der Umweg über Dritte kann ein Schutzmechanismus sein, um direkten Konflikt zu vermeiden." },
+    { prompt: "Die andere Person löscht oder blockiert dich nach jedem Streit sofort in sozialen Medien. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstschutz", "Humor", "Kreativität", "Ordnung"], correct: 0, explanation: "Sofortiges Blockieren kann ein Versuch sein, sich vor weiterer emotionaler Belastung zu schützen." },
+    { prompt: "Die andere Person besteht darauf, dass das Kind ihren neuen Partner sofort „Mama“ oder „Papa“ nennt. Welches Bedürfnis könnte dahinterstecken?", options: ["Zugehörigkeit", "Humor", "Effizienz", "Abwechslung"], correct: 0, explanation: "Das kann der Wunsch sein, dass die neue Familie als vollständig und zugehörig erlebt wird." },
+    { prompt: "Die andere Person schickt dir nachts um drei Uhr wütende Nachrichten. Welches Bedürfnis könnte dahinterstecken?", options: ["Beachtung", "Ordnung", "Humor", "Effizienz"], correct: 0, explanation: "Nachrichten zu ungewöhnlichen Zeiten können ein Zeichen sein, dass sich die Person sonst nicht gehört fühlt." },
+    { prompt: "Die andere Person verlangt bei jeder Übergabe eine schriftliche Bestätigung. Welches Bedürfnis könnte dahinterstecken?", options: ["Sicherheit", "Kreativität", "Geselligkeit", "Humor"], correct: 0, explanation: "Schriftliche Bestätigungen können ein Versuch sein, sich rechtlich und emotional abzusichern." },
+    { prompt: "Die andere Person erwähnt bei jeder Gelegenheit, wie sehr sie sich für das Kind aufopfert. Welches Bedürfnis könnte dahinterstecken?", options: ["Anerkennung", "Humor", "Ordnung", "Abwechslung"], correct: 0, explanation: "Wiederholtes Betonen der eigenen Aufopferung kann auf ein Bedürfnis nach Anerkennung hindeuten." },
+    { prompt: "Die andere Person meldet sich nur noch über den Anwalt, selbst bei Kleinigkeiten. Welches Bedürfnis könnte dahinterstecken?", options: ["Distanz", "Effizienz", "Kreativität", "Geselligkeit"], correct: 0, explanation: "Kommunikation nur über Dritte kann ein Schutzmechanismus sein, um direkten emotionalen Kontakt zu vermeiden." },
+    { prompt: "Die andere Person vergleicht dich ständig mit ihrem neuen Partner. Welches Bedürfnis könnte dahinterstecken?", options: ["Bestätigung", "Humor", "Ordnung", "Abwechslung"], correct: 0, explanation: "Vergleiche können ein Versuch sein, die eigene Position oder den eigenen Wert zu bestätigen." },
+    { prompt: "Die andere Person besteht darauf, jedes Wochenende neu zu verhandeln, obwohl es eine feste Regelung gibt. Welches Bedürfnis könnte dahinterstecken?", options: ["Mitsprache", "Geselligkeit", "Humor", "Effizienz"], correct: 0, explanation: "Ständiges Neuverhandeln kann das Bedürfnis widerspiegeln, weiterhin Einfluss auf Entscheidungen zu haben." },
+    { prompt: "Die andere Person reagiert wütend, wenn das Kind positiv von dir erzählt. Welches Bedürfnis könnte dahinterstecken?", options: ["Bedeutung", "Humor", "Ordnung", "Abwechslung"], correct: 0, explanation: "Wut bei positiven Erzählungen kann Angst vor dem eigenen Bedeutungsverlust beim Kind widerspiegeln." },
+    { prompt: "Die andere Person zieht sich bei jedem größeren Thema sofort zurück und antwortet tagelang nicht. Welches Bedürfnis könnte dahinterstecken?", options: ["Entlastung", "Geselligkeit", "Kreativität", "Ordnung"], correct: 0, explanation: "Rückzug bei großen Themen kann ein Zeichen sein, dass die Situation die Person gerade überfordert." },
+    { prompt: "Die andere Person besteht darauf, alle Erziehungsentscheidungen genau zu dokumentieren. Welches Bedürfnis könnte dahinterstecken?", options: ["Absicherung", "Humor", "Geselligkeit", "Abwechslung"], correct: 0, explanation: "Genaue Dokumentation kann ein Versuch sein, sich für den Fall eines Konflikts abzusichern." },
+    { prompt: "Die andere Person fragt das Kind nach jedem Umgang detailliert aus, was bei dir besprochen wurde. Welches Bedürfnis könnte dahinterstecken?", options: ["Kontrolle", "Neugier", "Humor", "Kreativität"], correct: 0, explanation: "Detailliertes Nachfragen kann aus dem Bedürfnis entstehen, einen Überblick über den Alltag des Kindes zu behalten." },
+    { prompt: "Die andere Person sagt in Streitgesprächen oft: „Du verstehst mich sowieso nie.“ Welches Bedürfnis könnte dahinterstecken?", options: ["Verständnis", "Humor", "Ordnung", "Effizienz"], correct: 0, explanation: "Der Vorwurf, nie verstanden zu werden, deutet oft auf ein unerfülltes Bedürfnis nach echtem Verständnis hin." },
+    { prompt: "Die andere Person besteht auf einer neutralen Übergabestelle, obwohl es früher unproblematisch war. Welches Bedürfnis könnte dahinterstecken?", options: ["Sicherheit", "Abwechslung", "Kreativität", "Effizienz"], correct: 0, explanation: "Das Bestehen auf einer neutralen Übergabe kann Ausdruck eines gestiegenen Sicherheitsbedürfnisses sein." },
+    { prompt: "Die andere Person feiert Erfolge des Kindes nur noch allein, ohne dich zu informieren. Welches Bedürfnis könnte dahinterstecken?", options: ["Bedeutung", "Humor", "Ordnung", "Geselligkeit"], correct: 0, explanation: "Das Ausschließen von Informationen kann ein Versuch sein, die eigene zentrale Rolle beim Kind zu wahren." },
+    { prompt: "Die andere Person reagiert trotzig, wenn du einen Kompromiss vorschlägst. Welches Bedürfnis könnte dahinterstecken?", options: ["Autonomie", "Humor", "Ordnung", "Geselligkeit"], correct: 0, explanation: "Trotzige Reaktionen auf Kompromissvorschläge können ein Bedürfnis nach eigener Entscheidungsfreiheit widerspiegeln." },
+    { prompt: "Die andere Person betont in Gesprächen oft, wie unfair alles für sie gelaufen sei. Welches Bedürfnis könnte dahinterstecken?", options: ["Gerechtigkeit", "Humor", "Ordnung", "Kreativität"], correct: 0, explanation: "Wiederholtes Betonen von Unfairness deutet oft auf ein starkes, noch unerfülltes Gerechtigkeitsbedürfnis hin." },
+    { prompt: "Die andere Person möchte jede Kommunikation nur noch schriftlich, nie mehr am Telefon. Welches Bedürfnis könnte dahinterstecken?", options: ["Klarheit", "Geselligkeit", "Humor", "Abwechslung"], correct: 0, explanation: "Der Wunsch nach ausschließlich schriftlicher Kommunikation kann aus dem Bedürfnis nach Klarheit und Nachvollziehbarkeit entstehen." }
+  ];
+
+  const bfGame = createQuizGame({ containerId: 'bf-quiz-container', pool: BITTE_FORDERUNG, questionCount: 15 });
+  const pwGame = createQuizGame({ containerId: 'pw-quiz-container', pool: PERSPEKTIVWECHSEL, questionCount: 12 });
+  bfGame.start();
+  pwGame.start();
 
   window.addEventListener('DOMContentLoaded', () => {
     if (prefersReduced) {
@@ -762,44 +1121,10 @@
   }
 
   async function translateToGFK(text) {
-    const systemPrompt = `Du bist spezialisiert auf Gewaltfreie Kommunikation (GFK) nach Marshall Rosenberg, mit Erfahrung in Elternkonflikten bei Eltern-Kind-Entfremdung. Du bekommst einen Text von einem Elternteil (z. B. eine Nachricht, einen Kommentar, eine geplante Antwort).
-
-Schreibe zuerst einen kurzen, einfühlsamen Einstiegssatz (max. 15 Wörter). Sprich die Person dabei immer direkt und persönlich an ("dein Text", "deiner Nachricht" – niemals unpersönlich "dieser Text" oder "diesem Text").
-
-Prüfe zuerst, ob der Originaltext die vier GFK-Schritte bereits weitgehend selbst enthält (konkrete Beobachtung, echtes Gefühl, erkennbares Bedürfnis, klare Bitte). Falls ja: Würdige das ausdrücklich und anerkennend, z. B. in der Art von "Das ist schon ziemlich nah an gewaltfreier Kommunikation!" oder "In deinem Text steckt schon viel von dem, worum es in der GFK geht!" – die folgende Version ist dann eine Verfeinerung, keine grundlegende Korrektur.
-
-Falls der Originaltext dagegen eher wertend, vorwurfsvoll oder unstrukturiert ist: würdige stattdessen kurz den Originaltext oder den darin spürbaren Schmerz bzw. die Anstrengung – ohne zu bewerten oder zu belehren. Ton-Beispiele (nicht wörtlich übernehmen, sondern individuell zur jeweiligen Situation passend formulieren): "Das ist eine Situation, die wirklich aufwühlen kann." / "In deinem Text steckt viel Schmerz." / "Das ist eine Situation, die verständlicherweise viel Spannung erzeugt."
-
-Formuliere danach einen einzigen, natürlich und flüssig klingenden GFK-Text, der alle vier Schritte enthält. Orientiere dich in der Länge am Originaltext: Bei kurzen, einfachen Aussagen reichen 2-3 Sätze; bei komplexeren oder emotional aufgeladenen Situationen darf der Text ausführlicher sein, auch mit mehreren Sätzen pro Schritt. Vermeide steife Schablonen-Formulierungen und variiere den Satzbau – der Text soll klingen, wie ein Mensch tatsächlich sprechen würde, nicht wie eine mechanisch abgearbeitete Vorlage.
-- Beobachtung: eine konkrete, wertfreie Beschreibung dessen, was beobachtbar passiert ist, ohne Interpretation oder Vorwurf. Vermeide dabei auch wertende Einordnungs-Verben wie "vorwirft", "beschuldigt" oder "unterstellt" – auch das ist bereits eine Interpretation, keine reine Beobachtung. Gib stattdessen wörtlich oder sinngemäß wieder, was die andere Person konkret gesagt oder getan hat (z. B. als Zitat), statt die Aussage als Vorwurf zu kennzeichnen. Ist der Originaltext dafür zu pauschal (z. B. "immer", "nie", keine konkrete Situation erkennbar), formuliere stattdessen eine klar als Beispiel gekennzeichnete, plausible Beobachtung (beginnend mit "zum Beispiel..."), statt eine Tatsachenbehauptung über die reale Situation der Person aufzustellen.
-- Gefühl: ein echtes Gefühl der sprechenden Person, kein verdecktes Urteil über die andere Person (kein Pseudogefühl).
-- Bedürfnis: das universelle menschliche Bedürfnis hinter dem Gefühl – abstrakt formuliert, ohne Bezug auf eine bestimmte Person oder deren Verhalten (das gehört in die Bitte, nicht ins Bedürfnis).
-- Bitte: eine konkrete, machbare, positiv formulierte Bitte, idealerweise als offene Frage, die ein Ja oder Nein zulässt (keine Forderung).
-
-Bleibe dabei einfühlsam und wertneutral gegenüber beiden Elternteilen und dem Kind.
-
-Gib danach für jeden der vier Schritte den exakten Wortlaut zurück, wie er in deinem GFK-Text vorkommt, sowie eine kurze Erklärung (max. 25 Wörter). Beziehe dich in der Erklärung nach Möglichkeit konkret auf die problematische Formulierung im Originaltext (z. B. ein bestimmtes Wort oder eine bestimmte Wendung), statt nur die GFK-Kategorie abstrakt zu beschreiben.
-
-Schreib abschließend eine zusätzliche, natürlich fließende Version ("everydaySentence"): eine direkt so aussprechbare Formulierung, die inhaltlich exakt dieselbe Beobachtung, dasselbe Gefühl, dasselbe Bedürfnis und dieselbe Bitte trägt wie der GFK-Text oben – nur Form und Reihenfolge dürfen sich lockern, nicht der Inhalt. Füge nichts inhaltlich Neues hinzu und lass keinen der vier Aspekte weg. Die vier Schritte müssen nicht mehr einzeln als Satzteil erkennbar sein, aber sinngemäß alle vier enthalten bleiben. Ein Satz reicht, wenn er alles Wesentliche trägt – bei Bedarf dürfen es auch mehrere Sätze sein.
-
-Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text:
-{
-  "intro": "...",
-  "gfkSentence": "...",
-  "steps": [
-    {"category": "Beobachtung", "text": "...", "explanation": "..."},
-    {"category": "Gefühl", "text": "...", "explanation": "..."},
-    {"category": "Bedürfnis", "text": "...", "explanation": "..."},
-    {"category": "Bitte", "text": "...", "explanation": "..."}
-  ],
-  "everydaySentence": "..."
-}
-Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen, ohne zusätzliche Anführungszeichen drumherum.`;
-
     const response = await fetch("/.netlify/functions/gfk-proxy", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: text, system: systemPrompt })
+      body: JSON.stringify({ mode: "translate", text: text })
     });
 
     if (!response.ok) {
@@ -971,29 +1296,6 @@ Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen
   });
 
   async function getPracticeFeedback(obs, feel, need, req) {
-    const systemPrompt = `Du bist ein GFK-Coach nach Marshall Rosenberg mit Erfahrung in Elternkonflikten bei Eltern-Kind-Entfremdung. Ein Elternteil hat versucht, eine eigene Situation selbst in die vier Schritte der Gewaltfreien Kommunikation zu fassen. Du bekommst die vier von der Person selbst geschriebenen Teile (einzelne Felder können auch leer sein).
-
-Prüfe jeden ausgefüllten Teil und gib knappes, konstruktives und ermutigendes Feedback (max. 30 Wörter pro Teil):
-- Beobachtung: wertfrei und konkret, ohne Interpretation oder Vorwurf?
-- Gefühl: ein echtes Gefühl, kein Pseudogefühl (verdecktes Urteil über die andere Person)?
-- Bedürfnis: abstrakt und universell, ohne Bezug auf eine bestimmte Person oder deren Verhalten?
-- Bitte: konkret, machbar, positiv formuliert (keine Forderung)?
-
-Setze "ok" auf true, wenn der Teil die GFK-Kriterien bereits gut erfüllt, sonst false. Formuliere das Feedback wertschätzend, auch bei Verbesserungsbedarf – benenne konkret, was schon gut ist und was noch geschärft werden könnte. Bei einem leeren Feld: "ok": false und feedback "Dieser Teil fehlt noch."
-
-Schreib außerdem einen kurzen, ermutigenden Gesamt-Kommentar (max. 25 Wörter).
-
-Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text:
-{
-  "overall": "...",
-  "steps": [
-    {"category": "Beobachtung", "ok": true, "feedback": "..."},
-    {"category": "Gefühl", "ok": true, "feedback": "..."},
-    {"category": "Bedürfnis", "ok": true, "feedback": "..."},
-    {"category": "Bitte", "ok": true, "feedback": "..."}
-  ]
-}`;
-
     const userContent = `Beobachtung: ${obs || '(leer)'}
 Gefühl: ${feel || '(leer)'}
 Bedürfnis: ${need || '(leer)'}
@@ -1002,7 +1304,7 @@ Bitte: ${req || '(leer)'}`;
     const response = await fetch("/.netlify/functions/gfk-proxy", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: userContent, system: systemPrompt })
+      body: JSON.stringify({ mode: "practice", text: userContent })
     });
 
     if (!response.ok) {
