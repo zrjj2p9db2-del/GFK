@@ -585,11 +585,11 @@
         <div class="word-lists-content">
           <div>
             <span class="word-list-label">Gefühle</span>
-            <p class="word-list">froh · erleichtert · dankbar · gelassen · zuversichtlich · gerührt · traurig · wütend · frustriert · einsam · ängstlich · überfordert · verletzt · hoffnungsvoll · erschöpft · unsicher · hilflos · sehnsüchtig · ohnmächtig · beschämt</p>
+            <p class="word-list">froh · erleichtert · dankbar · gelassen · zuversichtlich · gerührt · traurig · wütend · frustriert · einsam · ängstlich · überfordert · verletzt · hoffnungsvoll · erschöpft · unsicher · hilflos · sehnsüchtig · ohnmächtig · beschämt · begeistert · berührt · bewegt · glücklich · mutig · neugierig · ruhig · stolz · zufrieden · entspannt · besorgt · bestürzt · betrübt · misstrauisch · verwirrt</p>
           </div>
           <div>
             <span class="word-list-label">Bedürfnisse</span>
-            <p class="word-list">Nähe · Verbundenheit · Sicherheit · Geborgenheit · Verlässlichkeit · Kontinuität · Anerkennung · Autonomie · Mitsprache · Ruhe · Verständnis · Gehört werden · Fairness · Vertrauen · Wertschätzung · Klarheit · Zugehörigkeit · Halt · Selbstbestimmung · Unterstützung</p>
+            <p class="word-list">Nähe · Verbundenheit · Sicherheit · Geborgenheit · Verlässlichkeit · Kontinuität · Anerkennung · Autonomie · Mitsprache · Ruhe · Verständnis · Gehört werden · Fairness · Vertrauen · Wertschätzung · Klarheit · Zugehörigkeit · Halt · Selbstbestimmung · Unterstützung · Achtsamkeit · Austausch · Freiheit · Freude · Gemeinschaft · Gerechtigkeit · Harmonie · Kompetenz · Kooperation · Liebe · Respekt · Sinnhaftigkeit · Wärme · gesehen werden · Verständigung</p>
           </div>
           <p class="word-list-note">Keine vollständige Liste – nur zur Anregung.</p>
         </div>
@@ -941,7 +941,38 @@
     { prompt: "„Ich bin ohnmächtig.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Beschreibt ein echtes Gefühl von Hilflosigkeit, kein Urteil über andere." },
     { prompt: "„Ich bin gerührt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reiner emotionaler Zustand." },
     { prompt: "„Ich bin frustriert.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Ein echtes Gefühl, ohne die andere Person zu beschuldigen." },
-    { prompt: "„Ich bin sehnsüchtig.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reiner innerer Zustand, direkt benannt." }
+    { prompt: "„Ich bin sehnsüchtig.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reiner innerer Zustand, direkt benannt." },
+    { prompt: "„Ich fühle mich abgelehnt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Testsatz: „Darauf reagiere ich abgelehnt“ — klingt schräg. Beschreibt eine Handlung der anderen Person. Echtes Gefühl wäre z. B. „traurig“ oder „einsam“." },
+    { prompt: "„Ich fühle mich missverstanden.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Unterstellt der anderen Person, nicht richtig zugehört zu haben. Echtes Gefühl wäre z. B. „frustriert“ oder „einsam“." },
+    { prompt: "„Ich fühle mich verlassen.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Beschreibt eine Handlung der anderen Person. Echtes Gefühl wäre z. B. „einsam“ oder „traurig“." },
+    { prompt: "„Ich fühle mich vernachlässigt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Bewertet das Verhalten der anderen Person. Echtes Gefühl wäre z. B. „einsam“ oder „traurig“." },
+    { prompt: "„Ich fühle mich bedroht.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Unterstellt der anderen Person eine bedrohliche Absicht. Echtes Gefühl wäre z. B. „ängstlich“ oder „unsicher“." },
+    { prompt: "„Ich fühle mich beleidigt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Ein Urteil über die Absicht der anderen Person. Echtes Gefühl wäre z. B. „verletzt“ oder „gekränkt“." },
+    { prompt: "„Ich fühle mich nicht akzeptiert.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Bewertet das Verhalten der anderen Person. Echtes Gefühl wäre z. B. „unsicher“ oder „traurig“." },
+    { prompt: "„Ich fühle mich missachtet.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Unterstellt der anderen Person mangelnden Respekt. Echtes Gefühl wäre z. B. „gekränkt“ oder „traurig“." },
+    { prompt: "„Ich fühle mich geliebt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Klingt positiv, ist aber trotzdem ein Pseudogefühl — es beschreibt eine Zuwendung der anderen Person, keinen eigenen inneren Zustand. Echtes Gefühl wäre z. B. „geborgen“ oder „glücklich“." },
+    { prompt: "„Ich fühle mich verstanden.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Auch positiv formulierte Pseudogefühle zählen: Es beschreibt eine Handlung der anderen Person. Echtes Gefühl wäre z. B. „erleichtert“ oder „ruhig“." },
+    { prompt: "„Ich fühle mich wertgeschätzt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Beschreibt, wie die andere Person sich verhält, nicht den eigenen inneren Zustand. Echtes Gefühl wäre z. B. „stolz“ oder „froh“." },
+    { prompt: "„Ich fühle mich unterstützt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Beschreibt eine Handlung der anderen Person. Echtes Gefühl wäre z. B. „erleichtert“ oder „zuversichtlich“." },
+    { prompt: "„Ich fühle mich beschützt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Beschreibt eine Handlung der anderen Person. Echtes Gefühl wäre z. B. „sicher“ oder „geborgen“." },
+    { prompt: "„Ich fühle mich gewollt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Beschreibt eine Haltung der anderen Person dir gegenüber. Echtes Gefühl wäre z. B. „froh“ oder „erleichtert“." },
+    { prompt: "„Ich fühle mich respektiert.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 1, explanation: "Auch das beschreibt das Verhalten der anderen Person, nicht den eigenen Zustand. Echtes Gefühl wäre z. B. „stolz“ oder „zufrieden“." },
+    { prompt: "„Ich bin begeistert.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reiner, unmittelbarer innerer Zustand." },
+    { prompt: "„Ich bin berührt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Ein echtes Gefühl, ohne die andere Person zu bewerten." },
+    { prompt: "„Ich bin bewegt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reiner emotionaler Zustand." },
+    { prompt: "„Ich bin gelöst.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Beschreibt den eigenen Zustand direkt." },
+    { prompt: "„Ich bin glücklich.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Klarer, unmittelbarer Gefühlsausdruck." },
+    { prompt: "„Ich bin munter.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reiner innerer Zustand." },
+    { prompt: "„Ich bin mutig.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Echtes Gefühl, ohne jede Fremdzuschreibung." },
+    { prompt: "„Ich bin neugierig.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Beschreibt die eigene Haltung, kein Urteil über andere." },
+    { prompt: "„Ich bin bekümmert.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Ein echter innerer Zustand." },
+    { prompt: "„Ich bin besorgt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reines Gefühl, ohne die andere Person zu bewerten." },
+    { prompt: "„Ich bin bestürzt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Klarer, unmittelbarer Gefühlsausdruck." },
+    { prompt: "„Ich bin betrübt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Beschreibt den eigenen Zustand direkt." },
+    { prompt: "„Ich bin entmutigt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Ein echter innerer Zustand, kein Urteil über andere." },
+    { prompt: "„Ich bin misstrauisch.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Beschreibt die eigene Haltung, nicht das Verhalten der anderen Person." },
+    { prompt: "„Ich bin verwirrt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Reiner innerer Zustand." },
+    { prompt: "„Ich bin verzweifelt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Echtes, unmittelbares Gefühl." }
   ];
 
   const pgGame = createQuizGame({ containerId: 'pg-quiz-container', pool: PSEUDOGEFUEHL, questionCount: 15 });
