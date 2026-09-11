@@ -668,10 +668,16 @@
     <div id="werkzeuge-group">
       <div class="exercise-grid">
         <button type="button" class="exercise-card active" id="mode-translate-btn" data-mode="translate">
+          <span class="stripe-group">
+            <span class="stripe cat-obs"></span><span class="stripe cat-feel"></span><span class="stripe cat-need"></span><span class="stripe cat-req"></span>
+          </span>
           <span class="exercise-name">Text übersetzen</span>
           <span class="exercise-desc">Formuliere eine Nachricht neu, in echter gewaltfreier Kommunikation</span>
         </button>
         <button type="button" class="exercise-card" id="mode-practice-btn" data-mode="practice">
+          <span class="stripe-group">
+            <span class="stripe cat-obs"></span><span class="stripe cat-feel"></span><span class="stripe cat-need"></span><span class="stripe cat-req"></span>
+          </span>
           <span class="exercise-name">Selbst üben</span>
           <span class="exercise-desc">Schreib selbst die vier Schritte, bekomme KI-Feedback dazu</span>
         </button>
@@ -933,13 +939,13 @@
 
   function showExercise(mode) {
     Object.entries(UEBUNG_PANELS).forEach(([key, panel]) => { panel.hidden = key !== mode; });
-    document.querySelectorAll('.exercise-card').forEach(card => {
+    document.querySelectorAll('#uebungen-group .exercise-card').forEach(card => {
       card.classList.toggle('active', card.dataset.mode === mode);
     });
     lastUebungMode = mode;
   }
 
-  document.querySelectorAll('.exercise-card').forEach(card => {
+  document.querySelectorAll('#uebungen-group .exercise-card').forEach(card => {
     card.addEventListener('click', () => showExercise(card.dataset.mode));
   });
 
@@ -954,6 +960,12 @@
     groupUebungenBtn.classList.toggle('active', !isWerkzeuge);
     groupWerkzeugeBtn.setAttribute('aria-selected', String(isWerkzeuge));
     groupUebungenBtn.setAttribute('aria-selected', String(!isWerkzeuge));
+    if (!isWerkzeuge) {
+      resultSection.hidden = true;
+      resultSection.classList.remove('visible');
+      practiceResultSection.hidden = true;
+      practiceResultSection.classList.remove('visible');
+    }
     if (isWerkzeuge) setWerkzeugMode(lastWerkzeugMode);
     else showExercise(lastUebungMode);
   }
@@ -1277,7 +1289,8 @@
         req: "Wärst du bereit, uns vorher abzusprechen, falls sich mal etwas ändert?"
       },
       flaw: "obs",
-      explanation: "„Rücksichtslos“ ist eine Bewertung, keine neutrale Beobachtung. Neutral wäre z. B. „Weil du zwanzig Minuten später kamst, als wir vereinbart hatten,“."
+      explanation: "„Rücksichtslos“ ist eine Bewertung, keine neutrale Beobachtung. Neutral wäre z. B. „Weil du zwanzig Minuten später kamst, als wir vereinbart hatten,“.",
+      hardSentence: "Ich fühle mich verunsichert, weil mir Verlässlichkeit wichtig ist. Das spürte ich besonders, als du dich bei der letzten Übergabe rücksichtslos verhalten hast. Wärst du bereit, uns vorher abzusprechen, falls sich mal etwas ändert?"
     },
     {
       parts: {
@@ -1287,7 +1300,8 @@
         req: "Könntest du mir kurz Bescheid geben, wenn du gerade keine Zeit hast zu antworten?"
       },
       flaw: "feel",
-      explanation: "„Ignoriert“ unterstellt der anderen Person eine Absicht — ein Pseudogefühl. Echtes Gefühl wäre z. B. „unsicher“ oder „besorgt“."
+      explanation: "„Ignoriert“ unterstellt der anderen Person eine Absicht — ein Pseudogefühl. Echtes Gefühl wäre z. B. „unsicher“ oder „besorgt“.",
+      hardSentence: "Mir ist Verlässlichkeit in unserer Kommunikation wichtig. Deshalb fühlte ich mich ignoriert, als du am Freitag die Nachricht nicht beantwortet hast. Könntest du mir kurz Bescheid geben, wenn du gerade keine Zeit hast zu antworten?"
     },
     {
       parts: {
@@ -1297,7 +1311,8 @@
         req: "Könnten wir gemeinsam schauen, wie wir sowas zukünftig früher abstimmen?"
       },
       flaw: "need",
-      explanation: "„Verlässliche Verbindung zu dir“ bewertet dein Verhalten und bezieht sich auf eine bestimmte Person. Rein wäre z. B. einfach „Verbindung“ oder „Verlässlichkeit“."
+      explanation: "„Verlässliche Verbindung zu dir“ bewertet dein Verhalten und bezieht sich auf eine bestimmte Person. Rein wäre z. B. einfach „Verbindung“ oder „Verlässlichkeit“.",
+      hardSentence: "Ich war enttäuscht, als du gesagt hast, das Wochenende sei schon anders verplant. Mir ist nämlich eine verlässliche Verbindung zu dir wichtig. Könnten wir gemeinsam schauen, wie wir sowas zukünftig früher abstimmen?"
     },
     {
       parts: {
@@ -1307,7 +1322,8 @@
         req: "Ich möchte, dass du sowas nie wieder machst."
       },
       flaw: "req",
-      explanation: "Lässt kein echtes Nein zu, klingt nach Forderung. Eine Bitte wäre z. B. „Wärst du bereit, mir kurzfristige Absagen möglichst früh mitzuteilen?“"
+      explanation: "Lässt kein echtes Nein zu, klingt nach Forderung. Eine Bitte wäre z. B. „Wärst du bereit, mir kurzfristige Absagen möglichst früh mitzuteilen?“",
+      hardSentence: "Mir ist Planbarkeit wichtig. Als das Treffen zum dritten Mal kurzfristig abgesagt wurde, war ich deshalb frustriert. Ich möchte, dass du sowas nie wieder machst."
     },
     {
       parts: {
@@ -1317,7 +1333,8 @@
         req: "Könntest du mir Bescheid geben, sobald du weißt, ob du kommen kannst?"
       },
       flaw: "obs",
-      explanation: "„Typisch unzuverlässig“ ist ein Charakterurteil. Neutral wäre z. B. „Weil du die letzten zwei Male nicht wie vereinbart da warst,“."
+      explanation: "„Typisch unzuverlässig“ ist ein Charakterurteil. Neutral wäre z. B. „Weil du die letzten zwei Male nicht wie vereinbart da warst,“.",
+      hardSentence: "Weil mir Sicherheit für unser Kind wichtig ist, bin ich besorgt. Du warst nämlich wieder mal typisch unzuverlässig. Könntest du mir Bescheid geben, sobald du weißt, ob du kommen kannst?"
     },
     {
       parts: {
@@ -1327,7 +1344,8 @@
         req: "Wärst du bereit, mir kurz zu sagen, wenn dir ein Gespräch zu viel wird, statt aufzulegen?"
       },
       flaw: "feel",
-      explanation: "„Betrogen“ unterstellt der anderen Person eine Absicht. Echtes Gefühl wäre z. B. „verunsichert“ oder „irritiert“."
+      explanation: "„Betrogen“ unterstellt der anderen Person eine Absicht. Echtes Gefühl wäre z. B. „verunsichert“ oder „irritiert“.",
+      hardSentence: "Ein respektvoller Austausch ist mir wichtig. Als das Gespräch am Telefon plötzlich beendet wurde, fühlte ich mich deshalb betrogen. Wärst du bereit, mir kurz zu sagen, wenn dir ein Gespräch zu viel wird, statt aufzulegen?"
     },
     {
       parts: {
@@ -1337,7 +1355,8 @@
         req: "Könnten wir uns vorher kurz austauschen, bevor Termine geändert werden?"
       },
       flaw: "need",
-      explanation: "„Dein Einverständnis“ bezieht sich direkt auf eine bestimmte Person. Rein wäre z. B. „Mitsprache“ oder „Einbezogen sein“."
+      explanation: "„Dein Einverständnis“ bezieht sich direkt auf eine bestimmte Person. Rein wäre z. B. „Mitsprache“ oder „Einbezogen sein“.",
+      hardSentence: "Ich war verunsichert, als der Kalender ohne Rücksprache geändert wurde. Mir ist nämlich dein Einverständnis bei solchen Entscheidungen wichtig. Könnten wir uns vorher kurz austauschen, bevor Termine geändert werden?"
     },
     {
       parts: {
@@ -1347,7 +1366,8 @@
         req: "Du musst in Zukunft besser aufpassen."
       },
       flaw: "req",
-      explanation: "„Du musst“ ist ein Befehl, keine Bitte. Eine Bitte wäre z. B. „Könntest du beim nächsten Mal an eine Jacke denken?“"
+      explanation: "„Du musst“ ist ein Befehl, keine Bitte. Eine Bitte wäre z. B. „Könntest du beim nächsten Mal an eine Jacke denken?“",
+      hardSentence: "Mir ist seine Gesundheit wichtig. Als das Kind ohne Jacke zurückkam, war ich deshalb besorgt. Du musst in Zukunft besser aufpassen."
     }
   ];
 
@@ -1372,7 +1392,7 @@
     let difficulty = 'easy';
 
     function combinedSentence(q) {
-      return FF_ORDER.map(cat => q.parts[cat]).join(' ');
+      return q.hardSentence;
     }
 
     function renderQuestion() {
