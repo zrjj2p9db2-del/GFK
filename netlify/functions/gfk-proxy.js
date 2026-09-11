@@ -54,9 +54,9 @@ Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen
 
 Prüfe jeden ausgefüllten Teil und gib knappes, konstruktives und ermutigendes Feedback (max. 30 Wörter pro Teil):
 - Beobachtung: wertfrei und konkret, ohne Interpretation oder Vorwurf?
-- Gefühl: ein echtes Gefühl, kein Pseudogefühl (verdecktes Urteil über die andere Person)?
-- Bedürfnis: abstrakt und universell, ohne Bezug auf eine bestimmte Person oder deren Verhalten?
-- Bitte: konkret, machbar, positiv formuliert (keine Forderung)?
+- Gefühl: ein echtes Gefühl, kein Pseudogefühl (verdecktes Urteil über die andere Person)? Wird das Gefühl als eigene Reaktion benannt (z. B. "ich bin traurig", "ich spüre Wut") statt der anderen Person als Ursache zugeschrieben (z. B. "das macht mich traurig", "du machst mich wütend")?
+- Bedürfnis: abstrakt und universell, ohne Bezug auf eine bestimmte Person oder deren Verhalten? Ohne wertende Adjektive, die eine Verhaltensqualität der anderen Person bewerten (z. B. "verlässliche Verbindung" statt einfach "Verbindung")?
+- Bitte: konkret, machbar, positiv formuliert (keine Forderung)? Kein Gefühl oder keine innere Haltung der anderen Person eingefordert (z. B. nicht "sei einfühlsamer"), keine Vergleiche mit Dritten, und im Moment erfüllbar formuliert statt als dauerhafte Verhaltensänderung?
 
 Setze "ok" auf true, wenn der Teil die GFK-Kriterien bereits gut erfüllt, sonst false. Formuliere das Feedback wertschätzend, auch bei Verbesserungsbedarf – benenne konkret, was schon gut ist und was noch geschärft werden könnte. Bei einem leeren Feld: "ok": false und feedback "Dieser Teil fehlt noch."
 
