@@ -128,6 +128,16 @@
   .dot.cat-feel { background: var(--feel); }
   .dot.cat-need { background: var(--need); }
   .dot.cat-req { background: var(--req); }
+  .stripe-group { display: inline-flex; gap: 1px; height: 9px; }
+  .stripe { width: 3px; height: 100%; border-radius: 1px; }
+  .stripe.cat-obs { background: var(--obs); }
+  .stripe.cat-feel { background: var(--feel); }
+  .stripe.cat-need { background: var(--need); }
+  .stripe.cat-req { background: var(--req); }
+  .dot.cat-mixed {
+    width: 16px; height: 16px;
+    background: conic-gradient(var(--obs) 0deg 90deg, var(--feel) 90deg 180deg, var(--need) 180deg 270deg, var(--req) 270deg 360deg);
+  }
 
   .legend-desc { color: var(--ink-soft); font-size: 14px; padding-left: 17px; }
 
@@ -261,18 +271,58 @@
   }
   .char-counter.warn { color: var(--feel); }
 
-  /* Mode toggle */
+  /* Group toggle (Ebene 1: Werkzeuge / Übungen) — immer genau 2 Knöpfe, bricht nie um */
+  .group-toggle {
+    display: flex;
+    gap: 6px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 5px;
+    margin-bottom: 16px;
+  }
+  .group-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 12px 16px;
+    font-family: var(--serif);
+    font-size: 15.5px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .group-btn.active { background: var(--brand); color: var(--paper); }
+  .group-btn:focus-visible, .mode-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(43, 83, 79, 0.35);
+  }
+
+  /* Mode toggle (Ebene 2: die Reiter innerhalb einer Gruppe) — feste einzeilige Leiste,
+     scrollt horizontal statt umzubrechen. Bleibt damit robust, egal wie viele Reiter
+     eine Gruppe später hat. */
+  .scroll-tabs-wrap { position: relative; margin-bottom: 24px; }
+  .scroll-tabs-wrap::after {
+    content: '';
+    position: absolute; top: 0; right: 0; bottom: 0; width: 28px;
+    background: linear-gradient(to right, transparent, var(--panel));
+    pointer-events: none;
+    border-radius: 0 10px 10px 0;
+  }
   .mode-toggle {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 4px;
     background: var(--paper);
     border: 1px solid var(--line);
     border-radius: 10px;
     padding: 4px;
-    margin-bottom: 24px;
-    width: fit-content;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
+  .mode-toggle::-webkit-scrollbar { display: none; }
   .mode-btn {
     background: none;
     border: none;
@@ -285,9 +335,40 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .mode-btn.active { background: var(--brand); color: var(--paper); }
   .mode-btn.active .dot { box-shadow: 0 0 0 1.5px rgba(239, 240, 234, 0.65); }
+
+  /* Übungen-Übersicht: Kartenraster statt scrollender Reiter — alles immer sichtbar */
+  .exercise-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+  .exercise-card {
+    text-align: left;
+    background: var(--paper);
+    border: 1.5px solid transparent;
+    border-radius: 10px;
+    padding: 16px 14px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: var(--sans);
+  }
+  .exercise-card:hover { border-color: var(--brand); }
+  .exercise-card.active { border-color: var(--brand); }
+  .exercise-name { font-family: var(--serif); font-weight: 600; font-size: 15px; color: var(--ink); }
+  .exercise-desc { font-size: 12.5px; color: var(--ink-soft); line-height: 1.4; }
+
+  .difficulty-toggle { display: inline-flex; gap: 4px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 4px; margin-bottom: 20px; }
+  .difficulty-btn { background: none; border: none; padding: 6px 14px; font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--ink-soft); border-radius: 6px; cursor: pointer; }
+  .difficulty-btn.active { background: var(--brand); color: var(--paper); }
+  .ff-sentence { font-family: var(--serif); font-size: 17px; line-height: 1.6; margin-bottom: 18px; }
 
   /* Difficulty row (Hörübung) */
   .diff-row { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -303,7 +384,20 @@
   }
 
   /* Shared quiz engine (Bitte/Forderung, Perspektivwechsel, Hörübung-Fragen) */
-  .quiz-progress { font-size: 13px; color: var(--ink-soft); margin-bottom: 10px; }
+  .quiz-progress { font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; }
+  .quiz-progress-bar {
+    height: 4px;
+    background: var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .quiz-progress-bar-fill {
+    height: 100%;
+    background: var(--brand);
+    border-radius: 999px;
+    transition: width 0.25s ease;
+  }
   .quiz-prompt { font-family: var(--serif); font-size: 18px; line-height: 1.5; margin-bottom: 18px; }
   .quiz-options { display: flex; flex-direction: column; gap: 8px; }
   .quiz-option {
@@ -318,6 +412,29 @@
   .quiz-feedback.correct { color: var(--req); }
   .quiz-feedback.incorrect { color: var(--feel); }
   .quiz-next { margin-top: 16px; }
+
+  /* Find den Fehler: klickbare, farblich markierte Satzteile statt einfacher Optionen */
+  .ff-segments { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+  .ff-segment {
+    text-align: left; cursor: pointer; border-radius: 8px; padding: 12px 14px 12px 16px;
+    font-family: var(--sans); font-size: 14.5px; line-height: 1.5; color: var(--ink);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--line);
+    background: var(--paper); width: 100%;
+  }
+  .ff-segment.obs { border-left-color: var(--obs); }
+  .ff-segment.feel { border-left-color: var(--feel); }
+  .ff-segment.need { border-left-color: var(--need); }
+  .ff-segment.req { border-left-color: var(--req); }
+  .ff-segment:hover:not(:disabled) { filter: brightness(0.97); }
+  .ff-segment:disabled { cursor: default; }
+  .ff-segment-cat { display: block; font-family: var(--serif); font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 3px; }
+  .ff-segment.obs .ff-segment-cat { color: var(--obs); }
+  .ff-segment.feel .ff-segment-cat { color: var(--feel); }
+  .ff-segment.need .ff-segment-cat { color: var(--need); }
+  .ff-segment.req .ff-segment-cat { color: var(--req); }
+  .ff-segment.correct { border-left-color: var(--req); background: var(--req-tint); }
+  .ff-segment.incorrect { border-left-color: var(--feel); background: var(--feel-tint); }
   .score-box {
     text-align: center; padding: 26px; background: var(--panel); border-radius: 12px;
     font-family: var(--serif); font-size: 20px;
@@ -543,14 +660,22 @@
   </section>
 
   <section class="input-section" aria-labelledby="input-heading">
-    <div class="mode-toggle" role="tablist" aria-label="Modus wählen">
-      <button type="button" class="mode-btn active" id="mode-translate-btn" role="tab" aria-selected="true">Text übersetzen</button>
-      <button type="button" class="mode-btn" id="mode-practice-btn" role="tab" aria-selected="false">Selbst üben</button>
-      <button type="button" class="mode-btn" id="mode-fi-btn" role="tab" aria-selected="false"><span class="dot cat-obs"></span>Fakt oder Interpretation?</button>
-      <button type="button" class="mode-btn" id="mode-pg-btn" role="tab" aria-selected="false"><span class="dot cat-feel"></span>Pseudogefühl-Jäger</button>
-      <button type="button" class="mode-btn" id="mode-pw-btn" role="tab" aria-selected="false"><span class="dot cat-need"></span>Perspektivwechsel</button>
-      <button type="button" class="mode-btn" id="mode-bf-btn" role="tab" aria-selected="false"><span class="dot cat-req"></span>Bitte/Forderung</button>
+    <div class="group-toggle" role="tablist" aria-label="Bereich wählen">
+      <button type="button" class="group-btn active" id="group-werkzeuge-btn" role="tab" aria-selected="true">Werkzeuge</button>
+      <button type="button" class="group-btn" id="group-uebungen-btn" role="tab" aria-selected="false">Spiele</button>
     </div>
+
+    <div id="werkzeuge-group">
+      <div class="exercise-grid">
+        <button type="button" class="exercise-card active" id="mode-translate-btn" data-mode="translate">
+          <span class="exercise-name">Text übersetzen</span>
+          <span class="exercise-desc">Formuliere eine Nachricht neu, in echter gewaltfreier Kommunikation</span>
+        </button>
+        <button type="button" class="exercise-card" id="mode-practice-btn" data-mode="practice">
+          <span class="exercise-name">Selbst üben</span>
+          <span class="exercise-desc">Schreib selbst die vier Schritte, bekomme KI-Feedback dazu</span>
+        </button>
+      </div>
 
     <div id="translate-panel">
     <h2 id="input-heading">Dein Text</h2>
@@ -612,6 +737,38 @@
       <div class="progress-bar" id="practice-progress-bar"><div class="progress-bar-fill" id="practice-progress-bar-fill"></div></div>
       <p class="error-msg" id="practice-error-msg" hidden></p>
     </div>
+    </div>
+
+    <div id="uebungen-group" hidden>
+      <div id="uebungen-overview" class="exercise-grid">
+        <button type="button" class="exercise-card" data-mode="fi">
+          <span class="dot cat-obs"></span>
+          <span class="exercise-name">Fakt oder Interpretation?</span>
+          <span class="exercise-desc">Beobachtung von Bewertung unterscheiden</span>
+        </button>
+        <button type="button" class="exercise-card" data-mode="pg">
+          <span class="dot cat-feel"></span>
+          <span class="exercise-name">Pseudogefühl-Jäger</span>
+          <span class="exercise-desc">Echte Gefühle von versteckten Urteilen unterscheiden</span>
+        </button>
+        <button type="button" class="exercise-card" data-mode="pw">
+          <span class="dot cat-need"></span>
+          <span class="exercise-name">Perspektivwechsel</span>
+          <span class="exercise-desc">Bedürfnisse hinter Verhalten vermuten</span>
+        </button>
+        <button type="button" class="exercise-card" data-mode="bf">
+          <span class="dot cat-req"></span>
+          <span class="exercise-name">Bitte oder Forderung?</span>
+          <span class="exercise-desc">Echte Bitten von Forderungen unterscheiden</span>
+        </button>
+        <button type="button" class="exercise-card" data-mode="ff">
+          <span class="stripe-group">
+            <span class="stripe cat-obs"></span><span class="stripe cat-feel"></span><span class="stripe cat-need"></span><span class="stripe cat-req"></span>
+          </span>
+          <span class="exercise-name">Find den Fehler</span>
+          <span class="exercise-desc">Ein ganzer GFK-Satz, aber ein Teil stimmt nicht</span>
+        </button>
+      </div>
 
     <div id="fi-panel" hidden>
       <h2>Fakt oder Interpretation?</h2>
@@ -635,6 +792,17 @@
       <h2>Bitte oder Forderung?</h2>
       <p class="hint">Lässt der Satz ein echtes Nein zu, oder nicht? Bliebe die Reaktion respektvoll, war's eine Bitte. Käme Vorwurf oder Drohung, war's eine Forderung — auch höflich verpackt.</p>
       <div id="bf-quiz-container"></div>
+    </div>
+
+    <div id="ff-panel" hidden>
+      <h2>Find den Fehler</h2>
+      <p class="hint" id="ff-hint">Ein vollständiger GFK-Satz, aufgeteilt in seine vier Teile. Einer davon erfüllt sein Kriterium eigentlich nicht — klick auf den Teil, der nicht wirklich Beobachtung, Gefühl, Bedürfnis oder Bitte ist.</p>
+      <div class="difficulty-toggle">
+        <button type="button" class="difficulty-btn active" id="ff-diff-easy-btn">Mit Hilfe</button>
+        <button type="button" class="difficulty-btn" id="ff-diff-hard-btn">Ohne Hilfe</button>
+      </div>
+      <div id="ff-quiz-container"></div>
+    </div>
     </div>
   </section>
 
@@ -674,7 +842,7 @@
 
   <footer class="site-footer">
     <p>Dieses Werkzeug dient dem Einüben von Sprache und ersetzt keine Beratung, Mediation oder rechtliche Unterstützung. Bei akuten Konflikten rund um Umgang oder Sorgerecht können Familienberatungsstellen oder das Jugendamt weiterhelfen.</p>
-    <p>Eingegebene Texte werden zur Verarbeitung an Anthropic (USA) übermittelt und dort automatisch nach spätestens 30 Tagen gelöscht – nie für das Training von KI-Modellen genutzt. Bitte gib nach Möglichkeit keine vollständigen Namen oder sonstige eindeutig identifizierenden Angaben ein.</p>
+    <p>Eingegebene Texte werden zur Verarbeitung an Anthropic (USA) übermittelt und dort automatisch nach spätestens 30 Tagen gelöscht – nie für das Training von KI-Modellen genutzt. Deine Eingaben laufen direkt zur KI und zurück, ohne dass diese Seite sie speichert oder einsehen kann. Bitte gib nach Möglichkeit keine vollständigen Namen oder sonstige eindeutig identifizierenden Angaben ein.</p>
   </footer>
 
 </div>
@@ -709,18 +877,19 @@
   const copyEverydayBtn = document.getElementById('copy-everyday-btn');
   const compass = document.querySelector('.compass');
 
+  const groupWerkzeugeBtn = document.getElementById('group-werkzeuge-btn');
+  const groupUebungenBtn = document.getElementById('group-uebungen-btn');
+  const werkzeugeGroup = document.getElementById('werkzeuge-group');
+  const uebungenGroup = document.getElementById('uebungen-group');
   const modeTranslateBtn = document.getElementById('mode-translate-btn');
   const modePracticeBtn = document.getElementById('mode-practice-btn');
-  const modeFiBtn = document.getElementById('mode-fi-btn');
-  const modePgBtn = document.getElementById('mode-pg-btn');
-  const modeBfBtn = document.getElementById('mode-bf-btn');
-  const modePwBtn = document.getElementById('mode-pw-btn');
   const translatePanel = document.getElementById('translate-panel');
   const practicePanel = document.getElementById('practice-panel');
   const fiPanel = document.getElementById('fi-panel');
   const pgPanel = document.getElementById('pg-panel');
   const bfPanel = document.getElementById('bf-panel');
   const pwPanel = document.getElementById('pw-panel');
+  const ffPanel = document.getElementById('ff-panel');
   const practiceObs = document.getElementById('practice-obs');
   const practiceFeel = document.getElementById('practice-feel');
   const practiceNeed = document.getElementById('practice-need');
@@ -734,17 +903,14 @@
   const practiceOverall = document.getElementById('practice-overall');
   const practiceBreakdown = document.getElementById('practice-breakdown');
 
-  const MODE_PANELS = {
+  // Werkzeuge (Text übersetzen / Selbst üben) — klassische Reiter, bleiben immer nur zu zweit.
+  const WERKZEUG_PANELS = {
     translate: { btn: modeTranslateBtn, panel: translatePanel },
-    practice: { btn: modePracticeBtn, panel: practicePanel },
-    fi: { btn: modeFiBtn, panel: fiPanel },
-    pg: { btn: modePgBtn, panel: pgPanel },
-    pw: { btn: modePwBtn, panel: pwPanel },
-    bf: { btn: modeBfBtn, panel: bfPanel }
+    practice: { btn: modePracticeBtn, panel: practicePanel }
   };
 
-  function setMode(mode) {
-    Object.entries(MODE_PANELS).forEach(([key, { btn, panel }]) => {
+  function setWerkzeugMode(mode) {
+    Object.entries(WERKZEUG_PANELS).forEach(([key, { btn, panel }]) => {
       const isActive = key === mode;
       panel.hidden = !isActive;
       btn.classList.toggle('active', isActive);
@@ -754,14 +920,47 @@
     resultSection.classList.remove('visible');
     practiceResultSection.hidden = true;
     practiceResultSection.classList.remove('visible');
+    lastWerkzeugMode = mode;
   }
 
-  modeTranslateBtn.addEventListener('click', () => setMode('translate'));
-  modePracticeBtn.addEventListener('click', () => setMode('practice'));
-  modeFiBtn.addEventListener('click', () => setMode('fi'));
-  modePgBtn.addEventListener('click', () => setMode('pg'));
-  modePwBtn.addEventListener('click', () => setMode('pw'));
-  modeBfBtn.addEventListener('click', () => setMode('bf'));
+  modeTranslateBtn.addEventListener('click', () => setWerkzeugMode('translate'));
+  modePracticeBtn.addEventListener('click', () => setWerkzeugMode('practice'));
+
+  // Übungen — Karten-Übersicht bleibt immer sichtbar. Klick auf eine Karte zeigt die
+  // passende Übung darunter und markiert die Karte selbst als aktiv (dünne Linie unten).
+  const UEBUNG_PANELS = { fi: fiPanel, pg: pgPanel, pw: pwPanel, bf: bfPanel, ff: ffPanel };
+  let lastUebungMode = 'fi';
+
+  function showExercise(mode) {
+    Object.entries(UEBUNG_PANELS).forEach(([key, panel]) => { panel.hidden = key !== mode; });
+    document.querySelectorAll('.exercise-card').forEach(card => {
+      card.classList.toggle('active', card.dataset.mode === mode);
+    });
+    lastUebungMode = mode;
+  }
+
+  document.querySelectorAll('.exercise-card').forEach(card => {
+    card.addEventListener('click', () => showExercise(card.dataset.mode));
+  });
+
+  // Ebene 1: Werkzeuge / Übungen. Beide Gruppen merken sich den zuletzt aktiven Punkt.
+  let lastWerkzeugMode = 'translate';
+
+  function setGroup(group) {
+    const isWerkzeuge = group === 'werkzeuge';
+    werkzeugeGroup.hidden = !isWerkzeuge;
+    uebungenGroup.hidden = isWerkzeuge;
+    groupWerkzeugeBtn.classList.toggle('active', isWerkzeuge);
+    groupUebungenBtn.classList.toggle('active', !isWerkzeuge);
+    groupWerkzeugeBtn.setAttribute('aria-selected', String(isWerkzeuge));
+    groupUebungenBtn.setAttribute('aria-selected', String(!isWerkzeuge));
+    if (isWerkzeuge) setWerkzeugMode(lastWerkzeugMode);
+    else showExercise(lastUebungMode);
+  }
+
+  groupWerkzeugeBtn.addEventListener('click', () => setGroup('werkzeuge'));
+  groupUebungenBtn.addEventListener('click', () => setGroup('uebungen'));
+  showExercise('fi');
 
   // ---------------------------------------------------------------
   // Gemeinsame Quiz-Engine — genutzt von Bitte/Forderung, Perspektiv-
@@ -810,6 +1009,7 @@
 
       container.innerHTML = `
         <p class="quiz-progress">Frage ${currentIndex + 1} von ${questions.length}</p>
+        <div class="quiz-progress-bar"><div class="quiz-progress-bar-fill" style="width: ${Math.round(((currentIndex + 1) / questions.length) * 100)}%"></div></div>
         <p class="quiz-prompt">${escapeHtml(q.prompt)}</p>
         <div class="quiz-options">
           ${shuffledOptions.map((opt, i) => `<button type="button" class="quiz-option" data-i="${i}">${escapeHtml(opt)}</button>`).join('')}
@@ -1028,42 +1228,264 @@
   // Perspektivwechsel-Rätsel
   // ---------------------------------------------------------------
   const PERSPEKTIVWECHSEL = [
-    { prompt: "Die andere Person reagiert auf jede Nachricht von dir sofort gereizt, auch bei ganz neutralen Themen. Welches Bedürfnis könnte dahinterstecken?", options: ["Sicherheit", "Abwechslung", "Anerkennung", "Ordnung"], correct: 0, explanation: "Gereiztheit auch bei neutralen Themen deutet oft auf ein Gefühl von Bedrohung hin — dahinter steckt häufig Sicherheit oder Selbstschutz." },
-    { prompt: "Die andere Person erzählt dem Kind gegenüber wiederholt schlecht über dich. Welches Bedürfnis könnte dahinterstecken?", options: ["Bedeutung", "Humor", "Ruhe", "Genauigkeit"], correct: 0, explanation: "Oft steckt dahinter die Angst, für das Kind an Bedeutung zu verlieren." },
-    { prompt: "Die andere Person besteht stur auf jedem kleinsten Detail der Umgangsvereinbarung. Welches Bedürfnis könnte dahinterstecken?", options: ["Struktur", "Spontaneität", "Anerkennung", "Nähe"], correct: 0, explanation: "Starres Beharren auf Details wirkt oft wie der Versuch, nach einer chaotisch erlebten Trennung wieder Kontrolle zu haben." },
-    { prompt: "Die andere Person reagiert seit Wochen kaum noch auf Nachrichten von dir. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstschutz", "Aufmerksamkeit", "Geselligkeit", "Kontrolle"], correct: 0, explanation: "Rückzug ist oft Selbstschutz vor weiterem Konflikt, nicht zwingend Desinteresse." },
-    { prompt: "Die andere Person sagt kurzfristig geplante Umgangstermine oft ohne klare Begründung ab. Welches Bedürfnis könnte dahinterstecken?", options: ["Entlastung", "Abenteuerlust", "Anerkennung", "Wettbewerb"], correct: 0, explanation: "Häufige kurzfristige Absagen können ein Zeichen von Überforderung sein, die so vermieden wird." },
-    { prompt: "Die andere Person postet auffällig viele „glückliche Familie“-Fotos mit dem Kind in sozialen Medien. Welches Bedürfnis könnte dahinterstecken?", options: ["Bestätigung", "Kreativität", "Humor", "Ordnung"], correct: 0, explanation: "Nach einer Trennung kann das Bedürfnis, nach außen als „gute Eltern“ zu wirken, stärker werden." },
-    { prompt: "Die andere Person besteht darauf, jede Kleinigkeit über einen Anwalt zu klären. Welches Bedürfnis könnte dahinterstecken?", options: ["Sicherheit", "Effizienz", "Geselligkeit", "Kreativität"], correct: 0, explanation: "Der Griff zu formellen Kanälen kann ein Versuch sein, sich rechtlich und emotional abgesichert zu fühlen." },
-    { prompt: "Die andere Person wechselt in Gesprächen schnell das Thema, sobald es um das Kind geht. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstschutz", "Neugier", "Humor", "Effizienz"], correct: 0, explanation: "Themenwechsel können ein Weg sein, belastende Gefühle wie Schuld nicht direkt fühlen zu müssen." },
-    { prompt: "Die andere Person kritisiert deine Erziehung öffentlich vor Familie oder Freunden. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstbestätigung", "Gerechtigkeitssinn", "Humor", "Aufmerksamkeit"], correct: 0, explanation: "Öffentliche Kritik kann ein Versuch sein, die eigene Unsicherheit als Elternteil zu kompensieren." },
-    { prompt: "Die andere Person will jedes Detail zur Freizeitgestaltung des Kindes bei dir wissen. Welches Bedürfnis könnte dahinterstecken?", options: ["Kontrolle", "Langeweile", "Geselligkeit", "Ordnungsliebe"], correct: 0, explanation: "Starkes Kontrollbedürfnis entsteht oft aus verlorenem Vertrauen, nicht aus reiner Neugier." },
-    { prompt: "Die andere Person reagiert extrem emotional auf kleine Planänderungen. Welches Bedürfnis könnte dahinterstecken?", options: ["Vorhersehbarkeit", "Abwechslung", "Anerkennung", "Geselligkeit"], correct: 0, explanation: "Wenn vieles im Leben gerade unsicher ist, wird Planbarkeit oft besonders wichtig." },
-    { prompt: "Die andere Person spricht mit dir nur noch über Anwälte oder Dritte, nie direkt. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstschutz", "Effizienz", "Humor", "Geselligkeit"], correct: 0, explanation: "Der Umweg über Dritte kann ein Schutzmechanismus sein, um direkten Konflikt zu vermeiden." },
-    { prompt: "Die andere Person löscht oder blockiert dich nach jedem Streit sofort in sozialen Medien. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstschutz", "Humor", "Kreativität", "Ordnung"], correct: 0, explanation: "Sofortiges Blockieren kann ein Versuch sein, sich vor weiterer emotionaler Belastung zu schützen." },
-    { prompt: "Die andere Person besteht darauf, dass das Kind ihren neuen Partner sofort „Mama“ oder „Papa“ nennt. Welches Bedürfnis könnte dahinterstecken?", options: ["Zugehörigkeit", "Humor", "Effizienz", "Abwechslung"], correct: 0, explanation: "Das kann der Wunsch sein, dass die neue Familie als vollständig und zugehörig erlebt wird." },
-    { prompt: "Die andere Person schickt dir nachts um drei Uhr wütende Nachrichten. Welches Bedürfnis könnte dahinterstecken?", options: ["Beachtung", "Ordnung", "Humor", "Effizienz"], correct: 0, explanation: "Nachrichten zu ungewöhnlichen Zeiten können ein Zeichen sein, dass sich die Person sonst nicht gehört fühlt." },
-    { prompt: "Die andere Person verlangt bei jeder Übergabe eine schriftliche Bestätigung. Welches Bedürfnis könnte dahinterstecken?", options: ["Sicherheit", "Kreativität", "Geselligkeit", "Humor"], correct: 0, explanation: "Schriftliche Bestätigungen können ein Versuch sein, sich rechtlich und emotional abzusichern." },
-    { prompt: "Die andere Person erwähnt bei jeder Gelegenheit, wie sehr sie sich für das Kind aufopfert. Welches Bedürfnis könnte dahinterstecken?", options: ["Anerkennung", "Humor", "Ordnung", "Abwechslung"], correct: 0, explanation: "Wiederholtes Betonen der eigenen Aufopferung kann auf ein Bedürfnis nach Anerkennung hindeuten." },
-    { prompt: "Die andere Person meldet sich nur noch über den Anwalt, selbst bei Kleinigkeiten. Welches Bedürfnis könnte dahinterstecken?", options: ["Distanz", "Effizienz", "Kreativität", "Geselligkeit"], correct: 0, explanation: "Kommunikation nur über Dritte kann ein Schutzmechanismus sein, um direkten emotionalen Kontakt zu vermeiden." },
-    { prompt: "Die andere Person vergleicht dich ständig mit ihrem neuen Partner. Welches Bedürfnis könnte dahinterstecken?", options: ["Bestätigung", "Humor", "Ordnung", "Abwechslung"], correct: 0, explanation: "Vergleiche können ein Versuch sein, die eigene Position oder den eigenen Wert zu bestätigen." },
-    { prompt: "Die andere Person besteht darauf, jedes Wochenende neu zu verhandeln, obwohl es eine feste Regelung gibt. Welches Bedürfnis könnte dahinterstecken?", options: ["Mitsprache", "Geselligkeit", "Humor", "Effizienz"], correct: 0, explanation: "Ständiges Neuverhandeln kann das Bedürfnis widerspiegeln, weiterhin Einfluss auf Entscheidungen zu haben." },
-    { prompt: "Die andere Person reagiert wütend, wenn das Kind positiv von dir erzählt. Welches Bedürfnis könnte dahinterstecken?", options: ["Bedeutung", "Humor", "Ordnung", "Abwechslung"], correct: 0, explanation: "Wut bei positiven Erzählungen kann Angst vor dem eigenen Bedeutungsverlust beim Kind widerspiegeln." },
-    { prompt: "Die andere Person zieht sich bei jedem größeren Thema sofort zurück und antwortet tagelang nicht. Welches Bedürfnis könnte dahinterstecken?", options: ["Entlastung", "Geselligkeit", "Kreativität", "Ordnung"], correct: 0, explanation: "Rückzug bei großen Themen kann ein Zeichen sein, dass die Situation die Person gerade überfordert." },
-    { prompt: "Die andere Person besteht darauf, alle Erziehungsentscheidungen genau zu dokumentieren. Welches Bedürfnis könnte dahinterstecken?", options: ["Absicherung", "Humor", "Geselligkeit", "Abwechslung"], correct: 0, explanation: "Genaue Dokumentation kann ein Versuch sein, sich für den Fall eines Konflikts abzusichern." },
-    { prompt: "Die andere Person fragt das Kind nach jedem Umgang detailliert aus, was bei dir besprochen wurde. Welches Bedürfnis könnte dahinterstecken?", options: ["Kontrolle", "Neugier", "Humor", "Kreativität"], correct: 0, explanation: "Detailliertes Nachfragen kann aus dem Bedürfnis entstehen, einen Überblick über den Alltag des Kindes zu behalten." },
-    { prompt: "Die andere Person sagt in Streitgesprächen oft: „Du verstehst mich sowieso nie.“ Welches Bedürfnis könnte dahinterstecken?", options: ["Verständnis", "Humor", "Ordnung", "Effizienz"], correct: 0, explanation: "Der Vorwurf, nie verstanden zu werden, deutet oft auf ein unerfülltes Bedürfnis nach echtem Verständnis hin." },
-    { prompt: "Die andere Person besteht auf einer neutralen Übergabestelle, obwohl es früher unproblematisch war. Welches Bedürfnis könnte dahinterstecken?", options: ["Sicherheit", "Abwechslung", "Kreativität", "Effizienz"], correct: 0, explanation: "Das Bestehen auf einer neutralen Übergabe kann Ausdruck eines gestiegenen Sicherheitsbedürfnisses sein." },
-    { prompt: "Die andere Person feiert Erfolge des Kindes nur noch allein, ohne dich zu informieren. Welches Bedürfnis könnte dahinterstecken?", options: ["Bedeutung", "Humor", "Ordnung", "Geselligkeit"], correct: 0, explanation: "Das Ausschließen von Informationen kann ein Versuch sein, die eigene zentrale Rolle beim Kind zu wahren." },
-    { prompt: "Die andere Person reagiert trotzig, wenn du einen Kompromiss vorschlägst. Welches Bedürfnis könnte dahinterstecken?", options: ["Autonomie", "Humor", "Ordnung", "Geselligkeit"], correct: 0, explanation: "Trotzige Reaktionen auf Kompromissvorschläge können ein Bedürfnis nach eigener Entscheidungsfreiheit widerspiegeln." },
-    { prompt: "Die andere Person betont in Gesprächen oft, wie unfair alles für sie gelaufen sei. Welches Bedürfnis könnte dahinterstecken?", options: ["Gerechtigkeit", "Humor", "Ordnung", "Kreativität"], correct: 0, explanation: "Wiederholtes Betonen von Unfairness deutet oft auf ein starkes, noch unerfülltes Gerechtigkeitsbedürfnis hin." },
-    { prompt: "Die andere Person möchte jede Kommunikation nur noch schriftlich, nie mehr am Telefon. Welches Bedürfnis könnte dahinterstecken?", options: ["Klarheit", "Geselligkeit", "Humor", "Abwechslung"], correct: 0, explanation: "Der Wunsch nach ausschließlich schriftlicher Kommunikation kann aus dem Bedürfnis nach Klarheit und Nachvollziehbarkeit entstehen." }
+    { prompt: "Der andere Elternteil reagiert auf jede Nachricht von dir sofort gereizt, auch bei ganz neutralen Themen. Welches Bedürfnis könnte dahinterstecken?", options: ["Sicherheit", "Abwechslung", "Anerkennung", "Ordnung"], correct: 0, explanation: "Gereiztheit auch bei neutralen Themen deutet oft auf ein Gefühl von Bedrohung hin — dahinter steckt häufig Sicherheit oder Selbstschutz." },
+    { prompt: "Der andere Elternteil erzählt dem Kind gegenüber wiederholt schlecht über dich. Welches Bedürfnis könnte dahinterstecken?", options: ["Bedeutung", "Humor", "Ruhe", "Genauigkeit"], correct: 0, explanation: "Oft steckt dahinter die Angst, für das Kind an Bedeutung zu verlieren." },
+    { prompt: "Der andere Elternteil besteht stur auf jedem kleinsten Detail der Umgangsvereinbarung. Welches Bedürfnis könnte dahinterstecken?", options: ["Struktur", "Spontaneität", "Anerkennung", "Nähe"], correct: 0, explanation: "Starres Beharren auf Details wirkt oft wie der Versuch, nach einer chaotisch erlebten Trennung wieder Kontrolle zu haben." },
+    { prompt: "Der andere Elternteil reagiert seit Wochen kaum noch auf Nachrichten von dir. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstschutz", "Aufmerksamkeit", "Geselligkeit", "Kontrolle"], correct: 0, explanation: "Rückzug ist oft Selbstschutz vor weiterem Konflikt, nicht zwingend Desinteresse." },
+    { prompt: "Der andere Elternteil sagt kurzfristig geplante Umgangstermine oft ohne klare Begründung ab. Welches Bedürfnis könnte dahinterstecken?", options: ["Entlastung", "Abenteuerlust", "Anerkennung", "Wettbewerb"], correct: 0, explanation: "Häufige kurzfristige Absagen können ein Zeichen von Überforderung sein, die so vermieden wird." },
+    { prompt: "Der andere Elternteil postet auffällig viele „glückliche Familie“-Fotos mit dem Kind in sozialen Medien. Welches Bedürfnis könnte dahinterstecken?", options: ["Bestätigung", "Kreativität", "Humor", "Ordnung"], correct: 0, explanation: "Nach einer Trennung kann das Bedürfnis, nach außen als „gute Eltern“ zu wirken, stärker werden." },
+    { prompt: "Der andere Elternteil besteht darauf, jede Kleinigkeit über einen Anwalt zu klären. Welches Bedürfnis könnte dahinterstecken?", options: ["Sicherheit", "Effizienz", "Geselligkeit", "Kreativität"], correct: 0, explanation: "Der Griff zu formellen Kanälen kann ein Versuch sein, sich rechtlich und emotional abgesichert zu fühlen." },
+    { prompt: "Der andere Elternteil wechselt in Gesprächen schnell das Thema, sobald es um das Kind geht. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstschutz", "Neugier", "Humor", "Effizienz"], correct: 0, explanation: "Themenwechsel können ein Weg sein, belastende Gefühle wie Schuld nicht direkt fühlen zu müssen." },
+    { prompt: "Der andere Elternteil kritisiert deine Erziehung öffentlich vor Familie oder Freunden. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstbestätigung", "Gerechtigkeitssinn", "Humor", "Aufmerksamkeit"], correct: 0, explanation: "Öffentliche Kritik kann ein Versuch sein, die eigene Unsicherheit als Elternteil zu kompensieren." },
+    { prompt: "Der andere Elternteil will jedes Detail zur Freizeitgestaltung des Kindes bei dir wissen. Welches Bedürfnis könnte dahinterstecken?", options: ["Kontrolle", "Langeweile", "Geselligkeit", "Ordnungsliebe"], correct: 0, explanation: "Starkes Kontrollbedürfnis entsteht oft aus verlorenem Vertrauen, nicht aus reiner Neugier." },
+    { prompt: "Der andere Elternteil reagiert extrem emotional auf kleine Planänderungen. Welches Bedürfnis könnte dahinterstecken?", options: ["Vorhersehbarkeit", "Abwechslung", "Anerkennung", "Geselligkeit"], correct: 0, explanation: "Wenn vieles im Leben gerade unsicher ist, wird Planbarkeit oft besonders wichtig." },
+    { prompt: "Der andere Elternteil spricht mit dir nur noch über Anwälte oder Dritte, nie direkt. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstschutz", "Effizienz", "Humor", "Geselligkeit"], correct: 0, explanation: "Der Umweg über Dritte kann ein Schutzmechanismus sein, um direkten Konflikt zu vermeiden." },
+    { prompt: "Der andere Elternteil löscht oder blockiert dich nach jedem Streit sofort in sozialen Medien. Welches Bedürfnis könnte dahinterstecken?", options: ["Selbstschutz", "Humor", "Kreativität", "Ordnung"], correct: 0, explanation: "Sofortiges Blockieren kann ein Versuch sein, sich vor weiterer emotionaler Belastung zu schützen." },
+    { prompt: "Der andere Elternteil besteht darauf, dass das Kind seinen neuen Partner sofort „Mama“ oder „Papa“ nennt. Welches Bedürfnis könnte dahinterstecken?", options: ["Zugehörigkeit", "Humor", "Effizienz", "Abwechslung"], correct: 0, explanation: "Das kann der Wunsch sein, dass die neue Familie als vollständig und zugehörig erlebt wird." },
+    { prompt: "Der andere Elternteil schickt dir nachts um drei Uhr wütende Nachrichten. Welches Bedürfnis könnte dahinterstecken?", options: ["Beachtung", "Ordnung", "Humor", "Effizienz"], correct: 0, explanation: "Nachrichten zu ungewöhnlichen Zeiten können ein Zeichen sein, dass sich der andere Elternteil sonst nicht gehört fühlt." },
+    { prompt: "Der andere Elternteil verlangt bei jeder Übergabe eine schriftliche Bestätigung. Welches Bedürfnis könnte dahinterstecken?", options: ["Sicherheit", "Kreativität", "Geselligkeit", "Humor"], correct: 0, explanation: "Schriftliche Bestätigungen können ein Versuch sein, sich rechtlich und emotional abzusichern." },
+    { prompt: "Der andere Elternteil erwähnt bei jeder Gelegenheit, wie sehr er sich für das Kind aufopfert. Welches Bedürfnis könnte dahinterstecken?", options: ["Anerkennung", "Humor", "Ordnung", "Abwechslung"], correct: 0, explanation: "Wiederholtes Betonen der eigenen Aufopferung kann auf ein Bedürfnis nach Anerkennung hindeuten." },
+    { prompt: "Der andere Elternteil meldet sich nur noch über den Anwalt, selbst bei Kleinigkeiten. Welches Bedürfnis könnte dahinterstecken?", options: ["Distanz", "Effizienz", "Kreativität", "Geselligkeit"], correct: 0, explanation: "Kommunikation nur über Dritte kann ein Schutzmechanismus sein, um direkten emotionalen Kontakt zu vermeiden." },
+    { prompt: "Der andere Elternteil vergleicht dich ständig mit seinem neuen Partner. Welches Bedürfnis könnte dahinterstecken?", options: ["Bestätigung", "Humor", "Ordnung", "Abwechslung"], correct: 0, explanation: "Vergleiche können ein Versuch sein, die eigene Position oder den eigenen Wert zu bestätigen." },
+    { prompt: "Der andere Elternteil besteht darauf, jedes Wochenende neu zu verhandeln, obwohl es eine feste Regelung gibt. Welches Bedürfnis könnte dahinterstecken?", options: ["Mitsprache", "Geselligkeit", "Humor", "Effizienz"], correct: 0, explanation: "Ständiges Neuverhandeln kann das Bedürfnis widerspiegeln, weiterhin Einfluss auf Entscheidungen zu haben." },
+    { prompt: "Der andere Elternteil reagiert wütend, wenn das Kind positiv von dir erzählt. Welches Bedürfnis könnte dahinterstecken?", options: ["Bedeutung", "Humor", "Ordnung", "Abwechslung"], correct: 0, explanation: "Wut bei positiven Erzählungen kann Angst vor dem eigenen Bedeutungsverlust beim Kind widerspiegeln." },
+    { prompt: "Der andere Elternteil zieht sich bei jedem größeren Thema sofort zurück und antwortet tagelang nicht. Welches Bedürfnis könnte dahinterstecken?", options: ["Entlastung", "Geselligkeit", "Kreativität", "Ordnung"], correct: 0, explanation: "Rückzug bei großen Themen kann ein Zeichen sein, dass die Situation die Person gerade überfordert." },
+    { prompt: "Der andere Elternteil besteht darauf, alle Erziehungsentscheidungen genau zu dokumentieren. Welches Bedürfnis könnte dahinterstecken?", options: ["Absicherung", "Humor", "Geselligkeit", "Abwechslung"], correct: 0, explanation: "Genaue Dokumentation kann ein Versuch sein, sich für den Fall eines Konflikts abzusichern." },
+    { prompt: "Der andere Elternteil fragt das Kind nach jedem Umgang detailliert aus, was bei dir besprochen wurde. Welches Bedürfnis könnte dahinterstecken?", options: ["Kontrolle", "Neugier", "Humor", "Kreativität"], correct: 0, explanation: "Detailliertes Nachfragen kann aus dem Bedürfnis entstehen, einen Überblick über den Alltag des Kindes zu behalten." },
+    { prompt: "Der andere Elternteil sagt in Streitgesprächen oft: „Du verstehst mich sowieso nie.“ Welches Bedürfnis könnte dahinterstecken?", options: ["Verständnis", "Humor", "Ordnung", "Effizienz"], correct: 0, explanation: "Der Vorwurf, nie verstanden zu werden, deutet oft auf ein unerfülltes Bedürfnis nach echtem Verständnis hin." },
+    { prompt: "Der andere Elternteil besteht auf einer neutralen Übergabestelle, obwohl es früher unproblematisch war. Welches Bedürfnis könnte dahinterstecken?", options: ["Sicherheit", "Abwechslung", "Kreativität", "Effizienz"], correct: 0, explanation: "Das Bestehen auf einer neutralen Übergabe kann Ausdruck eines gestiegenen Sicherheitsbedürfnisses sein." },
+    { prompt: "Der andere Elternteil feiert Erfolge des Kindes nur noch allein, ohne dich zu informieren. Welches Bedürfnis könnte dahinterstecken?", options: ["Bedeutung", "Humor", "Ordnung", "Geselligkeit"], correct: 0, explanation: "Das Ausschließen von Informationen kann ein Versuch sein, die eigene zentrale Rolle beim Kind zu wahren." },
+    { prompt: "Der andere Elternteil reagiert trotzig, wenn du einen Kompromiss vorschlägst. Welches Bedürfnis könnte dahinterstecken?", options: ["Autonomie", "Humor", "Ordnung", "Geselligkeit"], correct: 0, explanation: "Trotzige Reaktionen auf Kompromissvorschläge können ein Bedürfnis nach eigener Entscheidungsfreiheit widerspiegeln." },
+    { prompt: "Der andere Elternteil betont in Gesprächen oft, wie unfair alles für ihn gelaufen sei. Welches Bedürfnis könnte dahinterstecken?", options: ["Gerechtigkeit", "Humor", "Ordnung", "Kreativität"], correct: 0, explanation: "Wiederholtes Betonen von Unfairness deutet oft auf ein starkes, noch unerfülltes Gerechtigkeitsbedürfnis hin." },
+    { prompt: "Der andere Elternteil möchte jede Kommunikation nur noch schriftlich, nie mehr am Telefon. Welches Bedürfnis könnte dahinterstecken?", options: ["Klarheit", "Geselligkeit", "Humor", "Abwechslung"], correct: 0, explanation: "Der Wunsch nach ausschließlich schriftlicher Kommunikation kann aus dem Bedürfnis nach Klarheit und Nachvollziehbarkeit entstehen." }
   ];
 
   const bfGame = createQuizGame({ containerId: 'bf-quiz-container', pool: BITTE_FORDERUNG, questionCount: 15 });
   const pwGame = createQuizGame({ containerId: 'pw-quiz-container', pool: PERSPEKTIVWECHSEL, questionCount: 12 });
   bfGame.start();
   pwGame.start();
+
+  // ---------------------------------------------------------------
+  // Find den Fehler — ein vollständiger GFK-Satz, ein Teil ist fehlerhaft
+  // ---------------------------------------------------------------
+  const FIND_FEHLER = [
+    {
+      parts: {
+        obs: "Weil du dich bei der letzten Übergabe rücksichtslos verhalten hast,",
+        feel: "fühle ich mich verunsichert,",
+        need: "weil mir Verlässlichkeit wichtig ist.",
+        req: "Wärst du bereit, uns vorher abzusprechen, falls sich mal etwas ändert?"
+      },
+      flaw: "obs",
+      explanation: "„Rücksichtslos“ ist eine Bewertung, keine neutrale Beobachtung. Neutral wäre z. B. „Weil du zwanzig Minuten später kamst, als wir vereinbart hatten,“."
+    },
+    {
+      parts: {
+        obs: "Als du am Freitag die Nachricht nicht beantwortet hast,",
+        feel: "fühlte ich mich ignoriert,",
+        need: "weil mir Verlässlichkeit in unserer Kommunikation wichtig ist.",
+        req: "Könntest du mir kurz Bescheid geben, wenn du gerade keine Zeit hast zu antworten?"
+      },
+      flaw: "feel",
+      explanation: "„Ignoriert“ unterstellt der anderen Person eine Absicht — ein Pseudogefühl. Echtes Gefühl wäre z. B. „unsicher“ oder „besorgt“."
+    },
+    {
+      parts: {
+        obs: "Als du gesagt hast, das Wochenende sei schon anders verplant,",
+        feel: "war ich enttäuscht,",
+        need: "weil mir eine verlässliche Verbindung zu dir wichtig ist.",
+        req: "Könnten wir gemeinsam schauen, wie wir sowas zukünftig früher abstimmen?"
+      },
+      flaw: "need",
+      explanation: "„Verlässliche Verbindung zu dir“ bewertet dein Verhalten und bezieht sich auf eine bestimmte Person. Rein wäre z. B. einfach „Verbindung“ oder „Verlässlichkeit“."
+    },
+    {
+      parts: {
+        obs: "Als das Treffen zum dritten Mal kurzfristig abgesagt wurde,",
+        feel: "war ich frustriert,",
+        need: "weil mir Planbarkeit wichtig ist.",
+        req: "Ich möchte, dass du sowas nie wieder machst."
+      },
+      flaw: "req",
+      explanation: "Lässt kein echtes Nein zu, klingt nach Forderung. Eine Bitte wäre z. B. „Wärst du bereit, mir kurzfristige Absagen möglichst früh mitzuteilen?“"
+    },
+    {
+      parts: {
+        obs: "Weil du wieder mal typisch unzuverlässig warst,",
+        feel: "bin ich besorgt,",
+        need: "weil mir Sicherheit für unser Kind wichtig ist.",
+        req: "Könntest du mir Bescheid geben, sobald du weißt, ob du kommen kannst?"
+      },
+      flaw: "obs",
+      explanation: "„Typisch unzuverlässig“ ist ein Charakterurteil. Neutral wäre z. B. „Weil du die letzten zwei Male nicht wie vereinbart da warst,“."
+    },
+    {
+      parts: {
+        obs: "Als das Gespräch am Telefon plötzlich beendet wurde,",
+        feel: "fühlte ich mich betrogen,",
+        need: "weil mir ein respektvoller Austausch wichtig ist.",
+        req: "Wärst du bereit, mir kurz zu sagen, wenn dir ein Gespräch zu viel wird, statt aufzulegen?"
+      },
+      flaw: "feel",
+      explanation: "„Betrogen“ unterstellt der anderen Person eine Absicht. Echtes Gefühl wäre z. B. „verunsichert“ oder „irritiert“."
+    },
+    {
+      parts: {
+        obs: "Als der Kalender ohne Rücksprache geändert wurde,",
+        feel: "war ich verunsichert,",
+        need: "weil mir dein Einverständnis bei solchen Entscheidungen wichtig ist.",
+        req: "Könnten wir uns vorher kurz austauschen, bevor Termine geändert werden?"
+      },
+      flaw: "need",
+      explanation: "„Dein Einverständnis“ bezieht sich direkt auf eine bestimmte Person. Rein wäre z. B. „Mitsprache“ oder „Einbezogen sein“."
+    },
+    {
+      parts: {
+        obs: "Als das Kind ohne Jacke zurückkam,",
+        feel: "war ich besorgt,",
+        need: "weil mir seine Gesundheit wichtig ist.",
+        req: "Du musst in Zukunft besser aufpassen."
+      },
+      flaw: "req",
+      explanation: "„Du musst“ ist ein Befehl, keine Bitte. Eine Bitte wäre z. B. „Könntest du beim nächsten Mal an eine Jacke denken?“"
+    }
+  ];
+
+  const FF_LABELS = { obs: "Beobachtung", feel: "Gefühl", need: "Bedürfnis", req: "Bitte" };
+  const FF_ORDER = ["obs", "feel", "need", "req"];
+
+  function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function createFindFehlerGame(containerId, pool) {
+    const container = document.getElementById(containerId);
+    let questions = shuffleArray(pool);
+    let currentIndex = 0;
+    let score = 0;
+    let answered = false;
+    let difficulty = 'easy';
+
+    function combinedSentence(q) {
+      return FF_ORDER.map(cat => q.parts[cat]).join(' ');
+    }
+
+    function renderQuestion() {
+      answered = false;
+      const q = questions[currentIndex];
+      const progressHtml = `
+        <p class="quiz-progress">Satz ${currentIndex + 1} von ${questions.length}</p>
+        <div class="quiz-progress-bar"><div class="quiz-progress-bar-fill" style="width: ${Math.round(((currentIndex + 1) / questions.length) * 100)}%"></div></div>
+      `;
+
+      if (difficulty === 'easy') {
+        container.innerHTML = `
+          ${progressHtml}
+          <p class="hint">Welcher Teil erfüllt sein Kriterium eigentlich nicht?</p>
+          <div class="ff-segments">
+            ${FF_ORDER.map(cat => `
+              <button type="button" class="ff-segment ${cat}" data-cat="${cat}">
+                <span class="ff-segment-cat">${FF_LABELS[cat]}</span>${escapeHtml(q.parts[cat])}
+              </button>
+            `).join('')}
+          </div>
+          <p class="quiz-feedback hidden"></p>
+          <button type="button" class="primary-btn quiz-next hidden">Nächster Satz</button>
+        `;
+        container.querySelectorAll('.ff-segment').forEach(btn => {
+          btn.addEventListener('click', () => selectAnswer(btn.dataset.cat, q, btn));
+        });
+      } else {
+        container.innerHTML = `
+          ${progressHtml}
+          <p class="ff-sentence">${escapeHtml(combinedSentence(q))}</p>
+          <p class="hint">Welcher Teil erfüllt sein Kriterium eigentlich nicht — Beobachtung, Gefühl, Bedürfnis oder Bitte?</p>
+          <div class="quiz-options">
+            ${FF_ORDER.map(cat => `<button type="button" class="quiz-option" data-cat="${cat}">${FF_LABELS[cat]}</button>`).join('')}
+          </div>
+          <p class="quiz-feedback hidden"></p>
+          <button type="button" class="primary-btn quiz-next hidden">Nächster Satz</button>
+        `;
+        container.querySelectorAll('.quiz-option').forEach(btn => {
+          btn.addEventListener('click', () => selectAnswer(btn.dataset.cat, q, btn));
+        });
+      }
+    }
+
+    function selectAnswer(chosenCat, q, clickedBtn) {
+      if (answered) return;
+      answered = true;
+      const optionSelector = difficulty === 'easy' ? '.ff-segment' : '.quiz-option';
+      const buttons = container.querySelectorAll(optionSelector);
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        if (btn.dataset.cat === q.flaw) btn.classList.add('correct');
+        else if (btn.dataset.cat === chosenCat) btn.classList.add('incorrect');
+      });
+      if (chosenCat === q.flaw) score++;
+
+      const feedback = container.querySelector('.quiz-feedback');
+      feedback.textContent = q.explanation;
+      feedback.classList.remove('hidden');
+      feedback.classList.toggle('correct', chosenCat === q.flaw);
+      feedback.classList.toggle('incorrect', chosenCat !== q.flaw);
+
+      const nextBtn = container.querySelector('.quiz-next');
+      nextBtn.classList.remove('hidden');
+      nextBtn.textContent = currentIndex === questions.length - 1 ? 'Ergebnis anzeigen' : 'Nächster Satz';
+      nextBtn.onclick = () => {
+        currentIndex++;
+        if (currentIndex < questions.length) renderQuestion();
+        else {
+          container.innerHTML = `
+            <p class="quiz-progress">Fertig!</p>
+            <p class="quiz-prompt">${score} von ${questions.length} richtig.</p>
+            <button type="button" class="primary-btn" id="ff-restart-btn">Nochmal spielen</button>
+          `;
+          document.getElementById('ff-restart-btn').addEventListener('click', () => restart());
+        }
+      };
+    }
+
+    function restart() {
+      questions = shuffleArray(pool);
+      currentIndex = 0;
+      score = 0;
+      renderQuestion();
+    }
+
+    function setDifficulty(level) {
+      difficulty = level;
+      restart();
+    }
+
+    return { start: renderQuestion, setDifficulty };
+  }
+
+  const ffGame = createFindFehlerGame('ff-quiz-container', FIND_FEHLER);
+  ffGame.start();
+
+  const ffDiffEasyBtn = document.getElementById('ff-diff-easy-btn');
+  const ffDiffHardBtn = document.getElementById('ff-diff-hard-btn');
+  const ffHint = document.getElementById('ff-hint');
+
+  ffDiffEasyBtn.addEventListener('click', () => {
+    ffDiffEasyBtn.classList.add('active');
+    ffDiffHardBtn.classList.remove('active');
+    ffHint.textContent = 'Ein vollständiger GFK-Satz, aufgeteilt in seine vier Teile. Einer davon erfüllt sein Kriterium eigentlich nicht — klick auf den Teil, der nicht wirklich Beobachtung, Gefühl, Bedürfnis oder Bitte ist.';
+    ffGame.setDifficulty('easy');
+  });
+  ffDiffHardBtn.addEventListener('click', () => {
+    ffDiffHardBtn.classList.add('active');
+    ffDiffEasyBtn.classList.remove('active');
+    ffHint.textContent = 'Diesmal ohne Vorsortierung: ein durchgehender Satz. Erkenne selbst, welcher gedankliche Teil nicht wirklich Beobachtung, Gefühl, Bedürfnis oder Bitte ist.';
+    ffGame.setDifficulty('hard');
+  });
 
   window.addEventListener('DOMContentLoaded', () => {
     if (prefersReduced) {
