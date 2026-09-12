@@ -9,7 +9,7 @@ const express = require('express');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = 8080;
 
 // Clever Cloud läuft hinter einem Reverse Proxy — nötig, um die echte
 // Besucher-IP zu bekommen (für die Ratenbegrenzung unten), statt der IP des Proxys.
