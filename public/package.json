@@ -1,0 +1,15 @@
+{
+  "name": "gfk-kompass",
+  "version": "1.0.0",
+  "description": "GFK-Kompass — Server für Text übersetzen und Selbst üben",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
