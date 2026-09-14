@@ -1543,19 +1543,85 @@
     });
   });
 
-  async function withRetry(fn, retries = 1, delayMs = 1200) {
+  // Der Server wiederholt vorübergehende Fehler inzwischen selbst und unsichtbar.
+  // Hier bleibt nur ein einziger zusätzlicher Versuch für den Fall, dass die
+  // Verbindung des Besuchers selbst kurz aussetzt. Bei Fehlern, die ein sofortiger
+  // zweiter Versuch nur verschlimmern würde (Ratenbegrenzung) oder die sich nicht
+  // von allein beheben (zu langer Text), wird nicht wiederholt.
+  const NON_RETRYABLE_CODES = ['rate_limited', 'too_long', 'bad_request', 'auth_error'];
+
+  async function withRetry(fn, retries = 1, delayMs = 1500) {
     let lastErr;
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         return await fn();
       } catch (err) {
         lastErr = err;
+        if (NON_RETRYABLE_CODES.includes(err.code)) throw err;
         if (attempt < retries) {
           await new Promise(resolve => setTimeout(resolve, delayMs));
         }
       }
     }
     throw lastErr;
+  }
+
+  // Übersetzt den Fehlercode des Servers in einen Satz, mit dem ein Besucher
+  // etwas anfangen kann. Früher sah jeder Fehler gleich aus, auch wenn "kurz
+  // warten" und "gerade überlastet" völlig unterschiedliche Reaktionen erfordern.
+  const ERROR_MESSAGES = {
+    rate_limited: 'Gerade sind sehr viele Anfragen unterwegs. Bitte warte etwa eine Minute und versuche es dann noch einmal.',
+    overloaded: 'Der Dienst ist im Moment stark ausgelastet. Bitte versuche es in ein paar Sekunden noch einmal.',
+    timeout: 'Die Antwort hat zu lange gedauert. Bitte versuche es noch einmal.',
+    too_long: 'Der Text ist zu lang. Bitte kürze ihn etwas.',
+    incomplete_response: 'Die Antwort kam unvollständig zurück. Bitte versuche es noch einmal, gern mit einem etwas kürzeren Text.',
+    bad_response: 'Die Antwort kam unvollständig zurück. Bitte versuche es noch einmal, gern mit einem etwas kürzeren Text.',
+    offline: 'Es sieht so aus, als wäre die Internetverbindung unterbrochen. Bitte prüfe die Verbindung und versuche es noch einmal.'
+  };
+
+  function messageForError(err) {
+    if (!navigator.onLine) return ERROR_MESSAGES.offline;
+    return ERROR_MESSAGES[err && err.code] ||
+      'Das hat gerade nicht geklappt. Bitte versuche es in ein paar Sekunden erneut.';
+  }
+
+  // Fragt die API an und wirft bei Fehlern einen Error, der den Code des Servers
+  // mitträgt, damit oben die passende Meldung gewählt werden kann.
+  async function requestGfk(mode, text) {
+    let response;
+    try {
+      response = await fetch("/api/gfk-proxy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: mode, text: text })
+      });
+    } catch (err) {
+      const netErr = new Error('Verbindung fehlgeschlagen');
+      netErr.code = 'network_error';
+      throw netErr;
+    }
+
+    let json = null;
+    try {
+      json = await response.json();
+    } catch (err) {
+      json = null;
+    }
+
+    if (!response.ok) {
+      const apiErr = new Error('API request failed');
+      apiErr.code = (json && json.code) || 'upstream_error';
+      apiErr.status = response.status;
+      throw apiErr;
+    }
+
+    if (!json) {
+      const shapeErr = new Error('Leere Antwort');
+      shapeErr.code = 'bad_response';
+      throw shapeErr;
+    }
+
+    return json;
   }
 
   submitBtn.addEventListener('click', async () => {
@@ -1580,7 +1646,7 @@
       renderResult(text, data);
     } catch (err) {
       stopProgress(progressBar, progressBarFill);
-      errorMsg.textContent = 'Das hat gerade nicht geklappt. Bitte versuche es in ein paar Sekunden erneut.';
+      errorMsg.textContent = messageForError(err);
       errorMsg.hidden = false;
     } finally {
       submitBtn.disabled = false;
@@ -1616,23 +1682,15 @@
     fill.style.width = '0%';
   }
 
+  // Der Server prüft die Antwort inzwischen selbst und liefert ein fertiges Objekt.
+  // Das Herausschneiden von JSON aus dem Rohtext entfällt deshalb hier.
   async function translateToGFK(text) {
-    const response = await fetch("/api/gfk-proxy", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "translate", text: text })
-    });
-
-    if (!response.ok) {
-      throw new Error('API request failed');
-    }
-
-    const json = await response.json();
-    const raw = json.content.map(block => block.text || '').join('\n').trim();
-    const parsed = extractJson(raw);
+    const parsed = await requestGfk("translate", text);
 
     if (!parsed.gfkSentence || !Array.isArray(parsed.steps)) {
-      throw new Error('Unexpected response shape');
+      const shapeErr = new Error('Unexpected response shape');
+      shapeErr.code = 'bad_response';
+      throw shapeErr;
     }
     return parsed;
   }
@@ -1645,15 +1703,6 @@
       'Bitte': 'cat-req'
     };
     return map[category] || '';
-  }
-
-  function extractJson(raw) {
-    const start = raw.indexOf('{');
-    const end = raw.lastIndexOf('}');
-    if (start === -1 || end === -1 || end < start) {
-      throw new Error('Kein JSON-Objekt in der Antwort gefunden');
-    }
-    return JSON.parse(raw.slice(start, end + 1));
   }
 
   function escapeHtml(str) {
@@ -1783,7 +1832,7 @@
       renderPracticeResult(data);
     } catch (err) {
       stopProgress(practiceProgressBar, practiceProgressBarFill);
-      practiceErrorMsg.textContent = 'Das hat gerade nicht geklappt. Bitte versuche es in ein paar Sekunden erneut.';
+      practiceErrorMsg.textContent = messageForError(err);
       practiceErrorMsg.hidden = false;
     } finally {
       practiceSubmitBtn.disabled = false;
@@ -1797,22 +1846,12 @@ Gefühl: ${feel || '(leer)'}
 Bedürfnis: ${need || '(leer)'}
 Bitte: ${req || '(leer)'}`;
 
-    const response = await fetch("/api/gfk-proxy", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "practice", text: userContent })
-    });
-
-    if (!response.ok) {
-      throw new Error('API request failed');
-    }
-
-    const json = await response.json();
-    const raw = json.content.map(block => block.text || '').join('\n').trim();
-    const parsed = extractJson(raw);
+    const parsed = await requestGfk("practice", userContent);
 
     if (!Array.isArray(parsed.steps)) {
-      throw new Error('Unexpected response shape');
+      const shapeErr = new Error('Unexpected response shape');
+      shapeErr.code = 'bad_response';
+      throw shapeErr;
     }
     return parsed;
   }
