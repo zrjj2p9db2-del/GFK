@@ -11,45 +11,181 @@ const path = require('path');
 const app = express();
 const PORT = 8080;
 
-// Clever Cloud läuft hinter einem Reverse Proxy — nötig, um die echte
-// Besucher-IP zu bekommen (für die Ratenbegrenzung unten), statt der IP des Proxys.
-app.set('trust proxy', true);
+// Clever Cloud läuft hinter genau EINEM Reverse Proxy. "1" statt "true" sorgt dafür,
+// dass nur dieser eine Proxy als vertrauenswürdig gilt. Bei "true" könnte ein
+// Besucher einen X-Forwarded-For-Header selbst mitschicken und sich damit eine
+// beliebige IP geben, um die Ratenbegrenzung unten zu umgehen.
+app.set('trust proxy', 1);
 
-app.use(express.json());
+app.use(express.json({ limit: '32kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-const TRANSIENT_STATUS_CODES = [500, 502, 503, 529];
+// ---------------------------------------------------------------------------
+// Modell-Einstellungen
+// ---------------------------------------------------------------------------
+// WICHTIG, Hintergrund zu max_tokens: Bei diesem Modell ist internes Nachdenken
+// standardmäßig aktiv, und max_tokens ist eine harte Obergrenze für die GESAMTE
+// Ausgabe, also Nachdenken PLUS sichtbarer Antworttext. Ist der Wert zu knapp,
+// bricht die Antwort mitten im JSON ab und lässt sich nicht mehr auswerten.
+// Die Werte hier sind deshalb bewusst großzügig. Sie kosten nichts extra:
+// abgerechnet werden nur tatsächlich erzeugte Tokens, nicht das Budget.
+//
+// "effort" steuert, wie viel Aufwand das Modell in eine Antwort steckt. Der
+// Standard wäre "high". "medium" ist hier ein guter Kompromiss: die Prompts
+// geben die Aufgabe bereits sehr eng vor, deshalb bringt tiefes Nachdenken wenig,
+// kostet aber Wartezeit und Token-Budget. Erlaubte Werte: low, medium, high.
+// Falls sich die Qualität im 13-Satz-Regressionstest verschlechtert, hier auf
+// "high" zurückstellen.
+const MODEL = 'claude-sonnet-5';
+const EFFORT = 'medium';
+
+const MODE_CONFIG = {
+  translate: { maxTokens: 8000, maxInputChars: 2000 },
+  practice: { maxTokens: 4000, maxInputChars: 2000 }
+};
+
+// Obergrenze für den zweiten Versuch, falls eine Antwort trotzdem abgeschnitten wurde.
+const MAX_TOKENS_CEILING = 16000;
+
+// ---------------------------------------------------------------------------
+// Retry-Einstellungen
+// ---------------------------------------------------------------------------
+// 429 (zu viele Anfragen) gehört ausdrücklich dazu: das ist der häufigste
+// vorübergehende Fehler bei Lastspitzen und geht nach kurzem Warten fast immer durch.
+const RETRYABLE_STATUS_CODES = [408, 409, 425, 429, 500, 502, 503, 529];
+const MAX_ATTEMPTS = 4;
+const REQUEST_TIMEOUT_MS = 120000;
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Exponentielles Warten mit etwas Zufall. Der Zufallsanteil verhindert, dass mehrere
+// gleichzeitig wartende Anfragen danach alle im selben Moment wieder losschlagen.
+function backoffDelay(attempt, retryAfterHeader) {
+  const retryAfterSeconds = Number(retryAfterHeader);
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+    return Math.min(retryAfterSeconds * 1000, 10000);
+  }
+  const base = 600 * Math.pow(2, attempt - 1);
+  return Math.min(base, 8000) + Math.floor(Math.random() * 400);
+}
 
 // Die vollständigen Anleitungen an die KI liegen nur hier auf dem Server — der Browser
 // bekommt sie nie zu sehen, weder im Quelltext noch im Netzwerk-Tab.
 const SYSTEM_PROMPTS = {
-  translate: `Du bist spezialisiert auf Gewaltfreie Kommunikation (GFK) nach Marshall Rosenberg, mit Erfahrung in Elternkonflikten bei Eltern-Kind-Entfremdung. Du bekommst einen Text von einem Elternteil (z. B. eine Nachricht, einen Kommentar, eine geplante Antwort).
+  translate: `Du bist spezialisiert auf Gewaltfreie Kommunikation (GFK) nach Marshall Rosenberg, mit Erfahrung in Elternkonflikten bei Eltern-Kind-Entfremdung. Du bekommst einen Text, den ein Elternteil geschrieben hat: eine Nachricht, einen Kommentar, eine geplante Antwort oder einfach das, was der Person gerade auf der Seele liegt. Die schreibende Person ist emotional belastet. Jede Formulierung, die du erzeugst, kann eine laufende familiäre Krise entspannen oder verschärfen. Du übersetzt diesen Text in die vier Schritte der GFK: Beobachtung, Gefühl, Bedürfnis, Bitte.
 
-WICHTIGSTE REGEL, gilt für deine gesamte Antwort ausnahmslos (Einleitung, GFK-Text, alle Erklärungen, flüssige Version, wirklich jedes Textfeld): Verwende an KEINER einzigen Stelle einen Gedankenstrich (–) zur Satzverbindung. Nutze stattdessen immer einen Punkt und beginne einen neuen Satz. Diese Regel gilt uneingeschränkt für die komplette Ausgabe, nicht nur für einzelne Abschnitte.
+RANGFOLGE
 
-Das Vermeiden von Gedankenstrichen darf aber nicht dazu führen, dass du stattdessen umständliche Nebensätze baust oder Füllwörter aufeinanderstapelst, um denselben Gedanken auszudrücken (nicht: "ich merke, wie meine Kraft langsam nachlässt", sondern einfach "mutlos"; nicht: "jetzt schon seit Wochen", sondern "schon seit Wochen"). Bleib bei kurzen, klaren Sätzen und benenne Gefühle und Bedürfnisse weiterhin direkt mit einem einzelnen, klaren Wort, auch ohne Gedankenstrich. Das gilt für alle Textfelder, auch für die flüssige Version.
+Wenn zwei Anforderungen miteinander in Konflikt geraten, gilt diese Reihenfolge:
+1. Wahrheitstreue: Im Ergebnis steht nichts, was nicht im Originaltext steht.
+2. Gewaltfreiheit: kein Vorwurf, keine Deutung, kein Pseudogefühl, keine Forderung.
+3. Sendbarkeit: Der GFK-Text ist eine Nachricht an ein Gegenüber, das durchgehend mit "du" angesprochen wird.
+4. Kürze und natürlicher Klang.
 
-Schreibe zuerst einen kurzen, einfühlsamen Einstiegssatz (max. 15 Wörter). Sprich die Person dabei immer direkt und persönlich an ("dein Text", "deiner Nachricht" – niemals unpersönlich "dieser Text" oder "diesem Text").
+Eine allgemeine, aber wahre Beobachtung ist immer besser als eine genaue, aber erfundene. Ein längerer, aber vollständiger Text ist immer besser als ein kurzer, dem ein Bezug fehlt.
 
-Prüfe zuerst, ob der Originaltext die vier GFK-Schritte bereits weitgehend selbst enthält (konkrete Beobachtung, echtes Gefühl, erkennbares Bedürfnis, klare Bitte). Falls ja: Würdige das ausdrücklich und selbstbewusst-anerkennend, z. B. in der Art von "Das ist schon eine richtig gute GFK-Formulierung!" oder "Das ist schon ziemlich nah an gewaltfreier Kommunikation!" – und übernimm den Originaltext im GFK-Text dann möglichst wortgleich, ohne eine kosmetische Umformulierung zu erzwingen, nur um etwas verändert zu haben.
+ZWEI SPRECHER-EBENEN
 
-Falls der Originaltext dagegen eher wertend, vorwurfsvoll oder unstrukturiert ist: würdige stattdessen kurz den Originaltext oder den darin spürbaren Schmerz bzw. die Anstrengung – ohne zu bewerten oder zu belehren. Ton-Beispiele (nicht wörtlich übernehmen, sondern individuell zur jeweiligen Situation passend formulieren): "Das ist eine Situation, die wirklich aufwühlen kann." / "In deinem Text steckt viel Schmerz." / "Das ist eine Situation, die verständlicherweise viel Spannung erzeugt."
+Im Einstiegssatz ("intro") und in den Erklärungen ("explanation") sprichst du die schreibende Person direkt an: "dein Text", "deine Nachricht", nie "dieser Text".
 
-Formuliere danach einen einzigen, natürlich und flüssig klingenden GFK-Text, der alle vier Schritte enthält. Orientiere dich in der Länge am Originaltext: Bei kurzen, einfachen Aussagen reichen 2-3 Sätze; bei komplexeren oder emotional aufgeladenen Situationen darf der Text ausführlicher sein, auch mit mehreren Sätzen pro Schritt. Vermeide steife Schablonen-Formulierungen und variiere den Satzbau – der Text soll klingen, wie ein Mensch tatsächlich sprechen würde, nicht wie eine mechanisch abgearbeitete Vorlage.
-- Beobachtung: eine wertfreie Beschreibung dessen, was im Originaltext tatsächlich steht, ohne Interpretation oder Vorwurf. Vermeide dabei auch wertende Einordnungs-Verben wie "vorwirft", "beschuldigt" oder "unterstellt" – auch das ist bereits eine Interpretation, keine reine Beobachtung. WICHTIGSTE REGEL: Die Beobachtung darf ausschließlich Inhalte enthalten, die tatsächlich im Originaltext stehen, wörtlich oder sinngemäß. Erfinde niemals eine neue, im Originaltext nicht vorkommende konkrete Situation, Handlung oder Aussage – egal wie plausibel sie klingen mag und egal mit welcher Formulierung sie eingeleitet wird. Das gilt für jede denkbare Einleitung, auch für Sätze wie "Wenn ich das Gefühl habe, dass..." oder ähnliche Wendungen: Auch dahinter darf niemals eine erfundene konkrete Situation stehen. Enthält der Originaltext ein konkretes Zitat oder eine konkrete Situation, nutze genau diese. Enthält der Originaltext dagegen nur eine allgemeine, pauschale Aussage ohne jedes konkrete Detail, dann bleibt auch die Beobachtung entsprechend allgemein und beschreibt nur das, was die Person tatsächlich pauschal gesagt hat, ohne ein konkretes Einzelbeispiel zu erfinden. Konkretheit ist also immer zweitrangig gegenüber Wahrheitstreue: lieber eine allgemeine, aber wahre Beobachtung als eine konkrete, aber erfundene. Vermeide außerdem die Konstruktion "ich tue X, ohne Y zu bekommen" (z. B. "ich schreibe dir, ohne eine Antwort zu bekommen") – auch ganz ohne wertende Wörter wirkt diese Gegenüberstellung von eigener Anstrengung und ausbleibender Reaktion wie eine stille Abrechnung. Formuliere stattdessen den Sachverhalt selbst, ohne die eigene Leistung dagegenzustellen (z. B. "Meine Nachrichten sind seit Wochen unbeantwortet geblieben").
-- Gefühl: ein echtes Gefühl der sprechenden Person, kein verdecktes Urteil über die andere Person (kein Pseudogefühl). Prüfe das gewählte Gefühlswort mit dem Testsatz "Darauf reagiere ich [Wort]" – klingt er stimmig und beschreibt er einen inneren Zustand, ist es ein echtes Gefühl. Klingt er seltsam oder beschreibt er eigentlich eine Handlung der anderen Person, ist es ein Pseudogefühl. Vermeide außerdem Formulierungen, die der anderen Person die Verantwortung für dein Gefühl zuschreiben (z. B. "das macht mich wütend", "du machst mich traurig"). Formuliere stattdessen als eigene Reaktion (z. B. "ich spüre Wut", "ich bin traurig"), ohne die Ursache grammatisch der anderen Person zuzuweisen.
-- Bedürfnis: das universelle menschliche Bedürfnis hinter dem Gefühl – abstrakt formuliert, ohne Bezug auf eine bestimmte Person oder deren Verhalten (das gehört in die Bitte, nicht ins Bedürfnis). Vermeide dabei auch wertende Adjektive, die eine Verhaltensqualität der anderen Person bewerten (z. B. "verlässliche Verbindung", "ehrliches Gespräch") – das reine Bedürfnis (z. B. "Verbindung", "Vertrauen") gehört ohne solche Zusätze hierher, die Verlässlichkeit selbst gehört in die Bitte.
-- Bitte: eine konkrete, machbare, positiv formulierte Bitte, idealerweise als offene Frage, die ein Ja oder Nein zulässt (keine Forderung). Erbitte kein Gefühl oder keine innere Haltung der anderen Person (z. B. nicht "sei einfühlsamer"), sondern konkretes, beobachtbares Verhalten. Vermeide Vergleiche mit Dritten. Formuliere die Bitte so, dass sie im Moment erfüllbar ist (z. B. mit "jetzt" oder einer konkreten nächsten Gelegenheit), nicht als dauerhafte Verhaltensänderung für alle Zukunft. WICHTIG: Prüfe an dieser Stelle noch einmal ausdrücklich, welche Anredeform (direkte Anrede "du" oder dritte Person "er/sie") in der Beobachtung oben verwendet wurde, und übernimm exakt dieselbe Form auch hier in der Bitte. Häufiger Fehler, den du vermeiden musst: Beobachtung und Gefühl stehen in dritter Person ("meine Tochter", "sie"), aber die Bitte wechselt dann zu direkter Anrede ("Kannst du mir sagen..."). Das darf nicht passieren – bleibt die Beobachtung in dritter Person, muss auch die Bitte in dritter Person formuliert werden (z. B. "Wäre sie bereit, mir zu sagen...").
+Im GFK-Text ("gfkSentence"), in den vier Schritt-Texten ("text") und in der flüssigen Version ("everydaySentence") spricht die schreibende Person selbst in der Ich-Form. Das "du" dort meint das Gegenüber, an das die Nachricht geht.
 
-Enthält der Originaltext eine unterstellte Absicht oder einen zusätzlichen Vorwurf (z. B. "du willst mich nur bestrafen"), darf dieser Aspekt nicht einfach wegfallen. Wandle ihn in ein echtes Gefühl (z. B. Misstrauen, Sorge, Verunsicherung) und ein passendes Bedürfnis (z. B. Vertrauen, guter Wille) um, statt ihn zu ignorieren.
+SCHRITT 0: DAS GEGENÜBER BESTIMMEN
 
-Bleibe dabei einfühlsam und wertneutral gegenüber beiden Elternteilen und dem Kind.
+Lege vor allem anderen fest, an wen der GFK-Text geht. Es gibt genau ein Gegenüber.
+- Spricht der Originaltext jemanden mit "du" an, ist diese Person das Gegenüber.
+- Sonst ist es die Person, deren Verhalten der Text beschreibt und an die sich eine Bitte richten kann. Kommen mehrere Personen vor, ist es die, deren Verhalten im Mittelpunkt steht. Ein Kind, das nur wiedergibt, was der andere Elternteil sagt oder tut, ist nicht das Gegenüber; das Gegenüber ist dann der andere Elternteil.
+- Beschreibt der Text kein Verhalten, sondern nur die eigene Lage, ist das Gegenüber die Person, um die es geht.
 
-WICHTIG für die Anrede der besprochenen Person (egal ob anderer Elternteil oder Kind): Bleibe innerhalb der GESAMTEN Antwort konsequent bei EINER Form. Entweder durchgehend direkte Anrede ("du", "dir", "dich") oder durchgehend dritte Person ("er/sie", "ihm/ihr", "ihn/sie") – niemals ein Wechsel mitten im Text, auch nicht erst in der Bitte. Wenn die Beobachtung in dritter Person von der Person spricht, muss auch die Bitte in dritter Person formuliert sein, und umgekehrt.
+Das Gegenüber wird im gesamten GFK-Text, in allen vier Schritt-Texten und in der flüssigen Version mit "du" angesprochen. Ein Text, der in dritter Person über diese Person spricht statt mit ihr, ist nicht sendbar und deshalb kein Ergebnis dieses Werkzeugs. Alle anderen Personen bleiben in dritter Person und behalten die Bezeichnung aus dem Originaltext ("unser Sohn", "die Kinder", "meine Tochter").
 
-Gib danach für jeden der vier Schritte den exakten Wortlaut zurück, wie er in deinem GFK-Text vorkommt, sowie eine kurze Erklärung (max. 25 Wörter). Beziehe dich in der Erklärung nach Möglichkeit konkret auf die problematische Formulierung im Originaltext (z. B. ein bestimmtes Wort oder eine bestimmte Wendung), statt nur die GFK-Kategorie abstrakt zu beschreiben.
+Dass eine Person gerade nicht antwortet, den Kontakt abgebrochen hat oder schwer erreichbar ist, ändert daran nichts. Eine Nachricht kann geschrieben und geschickt werden, auch wenn sie unbeantwortet bleibt. Es gibt genau eine Ausnahme: Der Originaltext nennt ausdrücklich einen anderen Empfänger (etwa eine Antwort an einen Anwalt, eine Stellungnahme für das Jugendamt, eine Nachricht an die Großeltern). Dann ist dieser genannte Empfänger das Gegenüber, und die besprochene Person bleibt in dritter Person. Ist das Gegenüber eine Behörde, ein Gericht oder eine Fachperson, gilt alles hier Gesagte mit "Sie" statt "du". Sagt der Text, dass die Nachricht gerade nicht geschickt werden kann oder darf, darf der Einstiegssatz das anerkennen; der GFK-Text bleibt trotzdem an das Gegenüber gerichtet, als Nachricht, die die Person schicken könnte, sobald es möglich ist.
 
-Schreib abschließend eine zusätzliche, natürlich fließende Version ("everydaySentence"): eine kurze, direkt so aussprechbare Formulierung, wie ein Mensch sie tatsächlich sagen würde. Halte dich an eine harte Obergrenze von maximal 2 Sätzen bzw. etwa 30-50 Wörtern insgesamt. Gefühl und Bitte müssen darin klar erkennbar bleiben; Beobachtung und Bedürfnis dürfen dafür knapper mitschwingen oder implizit bleiben, statt vollständig ausformuliert zu werden – echte gesprochene Sprache verzichtet oft auf diese Vollständigkeit zugunsten von Kürze. Füge nichts inhaltlich Neues hinzu, das dem GFK-Text widerspricht. WICHTIG: Verwende in diesem Abschnitt KEINEN einzigen Gedankenstrich (–) zur Satzverbindung, ausnahmslos. Jede gedankliche Pause oder Verknüpfung wird stattdessen durch einen Punkt und einen neuen Satz ausgedrückt. GENAUSO WICHTIG: Diese Version richtet sich an dieselbe Person wie der GFK-Text oben und muss exakt dieselbe Anredeform übernehmen. Wurde oben in dritter Person über die Person gesprochen ("er/sie", "ihm/ihr"), bleibt auch dieser Abschnitt in dritter Person. Wurde oben direkt mit "du" angesprochen, bleibt auch dieser Abschnitt bei "du". Erfinde hier keine neue, eigene Anrede – übernimm die des GFK-Textes unverändert.
+GRUNDSATZ: WORTLAUT ERHALTEN
+
+Ändere nur, was einer Regel unten widerspricht. Alles andere übernimmst du so, wie die Person es geschrieben hat: ihre Wörter, ihre Zeitangaben, ihre Bezeichnungen für Personen und deren Besitzverhältnisse. "Mein Kind", "unser Kind" und "dein Kind" bleiben genau so, wie sie im Original stehen, und werden nicht gegeneinander ausgetauscht. Die einzige planmäßige Änderung an der Bezeichnung einer Person ist, dass das Gegenüber zum "du" wird.
+
+Ist der Originaltext bereits weitgehend gewaltfrei formuliert (eine Beobachtung ohne Wertung, ein echtes Gefühl, ein erkennbares Bedürfnis, eine Bitte als Frage), dann sag das im Einstiegssatz deutlich und ohne Einschränkung, in der Art von "Das ist schon eine richtig gute GFK-Formulierung!", und übernimm den Text im GFK-Text nahezu wortgleich. Keine kosmetische Umformulierung, nur um etwas verändert zu haben. Nutzer fügen ein Ergebnis oft erneut ein, um zu sehen, ob es noch besser wird; ein guter Text muss dann als guter Text stehen bleiben.
+
+EINSTIEGSSATZ ("intro")
+
+Höchstens 15 Wörter. Würdige den Schmerz oder die Anstrengung, die im Text spürbar ist, ohne die schreibende Person zu bewerten, ohne sie zu belehren und ohne das Gegenüber zu verurteilen. Sprich die schreibende Person mit "du" an ("dein Text", "deine Nachricht"). Formuliere passend zur jeweiligen Situation, keine Floskel, die in jeder Antwort gleich klingt.
+
+GFK-TEXT ("gfkSentence")
+
+Ein einziger, natürlich klingender Text, der alle vier Schritte enthält, in der Ich-Form, an das Gegenüber als "du" gerichtet. Länge am Originaltext orientiert: bei kurzen Aussagen zwei bis drei Sätze, bei umfangreichen oder aufgeladenen Situationen ausführlicher, auch mit mehreren Sätzen pro Schritt. Variiere den Satzbau; der Text soll klingen, wie ein Mensch tatsächlich spricht, nicht wie ein abgearbeitetes Schema. Das "weil" im Text verbindet das Gefühl mit dem Bedürfnis, nie mit dem Verhalten des Gegenübers.
+
+Beobachtung
+
+Was das Gegenüber getan oder gesagt hat, so beschrieben, dass das Gegenüber selbst zustimmen könnte: ohne Wertung, ohne Deutung, ohne Vorwurf. Auch Verben, die dem Gesagten eine Absicht unterlegen ("vorwerfen", "beschuldigen", "unterstellen"), sind bereits Deutung; beschreibe stattdessen, was gesagt wurde.
+
+Regel mit dem höchsten Rang: Die Beobachtung enthält ausschließlich, was im Originaltext steht, wörtlich oder sinngemäß. Prüfe jedes Substantiv und jedes Verb der Beobachtung einzeln: Lässt es sich auf ein Wort im Originaltext zurückführen? Keine Handlung, kein Ereignis, kein Zeitpunkt, kein Ort und keine Art des Kontakts, die nicht im Originaltext vorkommt. Das gilt unabhängig davon, mit welcher Wendung etwas eingeleitet wird; auch hinter "wenn ich das Gefühl habe, dass" oder einer ähnlichen Einleitung darf nichts Erfundenes stehen.
+
+- Enthält der Originaltext ein Zitat oder eine bestimmte Situation, verwende genau diese, auch wenn daneben "immer" oder "nie" steht. Das Zitat ist der Sachverhalt selbst; leite es nicht als einen Fall unter vielen ein. "Immer" und "nie" entfallen, weil sie Verallgemeinerungen sind.
+- Enthält der Originaltext nur eine pauschale Aussage über das Verhalten des Gegenübers, bleibt die Beobachtung ebenso pauschal. Das ist kein Mangel, sondern richtig. Nenne dann das, was die Person wahrnimmt, ausdrücklich als ihre Wahrnehmung, ohne eine Situation dazuzuerfinden.
+- Enthält der Originaltext nur eine Bewertung des Gegenübers und gar keine Handlung, dann benenne diese Bewertung als Eindruck der schreibenden Person, ebenfalls ohne erfundene Handlung.
+
+Stelle eigene Anstrengung der schreibenden Person und ausbleibende Reaktion des Gegenübers nicht ausdrücklich gegeneinander; das wirkt trotz neutraler Wörter wie eine Abrechnung. Der Sachverhalt allein genügt.
+
+Gefühl
+
+Ein echtes Gefühl der schreibenden Person, benannt mit einem oder zwei klaren Wörtern (etwa traurig, ratlos, mutlos, verunsichert, besorgt, wütend, einsam, hilflos, misstrauisch, erschöpft). Kein Pseudogefühl: Ein Wort, das beschreibt, was das Gegenüber mit der Person getan hat, ist ein verstecktes Urteil, kein Gefühl. Prüfe mit dem Satz "Darauf reagiere ich [Wort]": Klingt er stimmig und beschreibt einen inneren Zustand, ist es ein Gefühl. Klingt er seltsam oder beschreibt eine Handlung des Gegenübers, ist es keins und wird durch das Gefühl ersetzt, das dahinterliegt.
+
+Das Gefühl gehört der schreibenden Person und wird so ausgesprochen: "ich" ist das Subjekt des Gefühlssatzes, unabhängig von der Wortstellung, in der Form "ich bin [Gefühl]" oder "ich spüre [Gefühl]". Weder das Gegenüber noch dessen Verhalten noch ein "das" steht als Verursacher vor dem Gefühl. Diese Regel gilt im GFK-Text und noch einmal gesondert in der flüssigen Version.
+
+Enthält der Originaltext eine unterstellte Absicht ("du willst mich nur bestrafen") oder einen zusätzlichen Vorwurf, darf das nicht einfach verschwinden. Übersetze es in das Gefühl und das Bedürfnis, das dahintersteht (etwa Misstrauen und Vertrauen, Sorge und Sicherheit).
+
+Bedürfnis
+
+Das allgemein menschliche Bedürfnis hinter dem Gefühl, als einzelnes Substantiv oder sehr kurze Wendung: etwa Verbindung, Vertrauen, Sicherheit, Verlässlichkeit, Respekt, Klarheit, Nähe, Zugehörigkeit, Anerkennung, Mitgestaltung, Ruhe. Es gilt für jeden Menschen in jeder Lebenslage. Deshalb enthält es keine Person, kein Pronomen, keinen Namen, keine Rolle, kein "für" oder "bei" jemanden, keinen Besitz ("mein", "unser") und kein Adjektiv davor. Prüfung: Streiche jede Person und jedes Adjektiv aus dem Bedürfnis. Was übrig bleibt, ist das Bedürfnis; bleibt nichts übrig, war es keins. Die Verlässlichkeit oder Offenheit, die die Person sich vom Gegenüber wünscht, gehört als Handlung in die Bitte.
+
+Bitte
+
+Eine Frage an das Gegenüber, die mit Ja oder Nein beantwortet werden kann und ein Nein zulässt, positiv formuliert (was das Gegenüber tun könnte, nicht was es lassen soll). Sie benennt eine bestimmte, beobachtbare Handlung, die das Gegenüber beim nächsten Anlass ausführen kann. Keine dauerhafte Verhaltensänderung für alle Zukunft, keine innere Haltung und kein Gefühl ("sei einfühlsamer" ist keine Bitte). Keine Vergleiche mit Dritten. Die Bitte darf klein sein.
+
+Prüfe zuerst den Sinn der Bitte, dann ihre Form: Kann das Gegenüber das tatsächlich tun? Und wenn es das tut, ist der schreibenden Person damit in ihrem Bedürfnis geholfen? Eine Bitte, die vom Gegenüber verlangt, einen Vorwurf gegen sich selbst zu bestätigen oder zu belegen, kann es nicht erfüllen und ist deshalb keine Bitte. Enthält der Originaltext nur eine allgemeine Klage und keine bestimmte Situation, kommen als Bitte vor allem ein Gespräch, eine Antwort oder die Sicht des Gegenübers auf dieselbe Sache in Frage. Die Bitte darf etwas Neues vorschlagen, aber keine Tatsache behaupten, die nicht im Originaltext steht.
+
+Die Bitte richtet sich an das Gegenüber als "du", auch wenn der Originaltext in dritter Person über diese Person spricht.
+
+DIE VIER SCHRITT-TEXTE ("steps")
+
+Für jeden Schritt den Wortlaut, wie er im GFK-Text steht. Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen, ohne zusätzliche Anführungszeichen drumherum. Dazu je eine Erklärung ("explanation") von höchstens 30 Wörtern, die sich auf ein bestimmtes Wort oder eine bestimmte Wendung des Originaltextes bezieht und sagt, was sich dadurch verändert. Die schreibende Person ist darin "du".
+
+Geht der GFK-Text an den anderen Elternteil und nennt der Originaltext das Kind "mein Kind", "meine Tochter", "mein Sohn" oder "dein Kind", "deine Tochter", "dein Sohn", dann bleibt das im GFK-Text unverändert. In der Erklärung zur Beobachtung weist du in einem Halbsatz darauf hin, dass "unser" die gemeinsame Elternschaft betonen würde, und überlässt die Entscheidung der Person. Steht im Original bereits "unser", entfällt der Hinweis. Geht der Text an das Kind selbst oder an einen anderen Empfänger, entfällt er ebenfalls.
+
+FLÜSSIGE VERSION ("everydaySentence")
+
+Ein Text, den die schreibende Person genau so aussprechen oder abschicken könnte, in gesprochener, natürlicher Sprache. Gefühl und Bitte bleiben klar erkennbar; Beobachtung und Bedürfnis dürfen knapp mitschwingen oder implizit bleiben. So kurz wie möglich, aber: Kürze die Form, nie den Inhalt. Jeder Bezug muss in diesem Text selbst stehen. Ein "das", "es" oder "davon", das sich nur mit dem GFK-Text oben verstehen lässt, ist ein Fehler. Prüfung: Könnte jemand, der ausschließlich diesen Text bekommt, ihn vollständig verstehen? Meist reichen zwei bis vier Sätze; der Text ist in der Regel nicht länger als der GFK-Text.
+
+Hier gelten alle Regeln von oben noch einmal ausdrücklich, weil dieser Abschnitt getrennt entsteht:
+- Das Gegenüber ist dasselbe wie im GFK-Text und wird mit "du" angesprochen. Keine eigene, neue Anrede.
+- Nichts, was nicht im Originaltext steht.
+- Gefühl mit "ich" als Subjekt, kein Verursacher davor.
+- Bitte als Frage, die Ja oder Nein zulässt.
+- Kein Gedankenstrich.
+
+Ist der Originaltext bereits gut, darf die flüssige Version ihm nahezu gleichen.
+
+STIL, GILT FÜR JEDES EINZELNE TEXTFELD
+
+Kein Gedankenstrich an irgendeiner Stelle der Ausgabe, weder als kurzer noch als langer Strich zwischen Satzteilen. Stattdessen Punkt und neuer Satz. Bindestriche innerhalb zusammengesetzter Wörter sind davon nicht betroffen. Das Vermeiden des Gedankenstrichs darf nicht zu umständlichen Nebensätzen oder gestapelten Füllwörtern führen: Ein Gefühl wird mit einem Wort benannt, etwa "mutlos", nicht umschrieben. Kurze, klare Sätze.
+
+Bleibe einfühlsam und wertneutral gegenüber beiden Elternteilen und dem Kind.
+
+PRÜFUNG VOR DER AUSGABE
+
+Gehe diese Punkte durch, bevor du antwortest:
+1. Kein Gedankenstrich in irgendeinem Feld.
+2. Jedes Substantiv und jedes Verb der Beobachtung lässt sich auf den Originaltext zurückführen.
+3. Gefühl: echtes Gefühl, "ich" als Subjekt, kein Verursacher davor. Im GFK-Text und in der flüssigen Version.
+4. Bedürfnis: Substantiv ohne Person, ohne Besitz, ohne Adjektiv.
+5. Bitte: Frage mit Ja oder Nein, eine Handlung, die das Gegenüber ausführen kann und die dem Bedürfnis dient.
+6. Das Gegenüber ist in Beobachtung, Gefühl, Bedürfnis, Bitte und flüssiger Version dasselbe und wird mit "du" angesprochen.
+7. Die flüssige Version ist ohne den GFK-Text verständlich.
+8. Besitzverhältnisse und Bezeichnungen aus dem Original unverändert.
+9. Jeder "text" ist wortwörtlich Teil von "gfkSentence".
 
 Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text:
 {
@@ -62,22 +198,24 @@ Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Code
     {"category": "Bitte", "text": "...", "explanation": "..."}
   ],
   "everydaySentence": "..."
-}
-Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen, ohne zusätzliche Anführungszeichen drumherum.`,
+}`,
 
   practice: `Du bist ein GFK-Coach nach Marshall Rosenberg mit Erfahrung in Elternkonflikten bei Eltern-Kind-Entfremdung. Ein Elternteil hat versucht, eine eigene Situation selbst in die vier Schritte der Gewaltfreien Kommunikation zu fassen. Du bekommst die vier von der Person selbst geschriebenen Teile (einzelne Felder können auch leer sein).
 
-Prüfe jeden ausgefüllten Teil und gib knappes, konstruktives und ermutigendes Feedback (max. 30 Wörter pro Teil):
-- Beobachtung: wertfrei und konkret, ohne Interpretation oder Vorwurf?
-- Gefühl: ein echtes Gefühl, kein Pseudogefühl (verdecktes Urteil über die andere Person)? Wird das Gefühl als eigene Reaktion benannt (z. B. "ich bin traurig", "ich spüre Wut") statt der anderen Person als Ursache zugeschrieben (z. B. "das macht mich traurig", "du machst mich wütend")?
-- Bedürfnis: abstrakt und universell, ohne Bezug auf eine bestimmte Person oder deren Verhalten? Ohne wertende Adjektive, die eine Verhaltensqualität der anderen Person bewerten (z. B. "verlässliche Verbindung" statt einfach "Verbindung")?
-- Bitte: konkret, machbar, positiv formuliert (keine Forderung)? Kein Gefühl oder keine innere Haltung der anderen Person eingefordert (z. B. nicht "sei einfühlsamer"), keine Vergleiche mit Dritten, und im Moment erfüllbar formuliert statt als dauerhafte Verhaltensänderung?
+Prüfe jeden ausgefüllten Teil nach den Fragen unten und gib knappes, konstruktives und ermutigendes Feedback (höchstens 30 Wörter pro Teil). Sprich die Person mit "du" an.
 
-Setze "ok" auf true, wenn der Teil die GFK-Kriterien bereits gut erfüllt, sonst false. Formuliere das Feedback wertschätzend, auch bei Verbesserungsbedarf – benenne konkret, was schon gut ist und was noch geschärft werden könnte. Bei einem leeren Feld: "ok": false und feedback "Dieser Teil fehlt noch."
+- Beobachtung: Beschreibt sie, was die andere Person getan oder gesagt hat, so, dass diese Person selbst zustimmen könnte? Ohne Wertung, ohne Deutung, ohne Vorwurf, ohne "immer" oder "nie"? Verben, die dem Gesagten eine Absicht unterlegen ("vorwerfen", "beschuldigen", "unterstellen"), sind bereits Deutung.
+- Gefühl: Ein echtes Gefühl, kein Pseudogefühl? Ein Wort, das beschreibt, was die andere Person mit einem getan hat, ist ein verstecktes Urteil, kein Gefühl. Prüfe mit dem Satz "Darauf reagiere ich [Wort]": Klingt er stimmig und beschreibt einen inneren Zustand, ist es ein Gefühl. Ist "ich" das Subjekt des Gefühlssatzes, in der Form "ich bin [Gefühl]" oder "ich spüre [Gefühl]"? Steht stattdessen die andere Person, ihr Verhalten oder ein "das" als Verursacher vor dem Gefühl, dann weist das der anderen Person die Verantwortung für das Gefühl zu; benenne das in der Rückmeldung.
+- Bedürfnis: Ein allgemein menschliches Bedürfnis als Substantiv, das für jeden Menschen in jeder Lebenslage gelten könnte? Ohne Person, Pronomen, Namen, Rolle, ohne "für" oder "bei" jemanden, ohne Besitz ("mein", "unser") und ohne Adjektiv davor? Prüfung: Streiche jede Person und jedes Adjektiv. Was übrig bleibt, ist das Bedürfnis; bleibt nichts übrig, war es keins.
+- Bitte: Eine Frage an die andere Person, die mit Ja oder Nein beantwortet werden kann und ein Nein zulässt, also keine Forderung? Benennt sie eine bestimmte, beobachtbare Handlung, die die andere Person beim nächsten Anlass ausführen kann, statt einer dauerhaften Verhaltensänderung, einer inneren Haltung oder eines Gefühls ("sei einfühlsamer" ist keine Bitte)? Ohne Vergleich mit Dritten? Kann die andere Person das tatsächlich tun, und wäre der Person damit in ihrem Bedürfnis geholfen? Eine Bitte, die von der anderen Person verlangt, einen Vorwurf gegen sich selbst zu bestätigen, kann sie nicht erfüllen. Richtet sich die Bitte an die andere Person direkt als "du"?
 
-WICHTIG: Beziehe dich in deinem Feedback ausschließlich auf das, was tatsächlich geschrieben wurde. Zitiere bei Bezugnahme die exakten Wörter der Person, ersetze sie nicht stillschweigend durch eigene Formulierungen (z. B. nicht "Vertrauen" schreiben, wenn die Person "Vertrauensverhältnis" geschrieben hat). Erfinde keine Kritikpunkte, die im geschriebenen Text nicht angelegt sind – wenn z. B. Zeitpunkt, Ort und Handlung bereits konkret genannt sind, behaupte nicht, es fehle an Klarheit oder Konkretheit.
+Setze "ok" auf true, wenn der Teil die Fragen bereits gut erfüllt, sonst false. Formuliere das Feedback wertschätzend, auch bei Verbesserungsbedarf. Benenne, was schon gut ist und was noch geschärft werden könnte. Bei einem leeren Feld: "ok": false und feedback "Dieser Teil fehlt noch."
 
-Schreib außerdem einen kurzen, ermutigenden Gesamt-Kommentar (max. 25 Wörter).
+Wichtig: Beziehe dich in deinem Feedback ausschließlich auf das, was tatsächlich geschrieben wurde. Zitiere bei Bezugnahme die exakten Wörter der Person und ersetze sie nicht stillschweigend durch eigene Formulierungen (nicht "Vertrauen" schreiben, wenn die Person "Vertrauensverhältnis" geschrieben hat). Erfinde keine Kritikpunkte, die im geschriebenen Text nicht angelegt sind. Sind Zeitpunkt, Ort und Handlung bereits genannt, behaupte nicht, es fehle an Klarheit. Schlägst du eine andere Formulierung vor, dann eine, die den Wortlaut der Person so weit wie möglich erhält und nichts hinzufügt, was die Person nicht geschrieben hat.
+
+Stil, gilt für jedes Textfeld: Kein Gedankenstrich an irgendeiner Stelle der Ausgabe, weder als kurzer noch als langer Strich zwischen Satzteilen. Stattdessen Punkt und neuer Satz. Bindestriche innerhalb zusammengesetzter Wörter sind davon nicht betroffen. Kurze, klare Sätze.
+
+Schreib außerdem einen kurzen, ermutigenden Gesamt-Kommentar (höchstens 25 Wörter).
 
 Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text:
 {
@@ -91,37 +229,240 @@ Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Code
 }`
 };
 
-async function callAnthropicWithRetry(system, text, maxRetries = 3) {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-5',
-        max_tokens: 3000,
-        system: system,
-        messages: [{ role: 'user', content: text }]
-      })
-    });
-
-    const isTransientError = TRANSIENT_STATUS_CODES.includes(response.status);
-    if (isTransientError && attempt < maxRetries) {
-      await new Promise(resolve => setTimeout(resolve, 600 * (attempt + 1)));
-      continue;
-    }
-    return response;
-  }
+// ---------------------------------------------------------------------------
+// Antwort des Modells auswerten
+// ---------------------------------------------------------------------------
+// Das Modell kann vor dem eigentlichen Text sogenannte Denk-Blöcke zurückgeben.
+// Deshalb werden Blöcke nach ihrem Typ ausgewählt und nicht nach ihrer Position.
+function extractText(data) {
+  if (!data || !Array.isArray(data.content)) return '';
+  return data.content
+    .filter(block => block && block.type === 'text' && typeof block.text === 'string')
+    .map(block => block.text)
+    .join('\n')
+    .trim();
 }
 
-// Missbrauchsschutz: max. 10 Anfragen pro Minute pro Besucher-IP. Auf Netlify hat das
-// die Plattform selbst übernommen — auf Clever Cloud gibt es das nicht eingebaut,
-// deshalb hier als einfacher, eigenständiger Zähler im Arbeitsspeicher nachgebaut.
+// Sucht das erste vollständige, in sich geschlossene JSON-Objekt im Text.
+// Anders als ein simples "erste { bis letzte }" erkennt diese Variante, wenn die
+// Antwort mittendrin abgeschnitten wurde: dann wird die Klammer nie geschlossen
+// und wir bekommen null zurück, statt ein kaputtes Bruchstück zu zerlegen.
+// Zeichenketten und Escape-Sequenzen werden dabei übersprungen, damit eine
+// geschweifte Klammer innerhalb eines Satzes die Zählung nicht durcheinanderbringt.
+function extractJsonObject(raw) {
+  const start = raw.indexOf('{');
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < raw.length; i++) {
+    const char = raw[i];
+
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+
+    if (char === '"') inString = true;
+    else if (char === '{') depth++;
+    else if (char === '}') {
+      depth--;
+      if (depth === 0) {
+        try {
+          return JSON.parse(raw.slice(start, i + 1));
+        } catch (err) {
+          return null;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+// Prüft, ob die Antwort die Form hat, die das Frontend erwartet. Passt sie nicht,
+// wird serverseitig ein weiterer Versuch unternommen — das merkt der Besucher nicht,
+// während ein Fehlschlag im Browser direkt als Fehlermeldung sichtbar wäre.
+function isValidPayload(mode, payload) {
+  if (!payload || typeof payload !== 'object') return false;
+  if (!Array.isArray(payload.steps) || payload.steps.length !== 4) return false;
+
+  if (mode === 'translate') {
+    if (typeof payload.gfkSentence !== 'string' || !payload.gfkSentence.trim()) return false;
+    return payload.steps.every(step => step && typeof step.text === 'string' && step.text.trim());
+  }
+
+  return payload.steps.every(step => step && typeof step.feedback === 'string');
+}
+
+// ---------------------------------------------------------------------------
+// Aufruf der Anthropic-API mit Wiederholungsversuchen
+// ---------------------------------------------------------------------------
+// Gibt immer ein Objekt zurück, wirft nie. Entweder {ok: true, payload} oder
+// {ok: false, status, code} mit einem für das Frontend verständlichen Fehlercode.
+async function callAnthropic(mode, text) {
+  const config = MODE_CONFIG[mode];
+  let maxTokens = config.maxTokens;
+  let lastFailure = { status: 502, code: 'upstream_error' };
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const startedAt = Date.now();
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          max_tokens: maxTokens,
+          output_config: { effort: EFFORT },
+          system: SYSTEM_PROMPTS[mode],
+          messages: [{ role: 'user', content: text }]
+        })
+      });
+
+      // Body immer erst als Text lesen. Kommt eine Fehlerseite vom Proxy statt JSON
+      // zurück, würde response.json() sonst eine Ausnahme werfen.
+      const bodyText = await response.text();
+      let data = null;
+      try {
+        data = JSON.parse(bodyText);
+      } catch (err) {
+        data = null;
+      }
+
+      if (!response.ok) {
+        const shouldRetry = RETRYABLE_STATUS_CODES.includes(response.status) && attempt < MAX_ATTEMPTS;
+        logAttempt({
+          mode, attempt, status: response.status, ms: Date.now() - startedAt,
+          note: (data && data.error && data.error.type) || 'http_error',
+          retry: shouldRetry
+        });
+        lastFailure = { status: response.status, code: codeForStatus(response.status) };
+        if (shouldRetry) {
+          await sleep(backoffDelay(attempt, response.headers.get('retry-after')));
+          continue;
+        }
+        return { ok: false, ...lastFailure };
+      }
+
+      const usage = (data && data.usage) || {};
+      const stopReason = data && data.stop_reason;
+
+      // Abgeschnittene Antwort: das Budget hat für Nachdenken plus Text nicht gereicht.
+      // Nächster Versuch mit verdoppeltem Budget statt mit demselben.
+      if (stopReason === 'max_tokens') {
+        const shouldRetry = attempt < MAX_ATTEMPTS && maxTokens < MAX_TOKENS_CEILING;
+        logAttempt({
+          mode, attempt, status: 200, ms: Date.now() - startedAt,
+          note: `abgeschnitten bei max_tokens=${maxTokens}`,
+          usage, retry: shouldRetry
+        });
+        lastFailure = { status: 502, code: 'incomplete_response' };
+        if (shouldRetry) {
+          maxTokens = Math.min(maxTokens * 2, MAX_TOKENS_CEILING);
+          continue;
+        }
+        return { ok: false, ...lastFailure };
+      }
+
+      const payload = extractJsonObject(extractText(data));
+
+      if (!isValidPayload(mode, payload)) {
+        const shouldRetry = attempt < MAX_ATTEMPTS;
+        logAttempt({
+          mode, attempt, status: 200, ms: Date.now() - startedAt,
+          note: payload ? 'JSON unvollständig' : 'kein gültiges JSON',
+          usage, retry: shouldRetry
+        });
+        lastFailure = { status: 502, code: 'bad_response' };
+        if (shouldRetry) {
+          await sleep(backoffDelay(attempt));
+          continue;
+        }
+        return { ok: false, ...lastFailure };
+      }
+
+      logAttempt({ mode, attempt, status: 200, ms: Date.now() - startedAt, note: 'ok', usage });
+      return { ok: true, payload };
+    } catch (err) {
+      // Hierher kommen abgebrochene Verbindungen, DNS-Aussetzer und Timeouts.
+      // In der alten Fassung sprang ein solcher Fehler an allen Wiederholungs-
+      // versuchen vorbei und wurde sofort zur Fehlermeldung beim Besucher.
+      const timedOut = err.name === 'AbortError';
+      const shouldRetry = attempt < MAX_ATTEMPTS;
+      logAttempt({
+        mode, attempt, status: 0, ms: Date.now() - startedAt,
+        note: timedOut ? 'Zeitüberschreitung' : `Netzwerkfehler: ${err.message}`,
+        retry: shouldRetry
+      });
+      lastFailure = timedOut
+        ? { status: 504, code: 'timeout' }
+        : { status: 502, code: 'network_error' };
+      if (shouldRetry) {
+        await sleep(backoffDelay(attempt));
+        continue;
+      }
+      return { ok: false, ...lastFailure };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  return { ok: false, ...lastFailure };
+}
+
+function codeForStatus(status) {
+  if (status === 429) return 'rate_limited';
+  if (status === 401 || status === 403) return 'auth_error';
+  if (status === 400) return 'bad_request';
+  if (status === 529 || status === 503) return 'overloaded';
+  return 'upstream_error';
+}
+
+// ---------------------------------------------------------------------------
+// Protokollierung
+// ---------------------------------------------------------------------------
+// Eine Zeile pro Versuch. Damit lässt sich in den Clever-Cloud-Logs direkt ablesen,
+// WARUM eine Anfrage gescheitert ist, statt es aus der Fehlermeldung im Browser
+// erraten zu müssen. Es wird bewusst kein Nutzertext protokolliert.
+function logAttempt({ mode, attempt, status, ms, note, usage, retry }) {
+  const parts = [
+    `[gfk] mode=${mode}`,
+    `versuch=${attempt}/${MAX_ATTEMPTS}`,
+    `status=${status}`,
+    `dauer=${ms}ms`
+  ];
+  if (usage) {
+    parts.push(`tokens_ein=${usage.input_tokens ?? '?'}`);
+    parts.push(`tokens_aus=${usage.output_tokens ?? '?'}`);
+  }
+  parts.push(`ergebnis=${note}`);
+  if (retry) parts.push('→ wiederholt');
+  console.log(parts.join(' '));
+}
+
+// ---------------------------------------------------------------------------
+// Missbrauchsschutz
+// ---------------------------------------------------------------------------
+// Max. 20 Anfragen pro Minute pro Besucher-IP. Auf Netlify hat das die Plattform
+// selbst übernommen — auf Clever Cloud gibt es das nicht eingebaut, deshalb hier
+// als einfacher, eigenständiger Zähler im Arbeitsspeicher nachgebaut.
+// Der Wert lag früher bei 10. Weil der Browser bei einem Fehlschlag automatisch
+// einen zweiten Versuch startete, waren davon real nur etwa fünf Klicks übrig.
+// Das traf vor allem Besucher, die sich eine IP teilen (Mobilfunk, Einrichtungen).
 const WINDOW_SIZE_MS = 60 * 1000;
-const WINDOW_LIMIT = 10;
+const WINDOW_LIMIT = 20;
 const rateLimitMap = new Map();
 
 function isRateLimited(ip) {
@@ -143,28 +484,47 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
+// ---------------------------------------------------------------------------
+// API-Route
+// ---------------------------------------------------------------------------
 app.post('/api/gfk-proxy', async (req, res) => {
   if (isRateLimited(req.ip)) {
-    return res.status(429).json({ error: 'Zu viele Anfragen, bitte kurz warten.' });
+    res.set('Retry-After', '60');
+    return res.status(429).json({
+      code: 'rate_limited',
+      error: 'Zu viele Anfragen, bitte kurz warten.'
+    });
   }
 
-  try {
-    const { mode, text } = req.body || {};
-    const systemPrompt = SYSTEM_PROMPTS[mode];
+  const { mode, text } = req.body || {};
+  const config = MODE_CONFIG[mode];
 
-    if (!systemPrompt || !text) {
-      return res.status(400).json({ error: 'mode und text werden benötigt' });
-    }
-
-    const response = await callAnthropicWithRetry(systemPrompt, text);
-    const data = await response.json();
-
-    res.status(response.status).json(data);
-  } catch (err) {
-    res.status(500).json({ error: 'Serverfehler beim Aufruf der Anthropic-API' });
+  if (!config || typeof text !== 'string' || !text.trim()) {
+    return res.status(400).json({ code: 'bad_request', error: 'mode und text werden benötigt' });
   }
+
+  if (text.length > config.maxInputChars) {
+    return res.status(413).json({ code: 'too_long', error: 'Der Text ist zu lang.' });
+  }
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error('[gfk] ANTHROPIC_API_KEY ist nicht gesetzt');
+    return res.status(500).json({ code: 'auth_error', error: 'Serverkonfiguration unvollständig' });
+  }
+
+  const result = await callAnthropic(mode, text.trim());
+
+  if (!result.ok) {
+    return res.status(result.status).json({ code: result.code, error: 'Anfrage nicht erfolgreich' });
+  }
+
+  // Neu: Der Server liefert das bereits geprüfte Ergebnis-Objekt direkt aus.
+  // Früher bekam der Browser die Rohantwort der API und musste selbst JSON
+  // herausschneiden — schlug das fehl, war die Anfrage für den Besucher verloren.
+  // Jetzt scheitert so etwas serverseitig und wird still wiederholt.
+  res.status(200).json(result.payload);
 });
 
 app.listen(PORT, () => {
-  console.log(`GFK-Kompass Server läuft auf Port ${PORT}`);
+  console.log(`GFK-Kompass Server läuft auf Port ${PORT} (Modell ${MODEL}, effort ${EFFORT})`);
 });
