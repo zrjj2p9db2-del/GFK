@@ -1,3 +1,4 @@
+<!-- VERSION: Runde 3, 16.09.2026 (Frontend) -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -1548,6 +1549,9 @@
   // Verbindung des Besuchers selbst kurz aussetzt. Bei Fehlern, die ein sofortiger
   // zweiter Versuch nur verschlimmern würde (Ratenbegrenzung) oder die sich nicht
   // von allein beheben (zu langer Text), wird nicht wiederholt.
+  // Erscheint beim Laden in der Browser-Konsole.
+  console.log('GFK-Kompass Frontend, Runde 3, 16.09.2026');
+
   const NON_RETRYABLE_CODES = ['rate_limited', 'too_long', 'bad_request', 'auth_error'];
 
   async function withRetry(fn, retries = 1, delayMs = 1500) {
