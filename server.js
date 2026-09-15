@@ -1,3 +1,5 @@
+// VERSION: Runde 3, 16.09.2026
+//
 // Node.js-Server für Clever Cloud. Ersetzt die Netlify-Function durch einen
 // durchgehend laufenden Server, der sowohl die statische Seite als auch die
 // API-Route selbst bedient. Hält den API-Key UND die Prompts geheim — der
@@ -36,6 +38,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 // kostet aber Wartezeit und Token-Budget. Erlaubte Werte: low, medium, high.
 // Falls sich die Qualität im 13-Satz-Regressionstest verschlechtert, hier auf
 // "high" zurückstellen.
+// Versionskennung der Prompts. Bei JEDER Prompt-Änderung hochzählen und das Datum
+// anpassen. Sie wird beim Start ins Log geschrieben, damit sich jederzeit
+// nachsehen lässt, welche Fassung tatsächlich läuft. In dieser Session ist zweimal
+// unklar gewesen, welche Datei wo liegt; das kostet mehr Zeit als diese Zeile.
+const PROMPT_VERSION = 'Runde 3, 16.09.2026';
+
 const MODEL = 'claude-sonnet-5';
 const EFFORT = 'medium';
 
@@ -537,6 +545,12 @@ app.post('/api/gfk-proxy', async (req, res) => {
   res.status(200).json(result.payload);
 });
 
+// Damit lässt sich jederzeit prüfen, welcher Stand tatsächlich läuft, ohne
+// Dateien auf GitHub vergleichen zu müssen: einfach /api/version aufrufen.
+app.get('/api/version', (req, res) => {
+  res.json({ prompts: PROMPT_VERSION, model: MODEL, effort: EFFORT });
+});
+
 app.listen(PORT, () => {
-  console.log(`GFK-Kompass Server läuft auf Port ${PORT} (Modell ${MODEL}, effort ${EFFORT})`);
+  console.log(`GFK-Kompass Server läuft auf Port ${PORT} (Prompts: ${PROMPT_VERSION}, Modell ${MODEL}, effort ${EFFORT})`);
 });
