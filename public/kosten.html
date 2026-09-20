@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kosten — GFK-Kompass</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --paper:#EFF0EA; --flaeche:#FFFFFF; --panel:#E4E6DA;
+    --ink:#202B26; --ink-soft:#4C594F; --ink-leise:#7A857D;
+    --linie:#D7D8C7; --gitter:#E8E9E0;
+    --brand:#3B6E68; --brand-dunkel:#2B534F;
+    --balken:#A07714;            /* geprüft: Chroma und Kontrast bestanden */
+    --balken-hover:#7C5C0F;
+    --warn:#954B36;
+    --serif:'Fraunces', Georgia, serif;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; padding:36px 20px 80px; background:var(--paper); color:var(--ink);
+    font:15px/1.55 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+  .seite { max-width:760px; margin:0 auto; }
+
+  h1 { font-size:22px; margin:0 0 4px; }
+  .lead { color:var(--ink-soft); margin:0 0 26px; font-size:14.5px; }
+
+  .tor { background:var(--flaeche); border:1px solid var(--linie); border-radius:8px; padding:22px 24px; }
+  .tor label { display:block; font-weight:600; margin-bottom:6px; }
+  .tor p { color:var(--ink-soft); font-size:14px; margin:0 0 14px; }
+  input[type=password], input[type=text] {
+    font:inherit; padding:9px 12px; border:1px solid var(--linie); border-radius:6px;
+    background:#fff; color:inherit; width:100%; max-width:280px;
+  }
+  input:focus { outline:2px solid var(--brand); outline-offset:1px; }
+  button {
+    font:inherit; cursor:pointer; padding:9px 17px; border-radius:6px; margin-top:10px;
+    border:1px solid var(--brand); background:var(--brand); color:#fff;
+  }
+  button:hover { background:var(--brand-dunkel); border-color:var(--brand-dunkel); }
+  button.leise { background:transparent; color:var(--ink-soft); border-color:var(--linie); }
+  button.leise:hover { background:var(--panel); color:var(--ink); }
+
+  /* ---- Kennzahlen ---- */
+  .zahlen { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:22px; }
+  .kachel { background:var(--flaeche); border:1px solid var(--linie); border-radius:8px; padding:16px 18px; }
+  .kachel .name { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-leise); font-weight:600; }
+  .kachel .wert { font-family:var(--serif); font-size:27px; line-height:1.15; margin-top:6px; }
+  .kachel .wert.gross { font-size:34px; }
+  .kachel .neben { font-size:13px; color:var(--ink-soft); margin-top:3px; }
+
+  /* ---- Diagramm ---- */
+  .tafel { background:var(--flaeche); border:1px solid var(--linie); border-radius:8px; padding:20px 22px 14px; margin-bottom:22px; }
+  .tafel h2 { font-size:15.5px; margin:0 0 2px; }
+  .tafel .unter { font-size:13.5px; color:var(--ink-soft); margin:0 0 16px; }
+  svg { display:block; width:100%; height:auto; overflow:visible; }
+  /* Die Hervorhebung läuft über eine Klasse, nicht über :hover. Das
+     unsichtbare Zielfeld liegt über dem Balken und fängt den Zeiger ab —
+     der Balken selbst bekommt nie ein :hover zu sehen. */
+  .balken { fill:var(--balken); }
+  .balken.an { fill:var(--balken-hover); }
+  .gitterlinie { stroke:var(--gitter); stroke-width:1; }
+  .achstext { fill:var(--ink-leise); font-size:10.5px; }
+  .spitzenwert { fill:var(--ink); font-size:11px; font-weight:600; }
+
+  .wolke {
+    position:fixed; pointer-events:none; z-index:20; opacity:0; transition:opacity .1s;
+    background:var(--ink); color:#fff; border-radius:5px; padding:7px 10px;
+    font-size:12.5px; line-height:1.45; white-space:nowrap;
+    box-shadow:0 3px 12px rgba(32,43,38,.28);
+  }
+  .wolke b { font-weight:600; }
+  .wolke.an { opacity:1; }
+
+  /* ---- Tabelle ---- */
+  details { background:var(--flaeche); border:1px solid var(--linie); border-radius:8px; padding:16px 20px; margin-bottom:22px; }
+  summary { cursor:pointer; font-weight:600; font-size:14.5px; }
+  table { border-collapse:collapse; width:100%; margin-top:14px; font-size:13.5px; }
+  th, td { text-align:right; padding:6px 8px; border-bottom:1px solid var(--gitter); }
+  th:first-child, td:first-child { text-align:left; }
+  th { color:var(--ink-leise); font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; }
+  td.zahl { font-variant-numeric:tabular-nums; }
+
+  .miete { background:var(--flaeche); border:1px solid var(--linie); border-radius:8px; padding:18px 22px; margin-bottom:22px; }
+  .miete h2 { font-size:15.5px; margin:0 0 4px; }
+  .miete p { font-size:13.5px; color:var(--ink-soft); margin:0 0 12px; }
+  .miete .zeile { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .miete input { max-width:110px; }
+
+  .fussnote { font-size:13px; color:var(--ink-soft); line-height:1.6; }
+  .fussnote p { margin:0 0 8px; }
+  .hinweis { border-left:3px solid var(--warn); background:rgba(149,75,54,.09); padding:13px 15px; border-radius:0 6px 6px 0; margin-bottom:22px; font-size:13.5px; }
+</style>
+</head>
+<body>
+<div class="seite">
+
+  <h1>Kosten</h1>
+  <p class="lead">Was die Anfragen an Anthropic tatsächlich kosten, Tag für Tag.</p>
+
+  <div id="tor" class="tor">
+    <label for="feld">Kennwort</label>
+    <p>Steht bei Clever Cloud in der Umgebungsvariable <code>KOSTEN_TOKEN</code>. Der Browser merkt es sich, du gibst es nur einmal ein.</p>
+    <input type="password" id="feld" autocomplete="current-password">
+    <div><button id="rein">Öffnen</button></div>
+    <p id="torfehler" style="color:var(--warn);margin:12px 0 0" hidden></p>
+  </div>
+
+  <div id="inhalt" hidden>
+
+    <div class="zahlen">
+      <div class="kachel">
+        <div class="name">Heute</div>
+        <div class="wert gross" id="w-heute">—</div>
+        <div class="neben" id="n-heute"></div>
+      </div>
+      <div class="kachel">
+        <div class="name">Gestern</div>
+        <div class="wert" id="w-gestern">—</div>
+        <div class="neben" id="n-gestern"></div>
+      </div>
+      <div class="kachel">
+        <div class="name">Letzte 7 Tage</div>
+        <div class="wert" id="w-woche">—</div>
+        <div class="neben" id="n-woche"></div>
+      </div>
+      <div class="kachel">
+        <div class="name">Letzte 30 Tage</div>
+        <div class="wert" id="w-monat">—</div>
+        <div class="neben" id="n-monat"></div>
+      </div>
+    </div>
+
+    <div class="tafel">
+      <h2>Tageskosten der letzten 30 Tage</h2>
+      <p class="unter" id="tafel-unter"></p>
+      <div id="diagramm"></div>
+    </div>
+
+    <div class="miete">
+      <h2>Miete dazurechnen</h2>
+      <p>Was du bei Clever Cloud im Monat zahlst. Das weiß dein Server nicht — trag es einmal ein, der Browser merkt es sich.</p>
+      <div class="zeile">
+        <input type="text" id="miete" inputmode="decimal" placeholder="z. B. 9,00">
+        <span>€ im Monat</span>
+        <button class="leise" id="miete-speichern">Merken</button>
+      </div>
+      <p id="miete-ergebnis" style="margin:14px 0 0;color:var(--ink)"></p>
+    </div>
+
+    <details>
+      <summary>Alle Zahlen als Tabelle</summary>
+      <div style="overflow-x:auto"><table id="tabelle"></table></div>
+    </details>
+
+    <div id="speicher" class="hinweis" hidden></div>
+
+    <div class="fussnote">
+      <p id="seit"></p>
+      <p id="archiv"></p>
+      <p id="preisinfo"></p>
+      <p>
+        Maßgeblich ist immer deine Abrechnung bei Anthropic. Diese Seite zählt mit,
+        was dein Server verschickt — sie kann Anfragen nicht kennen, die vor dem
+        oben genannten Zeitpunkt lagen.
+      </p>
+      <p>
+        <button class="leise" id="neu">Neu laden</button>
+        <button class="leise" id="sichern">Als Tabelle herunterladen</button>
+        <button class="leise" id="raus">Kennwort vergessen</button>
+      </p>
+    </div>
+
+  </div>
+
+  <div id="wolke" class="wolke"></div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var SCHLUESSEL = 'gfk-kosten-token';
+  var MIETSCHLUESSEL = 'gfk-miete';
+  var ARCHIVSCHLUESSEL = 'gfk-kosten-archiv';
+  var daten = null;
+  var archivMeldung = '';
+
+  // ---- Archiv im Browser ----------------------------------------------
+  // Zweite Absicherung, unabhängig vom Server. Bei jedem Aufruf werden die
+  // Tage hier mitgeschrieben. Geht der Zähler auf dem Server verloren, weil
+  // eine neue Auslieferung die Maschine ersetzt hat, ist die Vergangenheit
+  // trotzdem noch da.
+  //
+  // Die Regel für Konflikte ist einfach und stimmt in beide Richtungen:
+  // Ein vergangener Tag ist abgeschlossen und wächst nicht mehr — von zwei
+  // Ständen ist der höhere der vollständigere. Der heutige Tag dagegen wächst
+  // noch, da gilt immer der Server.
+  //
+  // Grenze: Das Archiv liegt in DIESEM Browser. Es kennt nur Tage, die du
+  // auch angesehen hast, und ein anderes Gerät hat sein eigenes.
+  function archivLesen() {
+    try { return JSON.parse(gemerkt(ARCHIVSCHLUESSEL) || '{}'); } catch (e) { return {}; }
+  }
+
+  function archivAbgleichen(tage, heute) {
+    var archiv = archivLesen();
+    var gerettet = 0, neu = 0;
+
+    Object.keys(tage).forEach(function (iso) {
+      if (iso === heute) return;
+      var alt = archiv[iso];
+      if (!alt || tage[iso].usd > alt.usd) { archiv[iso] = tage[iso]; neu++; }
+    });
+
+    Object.keys(archiv).forEach(function (iso) {
+      if (iso === heute) return;
+      if (!tage[iso] || archiv[iso].usd > tage[iso].usd) {
+        tage[iso] = archiv[iso];
+        gerettet++;
+      }
+    });
+
+    try { merke(ARCHIVSCHLUESSEL, JSON.stringify(archiv)); } catch (e) {}
+
+    archivMeldung = gerettet
+      ? gerettet + ' Tag' + (gerettet === 1 ? '' : 'e') + ' stammen aus dem Archiv dieses Browsers, weil der Server sie nicht mehr kennt.'
+      : '';
+    return tage;
+  }
+
+  function hole(id) { return document.getElementById(id); }
+
+  function merke(name, wert) { try { localStorage.setItem(name, wert); } catch (e) {} }
+  function gemerkt(name) { try { return localStorage.getItem(name); } catch (e) { return null; } }
+  function vergiss(name) { try { localStorage.removeItem(name); } catch (e) {} }
+
+  // Währung: die API rechnet in Dollar, gezeigt wird beides.
+  function usd(n) { return '$' + n.toFixed(n < 1 ? 3 : 2); }
+  function cent(n) { return (n * 100).toFixed(1).replace('.', ',') + ' ct'; }
+  function euro(n) { return n.toFixed(2).replace('.', ',') + ' €'; }
+
+  function tagName(iso) {
+    var d = new Date(iso + 'T12:00:00');
+    return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+  }
+  function langerTag(iso) {
+    var d = new Date(iso + 'T12:00:00');
+    return d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'long' });
+  }
+
+  // Lückenlose Liste der letzten n Tage, damit ein Tag ohne Anfragen als
+  // Lücke sichtbar wird und nicht einfach fehlt.
+  function letzteTage(n) {
+    var reihe = [];
+    var heute = new Date(daten.heute + 'T12:00:00');
+    for (var i = n - 1; i >= 0; i--) {
+      var d = new Date(heute);
+      d.setDate(d.getDate() - i);
+      var iso = d.toISOString().slice(0, 10);
+      var t = daten.tage[iso];
+      reihe.push({
+        iso: iso,
+        usd: t ? t.usd : 0,
+        versuche: t ? t.versuche : 0,
+        ein: t ? t.ein : 0,
+        aus: t ? t.aus : 0,
+        cacheLesen: t ? t.cacheLesen : 0,
+        modi: t ? t.modi : {}
+      });
+    }
+    return reihe;
+  }
+
+  function summe(reihe, feld) {
+    return reihe.reduce(function (s, t) { return s + (t[feld] || 0); }, 0);
+  }
+
+  // ---- Diagramm --------------------------------------------------------
+  // Eine Reihe, also keine Legende: die Überschrift sagt, was gezeigt wird.
+  // Beschriftet wird nur der teuerste Tag — eine Zahl über jedem Balken
+  // würde niemand lesen.
+  function zeichne(reihe) {
+    var B = 700, H = 200, links = 44, rechts = 8, oben = 22, unten = 26;
+    var flaecheB = B - links - rechts, flaecheH = H - oben - unten;
+
+    var hoechst = Math.max.apply(null, reihe.map(function (t) { return t.usd; }));
+    var spanne = hoechst > 0 ? hoechst : 0.01;
+    // Auf eine runde Zahl aufrunden, damit die Achse lesbar bleibt.
+    var stufe = Math.pow(10, Math.floor(Math.log10(spanne)));
+    var deckel = Math.ceil(spanne / stufe) * stufe;
+    if (deckel === 0) deckel = 0.01;
+
+    var band = flaecheB / reihe.length;
+    var breite = Math.min(24, band - 2);   // 2px Luft zwischen Nachbarn
+    var teuerster = reihe.indexOf(reihe.reduce(function (a, b) { return b.usd > a.usd ? b : a; }, reihe[0]));
+
+    var s = '<svg viewBox="0 0 ' + B + ' ' + H + '" role="img" aria-label="Tageskosten der letzten 30 Tage">';
+
+    // Gitter und Achsenwerte
+    for (var g = 0; g <= 2; g++) {
+      var wert = deckel * g / 2;
+      var y = oben + flaecheH - (wert / deckel) * flaecheH;
+      s += '<line class="gitterlinie" x1="' + links + '" y1="' + y + '" x2="' + (B - rechts) + '" y2="' + y + '"/>';
+      s += '<text class="achstext" x="' + (links - 8) + '" y="' + (y + 3.5) + '" text-anchor="end">' + usd(wert) + '</text>';
+    }
+
+    reihe.forEach(function (t, i) {
+      var h = t.usd > 0 ? Math.max(2, (t.usd / deckel) * flaecheH) : 0;
+      var x = links + i * band + (band - breite) / 2;
+      var y = oben + flaecheH - h;
+      if (h > 0) {
+        // Oben 4px gerundet, unten kantig auf der Grundlinie.
+        var r = Math.min(4, h);
+        s += '<path class="balken" data-i="' + i + '" d="' +
+             'M' + x + ' ' + (y + h) +
+             ' L' + x + ' ' + (y + r) +
+             ' Q' + x + ' ' + y + ' ' + (x + r) + ' ' + y +
+             ' L' + (x + breite - r) + ' ' + y +
+             ' Q' + (x + breite) + ' ' + y + ' ' + (x + breite) + ' ' + (y + r) +
+             ' L' + (x + breite) + ' ' + (y + h) + ' Z"/>';
+      }
+      // Unsichtbares, größeres Ziel, damit auch ein Tag ohne Balken anfassbar ist.
+      s += '<rect data-i="' + i + '" x="' + (links + i * band) + '" y="' + oben +
+           '" width="' + band + '" height="' + flaecheH + '" fill="transparent" style="cursor:pointer"/>';
+
+      // Jede fünfte Beschriftung, sonst überlagern sie sich.
+      if (i % 5 === 0 || i === reihe.length - 1) {
+        s += '<text class="achstext" x="' + (links + i * band + band / 2) + '" y="' + (H - 8) +
+             '" text-anchor="middle">' + tagName(t.iso) + '</text>';
+      }
+    });
+
+    if (reihe[teuerster] && reihe[teuerster].usd > 0) {
+      var t2 = reihe[teuerster];
+      var h2 = Math.max(2, (t2.usd / deckel) * flaecheH);
+      s += '<text class="spitzenwert" x="' + (links + teuerster * band + band / 2) +
+           '" y="' + (oben + flaecheH - h2 - 6) + '" text-anchor="middle">' + usd(t2.usd) + '</text>';
+    }
+
+    s += '</svg>';
+    hole('diagramm').innerHTML = s;
+
+    // Schwebezettel
+    var wolke = hole('wolke');
+    var tafel = hole('diagramm');
+    tafel.querySelectorAll('rect[data-i]').forEach(function (el) {
+      var i = Number(el.dataset.i);
+      var balken = tafel.querySelector('path.balken[data-i="' + i + '"]');
+
+      el.addEventListener('mouseenter', function () {
+        if (balken) balken.classList.add('an');
+      });
+      el.addEventListener('mousemove', function (ev) {
+        var t = reihe[i];
+        wolke.innerHTML = '<b>' + langerTag(t.iso) + '</b><br>' +
+          (t.versuche
+            ? usd(t.usd) + ' &nbsp;·&nbsp; ' + cent(t.usd) + '<br>' +
+              t.versuche + ' Anfrage' + (t.versuche === 1 ? '' : 'n')
+            : 'keine Anfragen');
+        wolke.classList.add('an');
+        var x = ev.clientX + 14, y = ev.clientY - 10;
+        if (x + wolke.offsetWidth > window.innerWidth - 8) x = ev.clientX - wolke.offsetWidth - 14;
+        wolke.style.left = x + 'px';
+        wolke.style.top = y + 'px';
+      });
+      el.addEventListener('mouseleave', function () {
+        wolke.classList.remove('an');
+        if (balken) balken.classList.remove('an');
+      });
+    });
+  }
+
+  // ---- Tabelle ---------------------------------------------------------
+  function tabelle(reihe) {
+    var mit = reihe.filter(function (t) { return t.versuche > 0; }).slice().reverse();
+    var s = '<thead><tr><th>Tag</th><th>Anfragen</th><th>Token ein</th><th>Token aus</th><th>aus Zwischenspeicher</th><th>Kosten</th></tr></thead><tbody>';
+    if (!mit.length) {
+      s += '<tr><td colspan="6" style="text-align:left;color:var(--ink-soft)">Noch keine Anfragen gezählt.</td></tr>';
+    }
+    mit.forEach(function (t) {
+      s += '<tr><td>' + langerTag(t.iso) + '</td>' +
+        '<td class="zahl">' + t.versuche + '</td>' +
+        '<td class="zahl">' + t.ein.toLocaleString('de-DE') + '</td>' +
+        '<td class="zahl">' + t.aus.toLocaleString('de-DE') + '</td>' +
+        '<td class="zahl">' + t.cacheLesen.toLocaleString('de-DE') + '</td>' +
+        '<td class="zahl">' + usd(t.usd) + '</td></tr>';
+    });
+    hole('tabelle').innerHTML = s + '</tbody>';
+  }
+
+  // ---- Darstellen ------------------------------------------------------
+  function darstellen() {
+    var r30 = letzteTage(30);
+    var r7 = r30.slice(-7);
+    var heute = r30[r30.length - 1];
+    var gestern = r30[r30.length - 2] || { usd: 0, versuche: 0 };
+
+    hole('w-heute').textContent = usd(heute.usd);
+    hole('n-heute').textContent = heute.versuche + ' Anfrage' + (heute.versuche === 1 ? '' : 'n') + ' · ' + cent(heute.usd);
+    hole('w-gestern').textContent = usd(gestern.usd);
+    hole('n-gestern').textContent = gestern.versuche + ' Anfrage' + (gestern.versuche === 1 ? '' : 'n');
+
+    var s7 = summe(r7, 'usd'), s30 = summe(r30, 'usd');
+    hole('w-woche').textContent = usd(s7);
+    hole('n-woche').textContent = summe(r7, 'versuche') + ' Anfragen · ø ' + usd(s7 / 7) + ' pro Tag';
+    hole('w-monat').textContent = usd(s30);
+    hole('n-monat').textContent = summe(r30, 'versuche') + ' Anfragen · ø ' + usd(s30 / 30) + ' pro Tag';
+
+    var aktiv = r30.filter(function (t) { return t.versuche > 0; }).length;
+    hole('tafel-unter').textContent = aktiv
+      ? 'An ' + aktiv + ' von 30 Tagen gab es Anfragen. Fahr über einen Tag für Einzelheiten.'
+      : 'In den letzten 30 Tagen wurde noch nichts gezählt.';
+
+    zeichne(r30);
+    tabelle(r30);
+
+    var seit = new Date(daten.seit);
+    hole('seit').textContent = 'Der Server zählt seit ' + seit.toLocaleString('de-DE') + '.';
+    hole('archiv').textContent = archivMeldung;
+
+    // Offen sagen, ob die Zahlen eine Auslieferung überstehen.
+    var kasten = hole('speicher');
+    if (daten.schreibfehler) {
+      kasten.hidden = false;
+      kasten.innerHTML = '<b>Der Server kann die Zahlen nicht speichern.</b><br>' +
+        daten.schreibfehler + '<br>Gezählt wird trotzdem, aber nur bis zum nächsten Neustart.';
+    } else if (daten.dauerhaft === false) {
+      kasten.hidden = false;
+      kasten.innerHTML = '<b>Die Zahlen überstehen keine neue Auslieferung.</b><br>' +
+        'Sie liegen in <code>' + daten.ordner + '</code>, einem gewöhnlichen Ordner. ' +
+        'Häng dort einen FS Bucket ein, dann bleiben sie dauerhaft erhalten — bis 100 MB kostenlos. ' +
+        'Bis dahin führt dieser Browser ein eigenes Archiv mit.';
+    } else {
+      kasten.hidden = true;
+    }
+    hole('preisinfo').textContent = 'Modell ' + daten.modell + ', gerechnet mit $' +
+      daten.preise.ein + ' je Million Token hinein und $' + daten.preise.aus + ' hinaus.';
+
+    mieteRechnen();
+  }
+
+  function mieteRechnen() {
+    var m = parseFloat((gemerkt(MIETSCHLUESSEL) || '').replace(',', '.'));
+    var feld = hole('miete');
+    if (!isNaN(m)) feld.value = String(m).replace('.', ',');
+
+    var r30 = letzteTage(30);
+    var api = summe(r30, 'usd');
+    var ziel = hole('miete-ergebnis');
+
+    if (isNaN(m)) {
+      ziel.textContent = '';
+      return;
+    }
+    // Grob umgerechnet — der genaue Kurs steht auf deiner Abrechnung.
+    var apiEuro = api * 0.92;
+    ziel.innerHTML = 'Im letzten Monat rund <b>' + euro(m + apiEuro) + '</b> gesamt: ' +
+      euro(m) + ' Miete plus etwa ' + euro(apiEuro) + ' für die Anfragen (' + usd(api) + ').';
+  }
+
+  // ---- Laden -----------------------------------------------------------
+  function laden(token) {
+    return fetch('/api/kosten?t=' + encodeURIComponent(token), { cache: 'no-store' })
+      .then(function (r) {
+        if (r.status === 404) throw new Error('abgelehnt');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      });
+  }
+
+  function oeffnen(token) {
+    return laden(token).then(function (d) {
+      daten = d;
+      daten.tage = archivAbgleichen(d.tage || {}, d.heute);
+      merke(SCHLUESSEL, token);
+      hole('tor').hidden = true;
+      hole('inhalt').hidden = false;
+      darstellen();
+    });
+  }
+
+  hole('rein').addEventListener('click', function () {
+    var t = hole('feld').value.trim();
+    var fehler = hole('torfehler');
+    fehler.hidden = true;
+    if (!t) return;
+    oeffnen(t).catch(function (err) {
+      fehler.hidden = false;
+      fehler.textContent = err.message === 'abgelehnt'
+        ? 'Das Kennwort stimmt nicht — oder KOSTEN_TOKEN ist bei Clever Cloud noch nicht gesetzt.'
+        : 'Es antwortet kein Server (' + err.message + '). Liegt diese Seite auf deiner Domain?';
+    });
+  });
+  hole('feld').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); hole('rein').click(); }
+  });
+
+  hole('neu').addEventListener('click', function () {
+    var t = gemerkt(SCHLUESSEL);
+    if (t) oeffnen(t).catch(function () {});
+  });
+  // Dritte Absicherung, und die einzige, die niemandem gehört außer dir:
+  // die Zahlen als Datei auf deinem Rechner.
+  hole('sichern').addEventListener('click', function () {
+    var reihe = letzteTage(400).filter(function (t) { return t.versuche > 0; });
+    var zeilen = ['Tag;Anfragen;Token ein;Token aus;Aus Zwischenspeicher;Kosten USD'];
+    reihe.forEach(function (t) {
+      zeilen.push([
+        t.iso, t.versuche, t.ein, t.aus, t.cacheLesen,
+        t.usd.toFixed(6).replace('.', ',')
+      ].join(';'));
+    });
+    // Mit BOM, damit Excel die Umlaute richtig liest.
+    var blob = new Blob(['﻿' + zeilen.join('\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'gfk-kosten-' + daten.heute + '.csv';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+
+  hole('raus').addEventListener('click', function () {
+    vergiss(SCHLUESSEL);
+    location.reload();
+  });
+  hole('miete-speichern').addEventListener('click', function () {
+    merke(MIETSCHLUESSEL, hole('miete').value.trim());
+    mieteRechnen();
+  });
+
+  var bekannt = gemerkt(SCHLUESSEL);
+  if (bekannt) oeffnen(bekannt).catch(function () {});
+})();
+</script>
+</body>
+</html>
