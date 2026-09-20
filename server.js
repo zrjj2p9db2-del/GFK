@@ -45,7 +45,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const PROMPT_VERSION = 'Runde 3, 16.09.2026';
 
 const MODEL = 'claude-sonnet-5';
-const EFFORT = 'medium';
+const EFFORT = 'high';
 
 const MODE_CONFIG = {
   translate: { maxTokens: 8000, maxInputChars: 2000 },
