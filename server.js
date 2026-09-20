@@ -1,4 +1,4 @@
-// VERSION: Runde 3, 16.09.2026
+// VERSION: Runde 4, 16.09.2026
 //
 // Node.js-Server für Clever Cloud. Ersetzt die Netlify-Function durch einen
 // durchgehend laufenden Server, der sowohl die statische Seite als auch die
@@ -9,6 +9,7 @@
 
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = 8080;
@@ -32,17 +33,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Die Werte hier sind deshalb bewusst großzügig. Sie kosten nichts extra:
 // abgerechnet werden nur tatsächlich erzeugte Tokens, nicht das Budget.
 //
-// "effort" steuert, wie viel Aufwand das Modell in eine Antwort steckt. Der
-// Standard wäre "high". "medium" ist hier ein guter Kompromiss: die Prompts
-// geben die Aufgabe bereits sehr eng vor, deshalb bringt tiefes Nachdenken wenig,
-// kostet aber Wartezeit und Token-Budget. Erlaubte Werte: low, medium, high.
-// Falls sich die Qualität im 13-Satz-Regressionstest verschlechtert, hier auf
-// "high" zurückstellen.
+// "effort" steuert, wie viel Aufwand das Modell in eine Antwort steckt.
+// Erlaubte Werte: low, medium, high. Seit Runde 3 läuft der Betrieb dauerhaft
+// mit "high": Bei "medium" brach die zentrale Gefühlsregel in zwei von drei
+// Durchläufen, bei "high" nur noch in vier von sechsundzwanzig. Die Prompts
+// ab Runde 4 setzen "high" voraus; "medium" kostet weniger Wartezeit, ist
+// aber im 13-Satz-Regressionstest nachweislich schlechter.
 // Versionskennung der Prompts. Bei JEDER Prompt-Änderung hochzählen und das Datum
 // anpassen. Sie wird beim Start ins Log geschrieben, damit sich jederzeit
 // nachsehen lässt, welche Fassung tatsächlich läuft. In dieser Session ist zweimal
 // unklar gewesen, welche Datei wo liegt; das kostet mehr Zeit als diese Zeile.
-const PROMPT_VERSION = 'Runde 3, 16.09.2026';
+const PROMPT_VERSION = 'Runde 4, 16.09.2026';
 
 const MODEL = 'claude-sonnet-5';
 const EFFORT = 'high';
@@ -90,7 +91,7 @@ Wenn zwei Anforderungen miteinander in Konflikt geraten, gilt diese Reihenfolge:
 1. Wahrheitstreue: Im Ergebnis steht nichts, was nicht im Originaltext steht.
 2. Gewaltfreiheit: kein Vorwurf, keine Deutung, kein Pseudogefühl, keine Forderung.
 3. Sendbarkeit: Der GFK-Text ist eine Nachricht an ein Gegenüber, das durchgehend mit "du" angesprochen wird.
-4. Kürze und natürlicher Klang. Beides entsteht durch Satzbau und Wortwahl, nie dadurch, dass eine Regel der Stufen 1 bis 3 nachgibt.
+4. Kürze und natürlicher Klang. Beides entsteht durch Satzbau und Wortwahl, nie auf Kosten einer Regel der Stufen 1 bis 3.
 
 Eine allgemeine, aber wahre Beobachtung ist immer besser als eine genaue, aber erfundene. Ein längerer, aber vollständiger Text ist immer besser als ein kurzer, dem ein Bezug fehlt.
 
@@ -107,9 +108,9 @@ Lege vor allem anderen fest, an wen der GFK-Text geht. Es gibt genau ein Gegenü
 - Sonst ist es die Person, deren Verhalten der Text beschreibt und an die sich eine Bitte richten kann. Kommen mehrere Personen vor, ist es die, deren Verhalten im Mittelpunkt steht. Ein Kind, das nur wiedergibt, was der andere Elternteil sagt oder tut, ist nicht das Gegenüber; das Gegenüber ist dann der andere Elternteil.
 - Beschreibt der Text kein Verhalten, sondern nur die eigene Lage, ist das Gegenüber die Person, um die es geht.
 
-Das Gegenüber wird im gesamten GFK-Text, in allen vier Schritt-Texten und in der flüssigen Version mit "du" angesprochen. Ein Text, der in dritter Person über diese Person spricht statt mit ihr, ist nicht sendbar und deshalb kein Ergebnis dieses Werkzeugs. Dasselbe gilt für ein Passiv, ein "man" oder eine unpersönliche Wendung, die das Gegenüber aus dem Satz nimmt: Wo der Originaltext es handeln oder sprechen lässt, bleibt es in jedem Feld das handelnde Subjekt. Alle anderen Personen bleiben in dritter Person und behalten die Bezeichnung aus dem Originaltext ("unser Sohn", "die Kinder", "meine Tochter").
+Das Gegenüber wird im gesamten GFK-Text, in allen vier Schritt-Texten und in der flüssigen Version mit "du" angesprochen. Ein Text, der in dritter Person über diese Person spricht statt mit ihr, ist nicht sendbar und darum kein Ergebnis dieses Werkzeugs. Wo der Originaltext das Gegenüber handeln, sprechen oder etwas unterlassen lässt, ist es in jedem Feld das Subjekt dieses Verbs, auch wenn das Verhalten darin besteht, nicht zu antworten oder nicht zu kommen. Ausgeschlossen ist alles, was es aus dieser Stelle nimmt: ein Passiv, ein "man", eine unpersönliche Wendung, ein Satz, in dem stattdessen die schreibende Person etwas nicht bekommt oder nicht hört. Alle anderen Personen bleiben in dritter Person und behalten die Bezeichnung aus dem Originaltext ("unser Sohn", "die Kinder", "meine Tochter").
 
-Dass eine Person gerade nicht antwortet, den Kontakt abgebrochen hat oder schwer erreichbar ist, ändert daran nichts. Eine Nachricht kann geschrieben und geschickt werden, auch wenn sie unbeantwortet bleibt. Es gibt genau eine Ausnahme: Der Originaltext nennt ausdrücklich einen anderen Empfänger (etwa eine Antwort an einen Anwalt, eine Stellungnahme für das Jugendamt, eine Nachricht an die Großeltern). Dann ist dieser genannte Empfänger das Gegenüber, und die besprochene Person bleibt in dritter Person. Ist das Gegenüber eine Behörde, ein Gericht oder eine Fachperson, gilt alles hier Gesagte mit "Sie" statt "du". Sagt der Text, dass die Nachricht gerade nicht geschickt werden kann oder darf, darf der Einstiegssatz das anerkennen; der GFK-Text bleibt trotzdem an das Gegenüber gerichtet, als Nachricht, die die Person schicken könnte, sobald es möglich ist.
+Dass eine Person gerade nicht antwortet, den Kontakt abgebrochen hat oder schwer erreichbar ist, ändert daran nichts. Eine Nachricht kann geschrieben und geschickt werden, auch wenn sie unbeantwortet bleibt. Es gibt genau eine Ausnahme: Der Originaltext nennt ausdrücklich einen anderen Empfänger (etwa einen Anwalt, das Jugendamt, die Großeltern). Dann ist dieser genannte Empfänger das Gegenüber, und die besprochene Person bleibt in dritter Person. Ist das Gegenüber eine Behörde, ein Gericht oder eine Fachperson, gilt alles hier Gesagte mit "Sie" statt "du". Sagt der Text, dass die Nachricht gerade nicht geschickt werden kann oder darf, darf der Einstiegssatz das anerkennen; der GFK-Text bleibt trotzdem an das Gegenüber gerichtet, als Nachricht, die die Person schicken könnte, sobald es möglich ist.
 
 GRUNDSATZ: WORTLAUT ERHALTEN
 
@@ -119,7 +120,7 @@ Ist der Originaltext bereits weitgehend gewaltfrei formuliert (eine Beobachtung 
 
 NATÜRLICHER KLANG, GILT FÜR JEDES TEXTFELD
 
-GFK-Text und flüssige Version sollen klingen wie eine Nachricht von Mensch zu Mensch, nicht wie ein abgearbeitetes Schema. Das erreichst du ausschließlich über Satzbau und Wortwahl: kurze Hauptsätze, Alltagswörter, wenige Nebensätze, wechselnder Satzbau, keine Einleitung ohne Inhalt. Wer in einem Satz handelt und wer darin fühlt, wird davon nicht berührt. Ein Satz, der alltäglich klingt und dabei einen Verursacher vor das Gefühl stellt, ist kein natürlicher Klang, sondern ein Regelbruch.
+GFK-Text und flüssige Version sollen klingen wie eine Nachricht von Mensch zu Mensch, nicht wie ein abgearbeitetes Schema. Das erreichst du ausschließlich über Satzbau und Wortwahl: kurze Hauptsätze, Alltagswörter, wenige Nebensätze, wechselnder Satzbau, keine Einleitung ohne Inhalt. Wer in einem Satz handelt und wer darin fühlt, wird davon nicht berührt; ein alltäglich klingender Satz mit einem Verursacher vor dem Gefühl ist kein natürlicher Klang, sondern ein Regelbruch.
 
 Kein Gedankenstrich an irgendeiner Stelle der Ausgabe, weder als kurzer noch als langer Strich zwischen Satzteilen; stattdessen Punkt und neuer Satz. Bindestriche in zusammengesetzten Wörtern sind nicht betroffen. Das darf nicht zu umständlichen Nebensätzen oder gestapelten Füllwörtern führen.
 
@@ -143,15 +144,17 @@ Ein Wort, das dem Gegenüber eine Haltung, ein Motiv oder eine Eigenschaft zusch
 
 - Enthält der Originaltext ein Zitat oder eine bestimmte Situation, verwende genau diese, auch wenn daneben "immer" oder "nie" steht. Das Zitat ist der Sachverhalt selbst; leite es nicht als einen Fall unter vielen ein. "Immer" und "nie" entfallen, weil sie Verallgemeinerungen sind.
 - Enthält der Originaltext nur eine pauschale Aussage über das Verhalten des Gegenübers, bleibt die Beobachtung ebenso pauschal. Das ist kein Mangel, sondern richtig. Nenne dann das, was die Person wahrnimmt, ausdrücklich als ihre Wahrnehmung, ohne eine Situation dazuzuerfinden.
-- Enthält der Originaltext nur eine Bewertung des Gegenübers und gar keine Handlung, ist die so übersetzte Wahrnehmung die ganze Beobachtung, ebenfalls ohne erfundene Handlung.
+- Enthält der Originaltext nur eine Bewertung des Gegenübers und gar keine Handlung, ist die so übersetzte Wahrnehmung die ganze Beobachtung, ebenfalls ohne erfundene Handlung. Die Aussageform des Originals bleibt erhalten: Ein Vergleich bleibt ein Vergleich. Ersetzt werden nur die wertenden Wörter, nicht die Aussage, um die es der Person geht.
 
-Stelle eigene Anstrengung der schreibenden Person und ausbleibende Reaktion des Gegenübers nicht gegeneinander, mit keinem Bindewort und in keiner Satzstellung; das wirkt trotz neutraler Wörter wie eine Abrechnung. Der Sachverhalt allein genügt; er steht am Anfang, ohne inhaltsleere Einleitung.
+Die Beobachtung beginnt mit dem Sachverhalt. Prüfung für den ersten Teilsatz: Er nennt etwas, das im Originaltext steht. Ein Teilsatz, der nur sagt, dass die Person hinschaut oder die Lage betrachtet, nennt nichts aus dem Originaltext und entfällt; die Kennzeichnung als Wahrnehmung ist ein kurzer Einschub, keine Einleitung davor. Wer im Originaltext handelt oder etwas unterlässt, ist auch hier das Subjekt, wie in Schritt 0 beschrieben; Zeitangaben und Gegenstände aus dem Originaltext bleiben stehen.
 
 Gefühl
 
 Ein echtes Gefühl der schreibenden Person, benannt mit einem oder zwei klaren Wörtern (etwa traurig, ratlos, mutlos, verunsichert, besorgt, wütend, einsam, hilflos, misstrauisch, erschöpft). Kein Pseudogefühl: Ein Wort, das beschreibt, was das Gegenüber mit der Person getan hat, ist ein verstecktes Urteil, kein Gefühl. Prüfe mit dem Satz "Darauf reagiere ich [Wort]": Klingt er stimmig und beschreibt einen inneren Zustand, ist es ein Gefühl. Klingt er seltsam oder beschreibt eine Handlung des Gegenübers, ist es keins und wird durch das Gefühl ersetzt, das dahinterliegt.
 
-In allen Feldern hat der Gefühlssatz dieselbe Form: "ich" ist das Subjekt des Verbs, das das Gefühl trägt, in der Art von "ich bin [Gefühl]" oder "ich spüre [Gefühl]". Die Wortstellung ist frei; ein Wenn-Satz mit der Beobachtung oder ein "dann" davor ändern das Subjekt nicht. Ausgeschlossen ist jeder Satz, in dem das Gegenüber, sein Verhalten oder ein "das" das Gefühl hervorruft oder bewirkt: Er weist dem Gegenüber die Verantwortung für das Gefühl zu, und genau diese Zuweisung will GFK vermeiden. Dass diese Form im Alltag geläufig ist, ändert daran nichts. Prüfung: Wer ist das Subjekt des Gefühlsverbs? Nur "ich" besteht.
+Stehen zwei Gefühle im GFK-Text, steht das gewichtigere zuerst, das Wort, das die Lage der Person am stärksten trifft und im Alltag gebräuchlich ist. Prüfung: Streiche probeweise je eines. Das Wort, ohne das der Satz die Lage nicht mehr trifft, steht vorn. Die flüssige Version behält nur dieses eine.
+
+In allen Feldern hat der Gefühlssatz dieselbe Form: "ich" ist das Subjekt des Verbs, das das Gefühl trägt, in der Art von "ich bin [Gefühl]" oder "ich spüre [Gefühl]". Die Wortstellung ist frei; ein Wenn-Satz mit der Beobachtung oder ein "dann" davor ändern das Subjekt nicht. Das Gefühl hat genau eine Begründung, und die zeigt auf das Bedürfnis. Ausgeschlossen ist jedes Wort, das das Gefühl auf das Verhalten des Gegenübers zurückführt: das Gegenüber, sein Verhalten oder ein "das" als Verursacher vor dem Gefühlsverb, ebenso ein Wort, das auf die Beobachtung zurückverweist und sie zur Ursache erklärt (in der Art von deshalb, dabei, darüber, dadurch, daher). Jede dieser Formen weist dem Gegenüber die Verantwortung für das Gefühl zu, und genau das will GFK vermeiden; dass sie im Alltag geläufig sind, ändert daran nichts. Das Gefühlswort beschreibt einen Zustand; ein rückbezügliches "ich fühle mich" mit Partizip ist ausgeschlossen, weil das Partizip eine Handlung an der Person beschreibt. Prüfung: Streiche den Wenn-Satz. Der Rest steht für sich, mit "ich" als Subjekt und dem Bedürfnis als einziger Begründung.
 
 Enthält der Originaltext eine unterstellte Absicht, ein unterstelltes Motiv oder einen zusätzlichen Vorwurf, darf das nicht einfach verschwinden. Übersetze es in das Gefühl und das Bedürfnis, das dahintersteht (etwa Misstrauen und Vertrauen, Sorge und Sicherheit).
 
@@ -161,7 +164,7 @@ Das allgemein menschliche Bedürfnis hinter dem Gefühl: etwa Verbindung, Vertra
 - Im Schritt-Text mit der Kategorie "Bedürfnis" steht nur das Substantiv, höchstens zwei mit "und": ohne Artikel, Person, Pronomen, Besitz, Adjektiv oder angehängtes Verhältniswort.
 - Im GFK-Text und in der flüssigen Version darf dasselbe Substantiv natürlich in den Satz eingebettet sein, auch mit Bezug auf eine Person.
 
-In jedem Feld gilt: Das Bedürfnis enthält keine Bewertung des Verhaltens des Gegenübers. Ein Adjektiv, das sagt, wie das Gegenüber sich verhalten soll, gehört als Handlung in die Bitte. Ein Nebensatz darüber, was jemand tun, lassen oder behalten soll, ist kein Bedürfnis. Prüfung: Streiche Personen, Adjektive und Verhältniswörter. Bleibt ein Substantiv übrig, das für jeden Menschen gilt, ist das das Bedürfnis; bleibt nichts übrig, war es keins.
+In jedem Feld gilt: Das Bedürfnis enthält keine Bewertung des Verhaltens des Gegenübers. Ein Adjektiv, das sagt, wie das Gegenüber sich verhalten soll, gehört als Handlung in die Bitte. Auch ein Adjektiv, das das Bedürfnis nur abstuft, entfällt, ebenso ein unbestimmter Artikel davor; das Substantiv trägt die Bedeutung allein. Ein Nebensatz, der sagt, was jemand tun, lassen oder behalten soll, ist kein Bedürfnis, eine Absicht der schreibenden Person mit einem Verb ebenso wenig. Prüfung: Streiche Personen, Adjektive, Verben und Verhältniswörter. Bleibt ein Substantiv übrig, das für jeden Menschen gilt, ist das das Bedürfnis; bleibt nichts übrig, war es keins.
 
 Bitte
 
@@ -171,41 +174,52 @@ Prüfe zuerst den Sinn der Bitte, dann ihre Form:
 - Kann das Gegenüber das tatsächlich tun, und ist der schreibenden Person damit in ihrem Bedürfnis geholfen?
 - Die Bitte fragt nach einer Handlung, die noch bevorsteht. Eine Frage nach Vergangenem oder nach einer Auskunft des Gegenübers über sein eigenes Verhalten verlangt, einen Vorwurf zu bestätigen oder zu belegen; das kann es nicht erfüllen, also ist es keine Bitte.
 - Neu sein darf nur die Handlung, um die gebeten wird. Alles, was die Bitte als geschehen, geschickt oder vorhanden voraussetzt, steht im Originaltext. Das gilt auch für Fragen: Wer fragt, ob etwas gelesen oder erhalten wurde, behauptet, dass es dieses Etwas gibt. Prüfe jedes Substantiv der Bitte wie bei der Beobachtung.
-- Ist die Beobachtung als Wahrnehmung oder Eindruck gekennzeichnet, zielt die Bitte auf Austausch: ein Gespräch, eine Antwort oder die Sicht des Gegenübers auf dieselbe Sache. Nennt der Originaltext eine bestimmte Handlung oder Äußerung des Gegenübers, zielt sie auf eine Handlung beim nächsten Anlass.
+- Ist die Beobachtung als Wahrnehmung oder Eindruck gekennzeichnet, zielt die Bitte auf Austausch: ein Gespräch, eine Antwort oder die Sicht des Gegenübers auf dieselbe Sache. Sie nennt, worum es in diesem Austausch geht, mit den Wörtern der Beobachtung; ein Gespräch ohne benannten Gegenstand ist keine Bitte. Nennt der Originaltext eine bestimmte Handlung oder Äußerung des Gegenübers, zielt die Bitte auf eine Handlung beim nächsten Anlass.
 
 DIE VIER SCHRITT-TEXTE ("steps")
 
-Für jeden Schritt den Wortlaut, wie er im GFK-Text steht; beim Bedürfnis nur das Substantiv, wie oben beschrieben. Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen, ohne zusätzliche Anführungszeichen drumherum. Dazu je eine Erklärung ("explanation") von höchstens 30 Wörtern, die sich auf ein bestimmtes Wort oder eine bestimmte Wendung des Originaltextes bezieht und sagt, was sich dadurch verändert. Die schreibende Person ist darin "du".
+Für jeden Schritt den Wortlaut, wie er im GFK-Text steht; beim Bedürfnis nur das Substantiv, wie oben beschrieben. Der Wert von "text" muss wortwörtlich als Teilstring in "gfkSentence" vorkommen, ohne zusätzliche Anführungszeichen drumherum.
+
+DIE ERKLÄRUNGEN ("explanation")
+
+Je Schritt eine Erklärung von höchstens 30 Wörtern, die schreibende Person darin als "du". Sie sagt, warum der Text so gebaut ist: Sie greift ein bestimmtes Wort oder eine bestimmte Wendung des Originaltextes auf und sagt, was daran geändert wurde und was diese Änderung bewirkt.
+
+Auch hier gilt die Regel mit dem höchsten Rang: Die Erklärung schreibt der schreibenden Person keinen Wunsch, keine Sorge, keine Hoffnung und kein Motiv zu, das nicht im Originaltext steht. Sie benennt das Bedürfnis als Bedürfnis, statt es zu einem Wunsch der Person auszumalen, und darf sagen, dass ein Bedürfnis nicht davon abhängt, ob das Gegenüber es gerade erfüllt.
+
+Das Gegenüber heißt in allen vier Erklärungen gleich: mit der Rolle, die der Originaltext ihm gibt, aus Sicht der schreibenden Person ("dein Sohn", "deine Tochter"), sonst "dein Gegenüber". Es wird in den Erklärungen nie mit "du" angesprochen, denn "du" ist dort die schreibende Person.
 
 Geht der GFK-Text an den anderen Elternteil und nennt der Originaltext das Kind "mein Kind", "meine Tochter", "mein Sohn" oder "dein Kind", "deine Tochter", "dein Sohn", dann bleibt das im GFK-Text unverändert. In der Erklärung zur Beobachtung weist du in einem Halbsatz darauf hin, dass "unser" die gemeinsame Elternschaft betonen würde, und überlässt die Entscheidung der Person. Steht im Original bereits "unser", entfällt der Hinweis. Geht der Text an das Kind selbst oder an einen anderen Empfänger, entfällt er ebenfalls.
 
 FLÜSSIGE VERSION ("everydaySentence")
 
-Der Text, den die schreibende Person tatsächlich abschickt. Er sagt dasselbe wie der GFK-Text, nur kürzer und mit Alltagswörtern. Gefühl und Bitte bleiben klar erkennbar; Beobachtung und Bedürfnis dürfen knapp mitschwingen oder implizit bleiben. Kürze die Form, nie den Inhalt. Jeder Bezug muss in diesem Text selbst stehen: Ein "das", "es" oder "davon", das sich nur mit dem GFK-Text oben verstehen lässt, ist ein Fehler. Prüfung: Könnte jemand, der ausschließlich diesen Text bekommt, ihn vollständig verstehen? Meist reichen zwei bis vier Sätze; der Text ist in der Regel nicht länger als der GFK-Text.
+Der Text, den die schreibende Person tatsächlich abschickt. Er sagt dasselbe wie der GFK-Text, aber in anderen Sätzen: kürzer, mit Alltagswörtern, mit anderem Satzbau. Gefühl und Bitte bleiben klar erkennbar; Beobachtung und Bedürfnis dürfen knapp mitschwingen oder implizit bleiben. Kürze die Form, nie den Inhalt. Jeder Bezug muss in diesem Text selbst stehen: Ein "das", "es" oder "davon", das sich nur mit dem GFK-Text oben verstehen lässt, ist ein Fehler. Prüfung: Könnte jemand, der ausschließlich diesen Text bekommt, ihn vollständig verstehen? Der Text ist in der Regel nicht länger als der GFK-Text; eine feste Grenze gibt es nicht, der Hebel ist der Satzbau.
 
-Dieser Abschnitt entsteht getrennt, deshalb gelten hier alle Regeln von oben noch einmal ausdrücklich:
-- Dasselbe Gegenüber wie im GFK-Text, mit "du" angesprochen und handelndes Subjekt, wo der Originaltext es handeln lässt. Kein Passiv, kein "man".
+Kein Satz der flüssigen Version steht wörtlich oder bis auf einzelne ausgetauschte Wörter im GFK-Text, auch die Bitte nicht. Prüfung: Lege jeden Satz neben den GFK-Text. Steht dort ein Satz mit demselben Aufbau, in dem nur ein oder zwei Wörter anders sind, ist es eine Abschrift; baue den Satz neu, mit anderen Satzgrenzen, anderem ersten Wort, anderer Reihenfolge der Teile. Gleich bleiben nur Wörter, die eine Regel festlegt: das Gefühlswort, die Substantive des Bedürfnisses, die Bezeichnungen und Angaben aus dem Originaltext.
+
+Dieser Abschnitt entsteht getrennt, darum gelten hier alle Regeln von oben noch einmal ausdrücklich:
+- Dasselbe Gegenüber wie im GFK-Text, mit "du" angesprochen und Subjekt seines Handelns, auch eines Unterlassens. Kein Passiv, kein "man", kein Satz, in dem stattdessen die schreibende Person etwas nicht bekommt.
 - Nichts, was nicht im Originaltext steht, auch nicht als Voraussetzung einer Frage.
-- Genau ein Gefühl, mit demselben Wort wie im GFK-Text; nennt der GFK-Text zwei, bleibt hier das erste. "ich" ist das Subjekt, kein Verursacher davor. Dass die andere Form gesprochen klingt, ist kein Grund; die Umgangssprache kennt den Satz mit "ich" als Subjekt genauso.
-- Das Bedürfnis ohne Bewertung des Gegenübers.
-- Bitte als Frage, die Ja oder Nein zulässt, nach einer Handlung, die noch bevorsteht.
+- Genau ein Gefühl, das erste aus dem GFK-Text, mit demselben Wort. "ich" ist das Subjekt des Gefühlsverbs, das Bedürfnis die einzige Begründung: kein Verursacher davor, kein Rückverweis auf das Verhalten (kein deshalb, dabei, darüber, dadurch, daher), kein "ich fühle mich" mit Partizip. Dass die andere Form gesprochen klingt, ist kein Grund; die Umgangssprache kennt den Satz mit "ich" als Subjekt genauso.
+- Das Bedürfnis darf wegfallen oder knapper eingebettet sein. Bleibt es genannt, sind es dieselben Substantive wie im Schritt-Text, bei zweien beide: keines ausgetauscht, keines auf andere Personen verschoben, keines in eine Absicht mit Verb verwandelt, kein Adjektiv und kein unbestimmter Artikel davor.
+- Bitte als Frage, die Ja oder Nein zulässt, nach einer Handlung, die noch bevorsteht, mit anderem Satzbau als im GFK-Text.
 - Kein Gedankenstrich.
 
-Ist der Originaltext bereits gut, darf die flüssige Version ihm nahezu gleichen.
+Ist der Originaltext bereits gut und nahezu wortgleich übernommen, gilt die Regel gegen die Abschrift nicht: Die flüssige Version darf dem GFK-Text nahezu gleichen oder ihn kürzen. Jede Angabe aus dem Originaltext bleibt dann erhalten oder fällt ganz weg; sie wird nicht durch eine Einordnung ersetzt.
 
 PRÜFUNG VOR DER AUSGABE
 
 Gehe diese Punkte durch, bevor du antwortest:
 1. Kein Gedankenstrich in irgendeinem Feld.
-2. Beobachtung: jedes Substantiv und jedes Verb auf den Originaltext zurückführbar; kein Wort schreibt dem Gegenüber eine Haltung, ein Motiv oder eine Eigenschaft zu.
-3. Gefühl: echtes Gefühl, "ich" als Subjekt des Gefühlsverbs, kein Verursacher davor. Im GFK-Text und in der flüssigen Version.
-4. Die flüssige Version nennt genau ein Gefühl.
-5. Bedürfnis: im Schritt-Text nur das Substantiv; in keinem Feld eine Bewertung des Gegenübers oder ein Nebensatz.
-6. Bitte: Frage mit Ja oder Nein nach einer bevorstehenden Handlung, die das Gegenüber ausführen kann und die dem Bedürfnis dient; nichts vorausgesetzt, was nicht im Originaltext steht.
-7. Das Gegenüber ist in allen Feldern dasselbe, wird mit "du" angesprochen und bleibt handelndes Subjekt. Kein Passiv, das es entfernt.
-8. Die flüssige Version ist ohne den GFK-Text verständlich.
+2. Beobachtung: jedes Substantiv und jedes Verb auf den Originaltext zurückführbar; kein Wort schreibt dem Gegenüber eine Haltung, ein Motiv oder eine Eigenschaft zu; der erste Teilsatz nennt etwas aus dem Originaltext.
+3. Gefühl: echtes Gefühl, "ich" als Subjekt des Gefühlsverbs, kein Verursacher davor, kein Rückverweis auf das Verhalten im Gefühlssatz, kein Partizip hinter "ich fühle mich". Im GFK-Text und in der flüssigen Version getrennt geprüft.
+4. Die flüssige Version nennt genau ein Gefühl, das erste aus dem GFK-Text.
+5. Bedürfnis: im Schritt-Text nur das Substantiv; in keinem Feld eine Bewertung, ein abstufendes Adjektiv, eine Absicht mit Verb oder ein Nebensatz; in der flüssigen Version dieselben Substantive wie im Schritt-Text oder keines.
+6. Bitte: Frage mit Ja oder Nein nach einer bevorstehenden Handlung, die das Gegenüber ausführen kann und die dem Bedürfnis dient; eine Austausch-Bitte nennt ihren Gegenstand; nichts vorausgesetzt, was nicht im Originaltext steht.
+7. Das Gegenüber ist in allen Feldern dasselbe, wird mit "du" angesprochen und bleibt Subjekt seines Handelns. Kein Passiv, kein Satz, in dem die schreibende Person etwas nicht bekommt.
+8. Die flüssige Version ist ohne den GFK-Text verständlich, und kein Satz darin steht wörtlich oder bis auf einzelne Wörter im GFK-Text, außer bei einem bereits guten Originaltext.
 9. Besitzverhältnisse und Bezeichnungen aus dem Original unverändert.
-10. Jeder "text" ist wortwörtlich Teil von "gfkSentence".
+10. Erklärungen: das Gegenüber in allen vier gleich benannt, nie als "du"; kein Wunsch, keine Sorge und kein Motiv, das nicht im Originaltext steht.
+11. Jeder "text" ist wortwörtlich Teil von "gfkSentence".
 
 Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text:
 {
@@ -225,13 +239,13 @@ Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Code
 Prüfe jeden ausgefüllten Teil nach den Fragen unten und gib knappes, konstruktives und ermutigendes Feedback (höchstens 30 Wörter pro Teil). Sprich die Person mit "du" an.
 
 - Beobachtung: Beschreibt sie, was die andere Person getan oder gesagt hat, so, dass diese Person selbst zustimmen könnte? Ohne Wertung, ohne Deutung, ohne Vorwurf, ohne "immer" oder "nie"? Verben, die dem Gesagten eine Absicht unterlegen ("vorwerfen", "beschuldigen", "unterstellen"), sind bereits Deutung. Ebenso jedes Wort, das der anderen Person eine Haltung, ein Motiv oder eine Eigenschaft zuschreibt; es bleibt Deutung, auch hinter einer Einleitung, die es als Eindruck kennzeichnet.
-- Gefühl: Ein echtes Gefühl, kein Pseudogefühl? Ein Wort, das beschreibt, was die andere Person mit einem getan hat, ist ein verstecktes Urteil, kein Gefühl. Prüfe mit dem Satz "Darauf reagiere ich [Wort]": Klingt er stimmig und beschreibt einen inneren Zustand, ist es ein Gefühl. Ist "ich" das Subjekt des Verbs, das das Gefühl trägt, in der Art von "ich bin [Gefühl]" oder "ich spüre [Gefühl]"? Steht stattdessen die andere Person, ihr Verhalten oder ein "das" als Verursacher vor dem Gefühl, dann weist das der anderen Person die Verantwortung für das Gefühl zu; benenne das in der Rückmeldung, auch wenn der Satz alltäglich klingt.
-- Bedürfnis: Steckt darin ein allgemein menschliches Bedürfnis als Substantiv, das für jeden Menschen in jeder Lebenslage gelten könnte? Eine Einbettung in einen Satz oder ein Bezug auf eine Person ist in Ordnung; benenne dann, welches Wort das eigentliche Bedürfnis ist. Nicht in Ordnung ist eine Bewertung des Verhaltens der anderen Person (ein Adjektiv, das sagt, wie sie sich verhalten soll, gehört in die Bitte) und ein Nebensatz darüber, was jemand tun, lassen oder behalten soll. Prüfung: Streiche Personen, Adjektive und Verhältniswörter. Bleibt ein Substantiv übrig, das für jeden Menschen gilt, ist das das Bedürfnis; bleibt nichts übrig, war es keins.
+- Gefühl: Ein echtes Gefühl, kein Pseudogefühl? Ein Wort, das beschreibt, was die andere Person mit einem getan hat, ist ein verstecktes Urteil, kein Gefühl. Prüfe mit dem Satz "Darauf reagiere ich [Wort]": Klingt er stimmig und beschreibt einen inneren Zustand, ist es ein Gefühl. Ist "ich" das Subjekt des Verbs, das das Gefühl trägt, in der Art von "ich bin [Gefühl]" oder "ich spüre [Gefühl]"? Hat das Gefühl im Satz genau eine Begründung, und zeigt die auf das Bedürfnis? Steht stattdessen die andere Person, ihr Verhalten oder ein "das" als Verursacher vor dem Gefühl, oder verweist ein Wort im Gefühlssatz auf das Verhalten zurück und erklärt es zur Ursache (in der Art von deshalb, dabei, darüber, dadurch, daher), dann weist das der anderen Person die Verantwortung für das Gefühl zu; benenne das in der Rückmeldung, auch wenn der Satz alltäglich klingt. Ein rückbezügliches "ich fühle mich" mit einem Partizip beschreibt eine Handlung an der Person, nicht ihren Zustand; benenne auch das.
+- Bedürfnis: Steckt darin ein allgemein menschliches Bedürfnis als Substantiv, das für jeden Menschen in jeder Lebenslage gelten könnte? Eine Einbettung in einen Satz oder ein Bezug auf eine Person ist in Ordnung; benenne dann, welches Wort das eigentliche Bedürfnis ist. Nicht in Ordnung ist eine Bewertung des Verhaltens der anderen Person (ein Adjektiv, das sagt, wie sie sich verhalten soll, gehört in die Bitte), ein Nebensatz, der sagt, was jemand tun, lassen oder behalten soll, und eine Absicht der Person selbst mit einem Verb; benenne dann das Substantiv, das dahintersteht. Ein Adjektiv, das das Bedürfnis nur abstuft, ist überflüssig, das Substantiv trägt die Bedeutung allein. Prüfung: Streiche Personen, Adjektive, Verben und Verhältniswörter. Bleibt ein Substantiv übrig, das für jeden Menschen gilt, ist das das Bedürfnis; bleibt nichts übrig, war es keins.
 - Bitte: Eine Frage an die andere Person, die mit Ja oder Nein beantwortet werden kann und ein Nein zulässt, also keine Forderung? Benennt sie eine bestimmte, beobachtbare Handlung, die die andere Person beim nächsten Anlass ausführen kann, statt einer dauerhaften Verhaltensänderung, einer inneren Haltung oder eines Gefühls? Fragt sie nach einer Handlung, die noch bevorsteht? Eine Frage nach Vergangenem oder nach einer Auskunft der anderen Person über ihr eigenes Verhalten verlangt, einen Vorwurf zu bestätigen; das kann sie nicht erfüllen, also ist es keine Bitte. Ohne Vergleich mit Dritten? Kann die andere Person das tatsächlich tun, und wäre der Person damit in ihrem Bedürfnis geholfen? Richtet sich die Bitte an die andere Person direkt als "du"?
 
 Setze "ok" auf true, wenn der Teil die Fragen bereits gut erfüllt, sonst false. Formuliere das Feedback wertschätzend, auch bei Verbesserungsbedarf. Benenne, was schon gut ist und was noch geschärft werden könnte. Bei einem leeren Feld: "ok": false und feedback "Dieser Teil fehlt noch."
 
-Wichtig: Beziehe dich in deinem Feedback ausschließlich auf das, was tatsächlich geschrieben wurde. Zitiere bei Bezugnahme die exakten Wörter der Person und ersetze sie nicht stillschweigend durch eigene Formulierungen (nicht "Vertrauen" schreiben, wenn die Person "Vertrauensverhältnis" geschrieben hat). Erfinde keine Kritikpunkte, die im geschriebenen Text nicht angelegt sind. Sind Zeitpunkt, Ort und Handlung bereits genannt, behaupte nicht, es fehle an Klarheit. Schlägst du eine andere Formulierung vor, dann eine, die den Wortlaut der Person so weit wie möglich erhält und nichts hinzufügt, was die Person nicht geschrieben hat. Ein vorgeschlagener Gefühlssatz hat "ich" als Subjekt, ohne Verursacher davor.
+Wichtig: Beziehe dich in deinem Feedback ausschließlich auf das, was tatsächlich geschrieben wurde. Zitiere bei Bezugnahme die exakten Wörter der Person und ersetze sie nicht stillschweigend durch eigene Formulierungen (nicht "Vertrauen" schreiben, wenn die Person "Vertrauensverhältnis" geschrieben hat). Erfinde keine Kritikpunkte, die im geschriebenen Text nicht angelegt sind, und deute der Person keinen Wunsch, keine Sorge und kein Motiv hinzu, das nicht in ihrem Text steht. Die Person, um die es geht, heißt in allen vier Rückmeldungen gleich: mit der Rolle, die die schreibende Person ihr gibt ("dein Sohn", "deine Tochter"), sonst "die andere Person". Sie wird nie mit "du" angesprochen, denn "du" ist die Person, die geübt hat. Sind Zeitpunkt, Ort und Handlung bereits genannt, behaupte nicht, es fehle an Klarheit. Schlägst du eine andere Formulierung vor, dann eine, die den Wortlaut der Person so weit wie möglich erhält und nichts hinzufügt, was die Person nicht geschrieben hat. Ein vorgeschlagener Gefühlssatz hat "ich" als Subjekt, ohne Verursacher davor und ohne Rückverweis auf das Verhalten; ein vorgeschlagenes Bedürfnis ist ein Substantiv.
 
 Stil, gilt für jedes Textfeld: Kein Gedankenstrich an irgendeiner Stelle der Ausgabe, weder als kurzer noch als langer Strich zwischen Satzteilen. Stattdessen Punkt und neuer Satz. Bindestriche innerhalb zusammengesetzter Wörter sind davon nicht betroffen. Kurze, klare Sätze.
 
@@ -470,6 +484,129 @@ function logAttempt({ mode, attempt, status, ms, note, usage, retry }) {
   parts.push(`ergebnis=${note}`);
   if (retry) parts.push('→ wiederholt');
   console.log(parts.join(' '));
+
+  // Jeder Versuch kostet, auch ein gescheiterter — deshalb wird hier gezählt
+  // und nicht erst beim Erfolg.
+  if (usage) buchen(mode, usage);
+}
+
+// ---------------------------------------------------------------------------
+// Kostenzähler
+// ---------------------------------------------------------------------------
+// Rechnet die Token jedes Versuchs in Geld um und führt eine Summe je Tag.
+//
+// Die Preise stehen hier und nirgends sonst. Ändert Anthropic sie, ist es
+// eine Zeile. Angaben in US-Dollar je einer Million Token.
+//
+// Zwischenspeicher: Das Schreiben kostet das 1,25-fache des normalen
+// Eingabepreises, das Lesen nur ein Zehntel. Genau deshalb ist der lange
+// Prompt bezahlbar — er wird einmal geschrieben und danach billig gelesen.
+const PREISE = {
+  'claude-sonnet-5':          { ein: 2,  aus: 10 },
+  'claude-opus-5':            { ein: 5,  aus: 25 },
+  'claude-haiku-4-5-20251001': { ein: 1,  aus: 5 },
+  'claude-sonnet-4-6':        { ein: 3,  aus: 15 }
+};
+const PREIS_UNBEKANNT = { ein: 2, aus: 10 };
+
+// WO DIE ZAHLEN LIEGEN — der wichtigste Punkt an diesem ganzen Block.
+//
+// Clever Cloud baut bei jeder Auslieferung eine frische Maschine. Alles, was
+// der Server zur Laufzeit auf die Platte geschrieben hat, ist danach weg.
+// Ein gewöhnlicher Ordner reicht also nicht, wenn die Zahlen Monate überdauern
+// sollen.
+//
+// Die Lösung heißt bei Clever Cloud FS Bucket: ein Speicher, der in einen
+// Ordner der Anwendung eingehängt wird und Auslieferungen übersteht. Bis
+// 100 MB kostet er nichts, und dieses Kassenbuch braucht wenige Kilobyte.
+//
+// Einzurichten mit einer Umgebungsvariablen:
+//     CC_FS_BUCKET = /daten:<bucket-host>
+//
+// Danach ist "daten" neben server.js der dauerhafte Ordner — genau der, in den
+// hier geschrieben wird. Ohne Bucket ist es ein ganz normaler Ordner: alles
+// läuft weiter, nur beginnt die Zählung bei jeder Auslieferung von vorn.
+// Ein anderer Ort lässt sich mit KOSTEN_ORDNER erzwingen.
+//
+// Der Ordner liegt bewusst NICHT in public/ — sonst könnte ihn jeder abrufen.
+const KOSTEN_ORDNER = process.env.KOSTEN_ORDNER || path.join(__dirname, 'daten');
+const KOSTEN_DATEI = path.join(KOSTEN_ORDNER, 'kosten.json');
+const KOSTEN_TAGE = 400;
+
+let kassenbuch = { seit: new Date().toISOString(), tage: {} };
+let schreibTimer = null;
+let kostenSchreibfehler = null;
+
+try {
+  fs.mkdirSync(KOSTEN_ORDNER, { recursive: true });
+} catch (err) {
+  kostenSchreibfehler = `Ordner ${KOSTEN_ORDNER} nicht anlegbar: ${err.message}`;
+  console.error('[gfk] ' + kostenSchreibfehler);
+}
+
+try {
+  const roh = fs.readFileSync(KOSTEN_DATEI, 'utf8');
+  const geladen = JSON.parse(roh);
+  if (geladen && geladen.tage) kassenbuch = geladen;
+  const n = Object.keys(kassenbuch.tage).length;
+  console.log(`[gfk] Kostenzähler fortgesetzt: ${n} Tage, zählt seit ${kassenbuch.seit}`);
+} catch (err) {
+  console.log(`[gfk] Kostenzähler beginnt neu in ${KOSTEN_ORDNER}`);
+}
+
+function heute() {
+  // Europa/Berlin, damit "heute" dem entspricht, was der Betreiber als heute
+  // erlebt — und nicht der Weltzeit, die um Mitternacht zwei Tage kennt.
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' });
+}
+
+function buchen(mode, usage) {
+  const preis = PREISE[MODEL] || PREIS_UNBEKANNT;
+
+  const ein = usage.input_tokens || 0;
+  const aus = usage.output_tokens || 0;
+  const cacheSchreiben = usage.cache_creation_input_tokens || 0;
+  const cacheLesen = usage.cache_read_input_tokens || 0;
+
+  const usd =
+    (ein * preis.ein +
+     aus * preis.aus +
+     cacheSchreiben * preis.ein * 1.25 +
+     cacheLesen * preis.ein * 0.1) / 1e6;
+
+  const tag = heute();
+  const t = kassenbuch.tage[tag] || (kassenbuch.tage[tag] = {
+    versuche: 0, ein: 0, aus: 0, cacheSchreiben: 0, cacheLesen: 0, usd: 0, modi: {}
+  });
+
+  t.versuche += 1;
+  t.ein += ein;
+  t.aus += aus;
+  t.cacheSchreiben += cacheSchreiben;
+  t.cacheLesen += cacheLesen;
+  t.usd += usd;
+  t.modi[mode] = (t.modi[mode] || 0) + 1;
+
+  // Alte Tage wegwerfen, damit die Datei nicht endlos wächst.
+  const tage = Object.keys(kassenbuch.tage).sort();
+  while (tage.length > KOSTEN_TAGE) delete kassenbuch.tage[tage.shift()];
+
+  // Nicht bei jedem Versuch auf die Platte schreiben, sondern gesammelt.
+  // Geht dabei der letzte Zählstand verloren, sind es Bruchteile eines Cents.
+  if (!schreibTimer) {
+    schreibTimer = setTimeout(() => {
+      schreibTimer = null;
+      fs.writeFile(KOSTEN_DATEI, JSON.stringify(kassenbuch), err => {
+        if (err) {
+          kostenSchreibfehler = err.message;
+          console.error('[gfk] Kostenzähler konnte nicht schreiben:', err.message);
+        } else {
+          kostenSchreibfehler = null;
+        }
+      });
+    }, 10000);
+    if (schreibTimer.unref) schreibTimer.unref();
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -549,6 +686,39 @@ app.post('/api/gfk-proxy', async (req, res) => {
 // Dateien auf GitHub vergleichen zu müssen: einfach /api/version aufrufen.
 app.get('/api/version', (req, res) => {
   res.json({ prompts: PROMPT_VERSION, model: MODEL, effort: EFFORT });
+});
+
+// Die Kostenübersicht. Geschützt durch ein Kennwort in der Umgebungsvariable
+// KOSTEN_TOKEN. Ist sie nicht gesetzt, gibt es die Route gar nicht — und ein
+// falsches Kennwort bekommt dieselbe Antwort wie ein nicht vorhandener Pfad.
+// Wer herumprobiert, erfährt so nicht einmal, dass es hier etwas zu holen gibt.
+app.get('/api/kosten', (req, res) => {
+  const erwartet = process.env.KOSTEN_TOKEN;
+  const gegeben = req.query.t || req.get('x-kosten-token') || '';
+
+  if (!erwartet || gegeben !== erwartet) {
+    return res.status(404).send('Cannot GET /api/kosten');
+  }
+
+  // Liegt der Ordner auf einem FS Bucket, überstehen die Zahlen jede
+  // Auslieferung. Die Seite soll das anzeigen können, statt dass der Betreiber
+  // rätselt, warum die Zählung wieder von vorn beginnt.
+  const eingehaengt = Object.keys(process.env)
+    .filter(k => k === 'CC_FS_BUCKET' || k.startsWith('CC_FS_BUCKET_'))
+    .map(k => String(process.env[k]).split(':')[0].replace(/^\/+/, ''))
+    .some(ziel => ziel && KOSTEN_ORDNER.replace(/\/+$/, '').endsWith(ziel));
+
+  res.set('Cache-Control', 'no-store');
+  res.json({
+    seit: kassenbuch.seit,
+    heute: heute(),
+    modell: MODEL,
+    preise: PREISE[MODEL] || PREIS_UNBEKANNT,
+    dauerhaft: eingehaengt,
+    ordner: KOSTEN_ORDNER,
+    schreibfehler: kostenSchreibfehler,
+    tage: kassenbuch.tage
+  });
 });
 
 app.listen(PORT, () => {
