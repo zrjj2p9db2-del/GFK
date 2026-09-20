@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gefühlsmaschine — GFK-Kompass</title>
+<meta name="description" content="Finde das Wort für das, was in dir los ist. Zwei Fragen genügen meistens.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EFF0EA;
+    --panel: #E4E6DA;
+    --ink: #202B26;
+    --ink-soft: #4C594F;
+    --line: #D7D8C7;
+    --brand: #3B6E68;
+    --brand-dark: #2B534F;
+
+    --obs: #33566A;
+    --feel: #954B36;
+    --feel-tint: rgba(149, 75, 54, 0.14);
+    --need: #8A6A1E;
+    --req: #436B49;
+
+    --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .seite { max-width: 780px; margin: 0 auto; padding: 40px 24px 96px; }
+
+  .kopf { border-bottom: 1px solid var(--line); padding-bottom: 22px; }
+  .zurueck {
+    display: inline-block; font-size: 14px; color: var(--brand);
+    text-decoration: none; margin-bottom: 18px;
+  }
+  .zurueck:hover { text-decoration: underline; }
+  h1 {
+    font-family: var(--serif); font-weight: 600; font-size: 34px;
+    line-height: 1.2; letter-spacing: -0.01em; margin: 0 0 10px;
+  }
+  .lead { font-size: 17px; color: var(--ink-soft); margin: 0; max-width: 56ch; }
+
+  .warum {
+    margin: 28px 0 0; padding: 18px 20px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    font-size: 14.5px; line-height: 1.6; color: var(--ink-soft);
+  }
+  .warum p { margin: 0 0 10px; }
+  .warum p:last-child { margin: 0; }
+  .warum strong { color: var(--ink); font-weight: 600; }
+
+  #maschine { margin-top: 12px; }
+
+  .fussnote {
+    margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line);
+    font-size: 13.5px; color: var(--ink-soft); line-height: 1.6;
+  }
+  .fussnote p { margin: 0 0 8px; }
+  .fussnote p:last-child { margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="seite">
+
+  <header class="kopf">
+    <a class="zurueck" href="index.html">← zurück zum GFK-Kompass</a>
+    <h1>Gefühlsmaschine</h1>
+    <p class="lead">
+      Manchmal weiß man, dass etwas los ist, aber nicht, wie es heißt.
+      Hier suchst du das Wort dafür — in zwei Fragen.
+    </p>
+  </header>
+
+  <div class="warum">
+    <p>
+      Warum das der Mühe wert ist: In der Gewaltfreien Kommunikation ist das Gefühl
+      der Schritt, an dem sich entscheidet, ob dein Gegenüber zuhört oder dichtmacht.
+      <strong>„Ich bin enttäuscht“</strong> lädt ein. <strong>„Ich fühle mich hintergangen“</strong>
+      klingt wie ein Gefühl, ist aber ein Vorwurf im Gefühlskostüm — und wird auch so gehört.
+    </p>
+    <p>
+      Was du hier eintippst, bleibt in deinem Browser. Diese Seite fragt nichts ab und sendet nichts.
+    </p>
+  </div>
+
+  <div id="maschine"></div>
+
+  <div class="fussnote">
+    <p>
+      Die zwei Fragen ordnen Gefühle nach zwei Richtungen: angenehm oder unangenehm,
+      und ob sie dich antreiben oder ausbremsen. Vier Felder, und in jedem stehen
+      Wörter von leicht bis stark. Das ist eine Landkarte, kein Gesetz.
+    </p>
+    <p>
+      Wenn dich eine Nachricht gerade sehr belastet, ist ein Wort dafür ein Anfang,
+      aber kein Ersatz für Menschen, die dir zuhören.
+    </p>
+  </div>
+
+</div>
+
+<!-- Gefühlsmaschine — Wortschatz -->
+<script>
+// Wortschatz der Gefühlsmaschine.
+//
+// Eigene Zusammenstellung für GFK-Kompass, zugeschnitten auf Eltern in
+// Eltern-Kind-Entfremdungs-Situationen. Bewusst kein Übertrag aus vorhandenen
+// GFK-Listen: Einzelne Wörter sind Allgemeingut, eine fremde Zusammenstellung
+// wäre es nicht.
+//
+// FORM: Jedes Wort steht so, dass der Satz "Ich bin ..." grammatisch aufgeht.
+// Deshalb "mutlos" und nicht "Mutlosigkeit", deshalb kein "ich spüre Wut".
+// Nur so lässt sich ein Wort im Übersetzer austauschen, ohne den Satz umzubauen.
+//
+// QUADRANT: zwei Achsen.
+//   ua = unangenehm, viel Energie      aa = angenehm, viel Energie
+//   uk = unangenehm, wenig Energie     ak = angenehm, wenig Energie
+// Die waagerechte Achse entspricht der GFK-Unterteilung in Gefühle bei
+// erfüllten und bei unerfüllten Bedürfnissen. Die senkrechte trennt, was
+// sonst zusammenfällt: Wut und Trauer sind beide unangenehm, aber nicht gleich.
+//
+// STAERKE: 1 leise, 2 deutlich, 3 stark. Dient der Sortierung innerhalb eines
+// Quadranten, damit die Liste von "unruhig" zu "panisch" führt und nicht
+// alphabetisch.
+//
+// BEDUERFNISSE: was typischerweise dahintersteht. Als Angebot gedacht, nicht
+// als Diagnose. Immer mehrere, damit die Zuordnung nicht zwingend wirkt.
+//
+// Selbsttest: node gefuehle.js
+
+'use strict';
+
+const GEFUEHLE = [
+  // ---------------------------------------------------------------------
+  // unangenehm, viel Energie
+  // ---------------------------------------------------------------------
+  { wort: 'unruhig',        q: 'ua', staerke: 1, beduerfnisse: ['Ruhe', 'Sicherheit', 'Klarheit'] },
+  { wort: 'angespannt',     q: 'ua', staerke: 1, beduerfnisse: ['Ruhe', 'Erholung', 'Sicherheit'] },
+  { wort: 'nervös',         q: 'ua', staerke: 1, beduerfnisse: ['Sicherheit', 'Orientierung'] },
+  { wort: 'gereizt',        q: 'ua', staerke: 1, beduerfnisse: ['Ruhe', 'Rücksicht', 'Freiraum'] },
+  { wort: 'ungeduldig',     q: 'ua', staerke: 1, beduerfnisse: ['Klarheit', 'Wirksamkeit'] },
+  { wort: 'aufgewühlt',     q: 'ua', staerke: 2, beduerfnisse: ['Ruhe', 'Verständnis'] },
+  { wort: 'besorgt',        q: 'ua', staerke: 2, beduerfnisse: ['Sicherheit', 'Schutz', 'Verlässlichkeit'] },
+  { wort: 'beunruhigt',     q: 'ua', staerke: 2, beduerfnisse: ['Sicherheit', 'Klarheit'] },
+  { wort: 'verunsichert',   q: 'ua', staerke: 2, beduerfnisse: ['Sicherheit', 'Vertrauen', 'Orientierung'] },
+  { wort: 'misstrauisch',   q: 'ua', staerke: 2, beduerfnisse: ['Vertrauen', 'Verlässlichkeit', 'Ehrlichkeit'] },
+  { wort: 'ärgerlich',      q: 'ua', staerke: 2, beduerfnisse: ['Respekt', 'Rücksicht', 'Fairness'] },
+  { wort: 'empört',         q: 'ua', staerke: 2, beduerfnisse: ['Fairness', 'Respekt'] },
+  { wort: 'frustriert',     q: 'ua', staerke: 2, beduerfnisse: ['Wirksamkeit', 'Mitsprache', 'Fortschritt'] },
+  { wort: 'angestrengt',    q: 'ua', staerke: 2, beduerfnisse: ['Erholung', 'Unterstützung'] },
+  { wort: 'alarmiert',      q: 'ua', staerke: 2, beduerfnisse: ['Schutz', 'Sicherheit'] },
+  { wort: 'wütend',         q: 'ua', staerke: 3, beduerfnisse: ['Respekt', 'Fairness', 'Grenzen'] },
+  { wort: 'zornig',         q: 'ua', staerke: 3, beduerfnisse: ['Fairness', 'Würde'] },
+  { wort: 'verzweifelt',    q: 'ua', staerke: 3, beduerfnisse: ['Hoffnung', 'Unterstützung', 'Verbindung'] },
+  { wort: 'panisch',        q: 'ua', staerke: 3, beduerfnisse: ['Sicherheit', 'Schutz'] },
+  { wort: 'fassungslos',    q: 'ua', staerke: 3, beduerfnisse: ['Verständnis', 'Orientierung'] },
+  { wort: 'aufgebracht',    q: 'ua', staerke: 3, beduerfnisse: ['Respekt', 'Gehörtwerden'] },
+  { wort: 'überfordert',    q: 'ua', staerke: 3, beduerfnisse: ['Unterstützung', 'Erholung', 'Klarheit'] },
+  // Nachtrag aus der EKE-Gefühlsliste.
+  { wort: 'genervt',        q: 'ua', staerke: 1, beduerfnisse: ['Ruhe', 'Freiraum', 'Rücksicht'] },
+  { wort: 'gespannt',       q: 'ua', staerke: 1, beduerfnisse: ['Klarheit', 'Gewissheit'] },
+  { wort: 'ängstlich',      q: 'ua', staerke: 2, beduerfnisse: ['Sicherheit', 'Schutz', 'Halt'] },
+  { wort: 'eifersüchtig',   q: 'ua', staerke: 2, beduerfnisse: ['Verbindung', 'Zugehörigkeit', 'Gewissheit'] },
+  { wort: 'zerrissen',      q: 'ua', staerke: 3, beduerfnisse: ['Klarheit', 'Entlastung', 'Frieden'] },
+  { wort: 'verbittert',     q: 'ua', staerke: 3, beduerfnisse: ['Gerechtigkeit', 'Anerkennung', 'Frieden'] },
+
+  // ---------------------------------------------------------------------
+  // unangenehm, wenig Energie
+  // ---------------------------------------------------------------------
+  { wort: 'nachdenklich',   q: 'uk', staerke: 1, beduerfnisse: ['Klarheit', 'Orientierung'] },
+  { wort: 'unsicher',       q: 'uk', staerke: 1, beduerfnisse: ['Sicherheit', 'Orientierung', 'Vertrauen'] },
+  { wort: 'ratlos',         q: 'uk', staerke: 1, beduerfnisse: ['Orientierung', 'Unterstützung'] },
+  { wort: 'unzufrieden',    q: 'uk', staerke: 1, beduerfnisse: ['Wirksamkeit', 'Mitsprache'] },
+  { wort: 'bedrückt',       q: 'uk', staerke: 2, beduerfnisse: ['Leichtigkeit', 'Verständnis'] },
+  { wort: 'traurig',        q: 'uk', staerke: 2, beduerfnisse: ['Verbindung', 'Nähe', 'Trost'] },
+  { wort: 'enttäuscht',     q: 'uk', staerke: 2, beduerfnisse: ['Verlässlichkeit', 'Vertrauen'] },
+  { wort: 'mutlos',         q: 'uk', staerke: 2, beduerfnisse: ['Hoffnung', 'Verbindung', 'Ermutigung'] },
+  { wort: 'entmutigt',      q: 'uk', staerke: 2, beduerfnisse: ['Hoffnung', 'Wirksamkeit'] },
+  { wort: 'einsam',         q: 'uk', staerke: 2, beduerfnisse: ['Verbindung', 'Zugehörigkeit', 'Nähe'] },
+  { wort: 'müde',           q: 'uk', staerke: 2, beduerfnisse: ['Erholung', 'Ruhe'] },
+  { wort: 'erschöpft',      q: 'uk', staerke: 2, beduerfnisse: ['Erholung', 'Unterstützung'] },
+  { wort: 'schwer',         q: 'uk', staerke: 2, beduerfnisse: ['Leichtigkeit', 'Trost'] },
+  { wort: 'wehmütig',       q: 'uk', staerke: 2, beduerfnisse: ['Verbindung', 'Erinnerung'] },
+  { wort: 'beschämt',       q: 'uk', staerke: 2, beduerfnisse: ['Annahme', 'Würde', 'Milde'] },
+  { wort: 'schuldig',       q: 'uk', staerke: 2, beduerfnisse: ['Wiedergutmachung', 'Milde'] },
+  { wort: 'sehnsüchtig',    q: 'uk', staerke: 2, beduerfnisse: ['Nähe', 'Verbindung'] },
+  { wort: 'hilflos',        q: 'uk', staerke: 3, beduerfnisse: ['Unterstützung', 'Wirksamkeit', 'Halt'] },
+  { wort: 'ohnmächtig',     q: 'uk', staerke: 3, beduerfnisse: ['Wirksamkeit', 'Mitsprache', 'Selbstbestimmung'] },
+  { wort: 'leer',           q: 'uk', staerke: 3, beduerfnisse: ['Sinn', 'Verbindung'] },
+  { wort: 'niedergeschlagen', q: 'uk', staerke: 3, beduerfnisse: ['Trost', 'Hoffnung', 'Verbindung'] },
+  { wort: 'gekränkt',       q: 'uk', staerke: 3, beduerfnisse: ['Wertschätzung', 'Respekt', 'Würde'] },
+  { wort: 'resigniert',     q: 'uk', staerke: 3, beduerfnisse: ['Hoffnung', 'Wirksamkeit'] },
+  // Nachtrag aus der EKE-Gefühlsliste.
+  { wort: 'verwirrt',       q: 'uk', staerke: 1, beduerfnisse: ['Klarheit', 'Orientierung'] },
+  { wort: 'befangen',       q: 'uk', staerke: 1, beduerfnisse: ['Sicherheit', 'Leichtigkeit'] },
+  { wort: 'unbehaglich',    q: 'uk', staerke: 1, beduerfnisse: ['Sicherheit', 'Ruhe'] },
+  { wort: 'vorsichtig',     q: 'uk', staerke: 1, beduerfnisse: ['Sicherheit', 'Vertrauen', 'Schutz'] },
+  { wort: 'beklommen',      q: 'uk', staerke: 2, beduerfnisse: ['Sicherheit', 'Halt', 'Ruhe'] },
+  { wort: 'fremd',          q: 'uk', staerke: 2, beduerfnisse: ['Vertrautheit', 'Nähe', 'Zugehörigkeit'] },
+  { wort: 'gleichgültig',   q: 'uk', staerke: 2, beduerfnisse: ['Schutz', 'Abstand', 'Erholung'] },
+  { wort: 'verloren',       q: 'uk', staerke: 3, beduerfnisse: ['Orientierung', 'Halt', 'Zugehörigkeit'] },
+  { wort: 'betäubt',        q: 'uk', staerke: 3, beduerfnisse: ['Schutz', 'Lebendigkeit', 'Erholung'] },
+  { wort: 'erstarrt',       q: 'uk', staerke: 3, beduerfnisse: ['Sicherheit', 'Bewegung', 'Halt'] },
+
+  // ---------------------------------------------------------------------
+  // angenehm, viel Energie
+  // ---------------------------------------------------------------------
+  { wort: 'neugierig',      q: 'aa', staerke: 1, beduerfnisse: ['Verständnis', 'Lebendigkeit'] },
+  { wort: 'interessiert',   q: 'aa', staerke: 1, beduerfnisse: ['Verständnis', 'Teilhabe'] },
+  { wort: 'wach',           q: 'aa', staerke: 1, beduerfnisse: ['Lebendigkeit', 'Erholung'] },
+  { wort: 'zuversichtlich', q: 'aa', staerke: 2, beduerfnisse: ['Hoffnung', 'Vertrauen'] },
+  { wort: 'hoffnungsvoll',  q: 'aa', staerke: 2, beduerfnisse: ['Hoffnung', 'Sinn'] },
+  { wort: 'erleichtert',    q: 'aa', staerke: 2, beduerfnisse: ['Sicherheit', 'Klarheit'] },
+  { wort: 'froh',           q: 'aa', staerke: 2, beduerfnisse: ['Verbindung', 'Leichtigkeit'] },
+  { wort: 'dankbar',        q: 'aa', staerke: 2, beduerfnisse: ['Verbindung', 'Wertschätzung'] },
+  { wort: 'berührt',        q: 'aa', staerke: 2, beduerfnisse: ['Nähe', 'Verbindung'] },
+  { wort: 'gerührt',        q: 'aa', staerke: 2, beduerfnisse: ['Nähe', 'Verständnis'] },
+  { wort: 'ermutigt',       q: 'aa', staerke: 2, beduerfnisse: ['Unterstützung', 'Hoffnung'] },
+  { wort: 'motiviert',      q: 'aa', staerke: 2, beduerfnisse: ['Wirksamkeit', 'Sinn'] },
+  { wort: 'lebendig',       q: 'aa', staerke: 3, beduerfnisse: ['Lebendigkeit', 'Sinn'] },
+  { wort: 'begeistert',     q: 'aa', staerke: 3, beduerfnisse: ['Lebendigkeit', 'Teilhabe'] },
+  { wort: 'glücklich',      q: 'aa', staerke: 3, beduerfnisse: ['Verbindung', 'Sinn'] },
+  { wort: 'überwältigt',    q: 'aa', staerke: 3, beduerfnisse: ['Nähe', 'Verbindung'] },
+  { wort: 'stolz',          q: 'aa', staerke: 3, beduerfnisse: ['Wirksamkeit', 'Anerkennung'] },
+
+  // ---------------------------------------------------------------------
+  // angenehm, wenig Energie
+  // ---------------------------------------------------------------------
+  { wort: 'ruhig',          q: 'ak', staerke: 1, beduerfnisse: ['Ruhe', 'Sicherheit'] },
+  { wort: 'gelassen',       q: 'ak', staerke: 1, beduerfnisse: ['Ruhe', 'Vertrauen'] },
+  { wort: 'entspannt',      q: 'ak', staerke: 1, beduerfnisse: ['Erholung', 'Ruhe'] },
+  { wort: 'gefasst',        q: 'ak', staerke: 1, beduerfnisse: ['Halt', 'Klarheit'] },
+  { wort: 'zufrieden',      q: 'ak', staerke: 2, beduerfnisse: ['Sinn', 'Wirksamkeit'] },
+  { wort: 'versöhnlich',    q: 'ak', staerke: 2, beduerfnisse: ['Verbindung', 'Frieden'] },
+  { wort: 'geborgen',       q: 'ak', staerke: 2, beduerfnisse: ['Sicherheit', 'Nähe', 'Zugehörigkeit'] },
+  { wort: 'verbunden',      q: 'ak', staerke: 2, beduerfnisse: ['Verbindung', 'Zugehörigkeit'] },
+  { wort: 'getröstet',      q: 'ak', staerke: 2, beduerfnisse: ['Trost', 'Nähe'] },
+  { wort: 'sicher',         q: 'ak', staerke: 2, beduerfnisse: ['Sicherheit', 'Vertrauen'] },
+  { wort: 'klar',           q: 'ak', staerke: 2, beduerfnisse: ['Klarheit', 'Orientierung'] },
+  { wort: 'still',          q: 'ak', staerke: 2, beduerfnisse: ['Ruhe', 'Erholung'] },
+  { wort: 'friedlich',      q: 'ak', staerke: 3, beduerfnisse: ['Frieden', 'Ruhe'] },
+  { wort: 'erfüllt',        q: 'ak', staerke: 3, beduerfnisse: ['Sinn', 'Verbindung'] },
+  { wort: 'angenommen',     q: 'ak', staerke: 3, beduerfnisse: ['Annahme', 'Zugehörigkeit'] },
+  // Nachtrag aus der EKE-Gefühlsliste.
+  { wort: 'mitfühlend',     q: 'ak', staerke: 1, beduerfnisse: ['Verbindung', 'Verständnis'] },
+  { wort: 'zugehörig',      q: 'ak', staerke: 2, beduerfnisse: ['Zugehörigkeit', 'Verbindung'] },
+  { wort: 'vertrauensvoll', q: 'ak', staerke: 2, beduerfnisse: ['Vertrauen', 'Verlässlichkeit'] }
+];
+
+// ---------------------------------------------------------------------------
+// Pseudogefühle
+// ---------------------------------------------------------------------------
+// Wörter, die wie ein Gefühl klingen, aber beschreiben, was jemand anderes
+// angeblich tut. Sie stehen NICHT in der Liste oben. Wer eines eingibt,
+// bekommt die echten Gefühle angeboten, die dahinterstecken können.
+//
+// Bewusst mehrere Treffer je Eintrag: Welches zutrifft, weiß nur die Person
+// selbst. Das Werkzeug schlägt vor, es entscheidet nicht.
+
+const PSEUDOGEFUEHLE = {
+  'hintergangen':      ['misstrauisch', 'enttäuscht', 'verunsichert', 'wütend'],
+  'betrogen':          ['misstrauisch', 'enttäuscht', 'gekränkt'],
+  'verraten':          ['enttäuscht', 'misstrauisch', 'traurig'],
+  'ignoriert':         ['einsam', 'traurig', 'unsicher', 'ärgerlich'],
+  'übergangen':        ['ohnmächtig', 'ärgerlich', 'gekränkt'],
+  'nicht gesehen':     ['einsam', 'traurig', 'gekränkt'],
+  'nicht gehört':      ['frustriert', 'ohnmächtig', 'ärgerlich'],
+  'verletzt':          ['traurig', 'gekränkt', 'bedrückt'],
+  'abgelehnt':         ['traurig', 'einsam', 'unsicher'],
+  'zurückgewiesen':    ['traurig', 'einsam', 'gekränkt'],
+  'ausgeschlossen':    ['einsam', 'traurig', 'ohnmächtig'],
+  'im stich gelassen': ['einsam', 'hilflos', 'enttäuscht'],
+  'vernachlässigt':    ['einsam', 'traurig', 'sehnsüchtig'],
+  'angegriffen':       ['wütend', 'verunsichert', 'alarmiert'],
+  'bedroht':           ['alarmiert', 'panisch', 'besorgt'],
+  'unter druck gesetzt': ['angespannt', 'überfordert', 'gereizt'],
+  'manipuliert':       ['misstrauisch', 'wütend', 'verunsichert'],
+  'benutzt':           ['wütend', 'enttäuscht', 'gekränkt'],
+  'ausgenutzt':        ['ärgerlich', 'enttäuscht', 'erschöpft'],
+  'kontrolliert':      ['gereizt', 'ohnmächtig', 'angespannt'],
+  'bevormundet':       ['gereizt', 'ärgerlich', 'ohnmächtig'],
+  'missverstanden':    ['frustriert', 'einsam', 'ratlos'],
+  'unverstanden':      ['einsam', 'frustriert', 'traurig'],
+  'provoziert':        ['gereizt', 'wütend', 'angespannt'],
+  'gedemütigt':        ['beschämt', 'wütend', 'gekränkt'],
+  'erpresst':          ['ohnmächtig', 'wütend', 'angespannt'],
+  'ersetzt':           ['traurig', 'einsam', 'verunsichert'],
+  'ausgegrenzt':       ['einsam', 'traurig', 'ärgerlich'],
+  'entmündigt':        ['ohnmächtig', 'wütend', 'frustriert'],
+  'schlechtgemacht':   ['gekränkt', 'wütend', 'traurig'],
+  'ausgeliefert':      ['ohnmächtig', 'hilflos', 'panisch'],
+  'überrumpelt':       ['überfordert', 'verunsichert', 'ärgerlich'],
+  'im regen stehen gelassen': ['hilflos', 'enttäuscht', 'einsam'],
+
+  // Nachtrag aus der EKE-Gefühlsliste. "verlassen" stand hier zuerst
+  // fälschlich unter den echten Gefühlen: "Du hast mich verlassen" ist eine
+  // Handlung des Gegenübers, kein Zustand in mir. Das echte Gefühl ist einsam.
+  'verlassen':         ['einsam', 'traurig', 'verzweifelt'],
+  'bloßgestellt':      ['beschämt', 'wütend', 'ohnmächtig'],
+  'nicht ernst genommen': ['ärgerlich', 'enttäuscht', 'einsam', 'ohnmächtig'],
+  'ungeliebt':         ['traurig', 'einsam', 'sehnsüchtig'],
+  'ausgebootet':       ['wütend', 'ohnmächtig', 'einsam'],
+  'abgeschoben':       ['traurig', 'einsam', 'ärgerlich'],
+  'kleingemacht':      ['beschämt', 'wütend', 'entmutigt'],
+  'im unklaren gelassen': ['verunsichert', 'ärgerlich', 'beunruhigt'],
+  'ausgegrenzt worden': ['einsam', 'traurig', 'wütend'],
+  'zum schweigen gebracht': ['ohnmächtig', 'wütend', 'frustriert']
+};
+
+// Brücke zwischen der Sprache, in der Menschen suchen, und der Form, in der
+// die Wörter hier stehen müssen. Gefühlslisten sind fast immer in Hauptwörtern
+// geschrieben ("Ohnmacht", "Trauer"), die Maschine braucht aber "ohnmächtig".
+// Links steht, was jemand eintippt, rechts der Eintrag, der gemeint ist —
+// entweder ein echtes Gefühl oder ein Pseudogefühl.
+const SYNONYME = {
+  // Trauer und Verlust
+  'trauer': 'traurig', 'seelenschmerz': 'traurig', 'leere': 'leer',
+  'verlorenheit': 'verloren', 'verlassenheit': 'verlassen',
+  'einsamkeit': 'einsam', 'sehnsucht': 'sehnsüchtig', 'vermissen': 'sehnsüchtig',
+  'wehmut': 'wehmütig', 'fassungslosigkeit': 'fassungslos',
+
+  // Wut und Kränkung
+  'wut': 'wütend', 'zorn': 'zornig', 'gereiztheit': 'gereizt',
+  'empörung': 'empört', 'groll': 'verbittert', 'bitterkeit': 'verbittert',
+  'verbitterung': 'verbittert', 'kränkung': 'gekränkt', 'demütigung': 'gedemütigt',
+
+  // Ohnmacht und Erschöpfung
+  'ohnmacht': 'ohnmächtig', 'hilflosigkeit': 'hilflos',
+  'ausgeliefertsein': 'ausgeliefert', 'überforderung': 'überfordert',
+  'frustration': 'frustriert', 'mutlosigkeit': 'mutlos',
+  'resignation': 'resigniert', 'erschöpfung': 'erschöpft',
+  'verzweiflung': 'verzweifelt', 'sinnlosigkeit': 'leer',
+
+  // Angst und Unsicherheit
+  'angst': 'ängstlich', 'sorge': 'besorgt', 'verlustangst': 'ängstlich',
+  'zukunftsangst': 'ängstlich', 'unsicherheit': 'unsicher',
+  'misstrauen': 'misstrauisch', 'argwohn': 'misstrauisch',
+  'daueranspannung': 'angespannt', 'anspannung': 'angespannt',
+  'alarmbereitschaft': 'alarmiert', 'beklemmung': 'beklommen',
+
+  // Scham und Schuld
+  'scham': 'beschämt', 'fremdscham': 'beschämt', 'schuldgefühl': 'schuldig',
+  'reue': 'schuldig', 'selbstvorwürfe': 'schuldig', 'selbstzweifel': 'unsicher',
+  'versagensgefühl': 'beschämt', 'bloßgestelltsein': 'bloßgestellt',
+  'peinlichkeitsgefühl': 'beschämt',
+
+  // Zerrissenheit
+  'zerrissenheit': 'zerrissen', 'loyalitätskonflikt': 'zerrissen',
+  'ambivalenz': 'zerrissen', 'verwirrung': 'verwirrt',
+  'orientierungslosigkeit': 'ratlos', 'orientierungslos': 'ratlos',
+  'fremdheit': 'fremd', 'fremdeln': 'fremd', 'taubheit': 'betäubt',
+  'betäubung': 'betäubt', 'erstarrung': 'erstarrt',
+
+  // Ablehnung und Distanz
+  'genervtsein': 'genervt', 'abneigung': 'genervt', 'widerwille': 'genervt',
+  'gleichgültigkeit': 'gleichgültig',
+
+  // Ungerechtigkeit
+  'unverstandensein': 'unverstanden', 'übergangenwerden': 'übergangen',
+  'unsichtbarkeit': 'übergangen', 'ausgeschlossensein': 'ausgeschlossen',
+  'zurückgewiesensein': 'zurückgewiesen', 'enttäuschung': 'enttäuscht',
+  'verratensein': 'verraten', 'eifersucht': 'eifersüchtig',
+
+  // Kontakt und Wiederannäherung
+  'nervosität': 'nervös', 'befangenheit': 'befangen', 'unbehagen': 'unbehaglich',
+  'vorsicht': 'vorsichtig', 'zurückhaltung': 'vorsichtig',
+  'vorfreude': 'gespannt', 'überwältigung': 'überwältigt',
+
+  // Tragende Gefühle
+  'liebe': 'verbunden', 'verbundenheit': 'verbunden',
+  'zugehörigkeit': 'zugehörig', 'vertrauen': 'vertrauensvoll',
+  'hoffnung': 'hoffnungsvoll', 'zuversicht': 'zuversichtlich',
+  'erleichterung': 'erleichtert', 'freude': 'froh', 'dankbarkeit': 'dankbar',
+  'mitgefühl': 'mitfühlend', 'versöhnungsbereitschaft': 'versöhnlich',
+  'geborgenheit': 'geborgen', 'ruhe': 'ruhig', 'gelassenheit': 'gelassen'
+};
+
+const QUADRANTEN = {
+  ua: { angenehm: false, energie: 'viel',  titel: 'unangenehm, viel Energie' },
+  aa: { angenehm: true,  energie: 'viel',  titel: 'angenehm, viel Energie' },
+  uk: { angenehm: false, energie: 'wenig', titel: 'unangenehm, wenig Energie' },
+  ak: { angenehm: true,  energie: 'wenig', titel: 'angenehm, wenig Energie' }
+};
+
+// Liefert die Wörter eines Quadranten, nach Stärke sortiert.
+function ausQuadrant(q) {
+  return GEFUEHLE.filter(g => g.q === q).sort((a, b) => a.staerke - b.staerke);
+}
+
+// Sucht ein Wort, egal ob echtes Gefühl oder Pseudogefühl.
+// Rückgabe: {art: 'gefuehl', treffer} oder {art: 'pseudo', wort, vorschlaege}
+// oder {art: 'aehnlich', treffer} oder {art: 'unbekannt'}.
+function suche(eingabe) {
+  var e = String(eingabe || '').trim().toLowerCase()
+    .replace(/^(ich )?(bin|fühle mich|fuehle mich|habe|empfinde)\s+/i, '')
+    .replace(/[.!?,;]+$/, '');
+  if (!e) return { art: 'unbekannt' };
+
+  // Hauptwortform und Nebenformen auf den Eintrag zurückführen, der gemeint ist.
+  if (SYNONYME[e]) e = SYNONYME[e];
+
+  const treffer = GEFUEHLE.find(g => g.wort.toLowerCase() === e);
+  if (treffer) return { art: 'gefuehl', treffer };
+
+  if (PSEUDOGEFUEHLE[e]) {
+    return {
+      art: 'pseudo',
+      wort: e,
+      vorschlaege: PSEUDOGEFUEHLE[e].map(w => GEFUEHLE.find(g => g.wort === w)).filter(Boolean)
+    };
+  }
+
+  const teil = GEFUEHLE.filter(g => g.wort.toLowerCase().startsWith(e.slice(0, 4)));
+  if (teil.length) return { art: 'aehnlich', treffer: teil };
+
+  return { art: 'unbekannt' };
+}
+
+// Dieselbe Datei läuft an zwei Orten: in Node für den Selbsttest unten,
+// im Browser als <\script> für die Gefühlsmaschine. Darum beide Wege.
+const WORTSCHATZ = { GEFUEHLE, PSEUDOGEFUEHLE, SYNONYME, QUADRANTEN, ausQuadrant, suche };
+if (typeof module !== 'undefined' && module.exports) module.exports = WORTSCHATZ;
+if (typeof window !== 'undefined') window.GFK_WORTSCHATZ = WORTSCHATZ;
+
+// ---------------------------------------------------------------------------
+if (typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module) {
+  let fehler = 0;
+  const melde = (ok, text) => { if (!ok) { fehler++; console.log('FEHLER  ' + text); } };
+
+  console.log(`${GEFUEHLE.length} Gefühlswörter, ${Object.keys(PSEUDOGEFUEHLE).length} Pseudogefühle\n`);
+
+  for (const [q, info] of Object.entries(QUADRANTEN)) {
+    const n = ausQuadrant(q);
+    console.log(`${info.titel.padEnd(28)} ${String(n.length).padStart(2)} Wörter   ${n.slice(0, 4).map(g => g.wort).join(', ')} ...`);
+    melde(n.length >= 12, `${q} hat nur ${n.length} Wörter, mindestens 12 nötig`);
+  }
+  console.log('');
+
+  const gesehen = new Set();
+  for (const g of GEFUEHLE) {
+    melde(!gesehen.has(g.wort), `doppelt: ${g.wort}`);
+    gesehen.add(g.wort);
+    melde(/^[a-zäöüß]+$/.test(g.wort), `Form passt nicht zu "ich bin ...": ${g.wort}`);
+    melde(!!QUADRANTEN[g.q], `unbekannter Quadrant bei ${g.wort}`);
+    melde([1, 2, 3].includes(g.staerke), `Stärke ungültig bei ${g.wort}`);
+    melde(g.beduerfnisse.length >= 2, `zu wenige Bedürfnisse bei ${g.wort}`);
+    melde(!PSEUDOGEFUEHLE[g.wort], `${g.wort} steht in beiden Listen`);
+  }
+
+  for (const [pseudo, ziele] of Object.entries(PSEUDOGEFUEHLE)) {
+    melde(ziele.length >= 3, `${pseudo} hat nur ${ziele.length} Vorschläge`);
+    for (const z of ziele) melde(gesehen.has(z), `${pseudo} verweist auf unbekanntes Wort: ${z}`);
+  }
+
+  for (const [von, nach] of Object.entries(SYNONYME)) {
+    melde(gesehen.has(nach) || !!PSEUDOGEFUEHLE[nach],
+      `Synonym "${von}" zeigt auf "${nach}", das es nirgends gibt`);
+    melde(!gesehen.has(von) && !PSEUDOGEFUEHLE[von],
+      `Synonym "${von}" ist selbst schon ein Eintrag und verdeckt ihn`);
+  }
+  console.log(`${Object.keys(SYNONYME).length} Synonyme geprüft.\n`);
+
+  console.log('Stichproben der Suche:');
+  for (const e of ['hintergangen', 'ich fühle mich hintergangen', 'Ohnmacht', 'Trauer', 'Verlassenheit', 'Zerrissenheit', 'mutlos', 'traur', 'Blumenkohl']) {
+    const r = suche(e);
+    const text = r.art === 'gefuehl' ? r.treffer.wort
+      : r.art === 'pseudo' ? 'Pseudogefühl, führt zu ' + r.vorschlaege.map(g => g.wort).join(', ')
+      : r.art === 'aehnlich' ? 'ähnlich: ' + r.treffer.map(g => g.wort).join(', ')
+      : 'nicht gefunden';
+    console.log(`  ${('"' + e + '"').padEnd(34)} ${r.art.padEnd(10)} ${text}`);
+  }
+
+  console.log('');
+  console.log(fehler === 0 ? 'Wortliste in sich stimmig.' : `${fehler} Probleme gefunden.`);
+  process.exit(fehler === 0 ? 0 : 1);
+}
+
+</script>
+<!-- Gefühlsmaschine — Bedienung -->
+<script>
+// Gefühlsmaschine — findet zu einem diffusen Zustand ein brauchbares Wort.
+//
+// Kein Modell, keine Anfrage, keine Kosten: reines Nachschlagen in gefuehle.js.
+// Was der Nutzer hier eintippt, verlässt seinen Browser nicht.
+//
+// Einbau:
+//   <div id="maschine"></div>
+//   <\script src="gefuehle.js"><\/script>
+//   <\script src="gefuehlsmaschine.js"><\/script>
+//   <\script>GFK_Gefuehlsmaschine.mounten(document.getElementById('maschine'));<\/script>
+//
+// Optionen von mounten(ziel, optionen):
+//   startwort   String  — direkt mit diesem Wort in die Suche springen
+//   beiAuswahl  fn({wort, beduerfnis, satz}) — wird bei jeder Auswahl gerufen.
+//               Der Übersetzer hängt sich hier ein und setzt das Wort in seinen Satz.
+//   knopftext   String  — Beschriftung des Übernahme-Knopfs. Fehlt sie,
+//               erscheint stattdessen "Satz kopieren".
+//
+// Die Stile benutzen die Farbvariablen der Seite und fallen sonst auf
+// eigene Werte zurück, damit die Maschine auch allein auf einer Seite steht.
+
+(function (global) {
+  'use strict';
+
+  var STIL = [
+    '.gm { font-family: var(--sans, system-ui, sans-serif); color: var(--ink, #202B26); }',
+    '.gm *, .gm *::before, .gm *::after { box-sizing: border-box; }',
+    '.gm-frage { font-family: var(--serif, Georgia, serif); font-size: 21px; line-height: 1.35; margin: 0 0 6px; }',
+    '.gm-hilfe { font-size: 14px; color: var(--ink-soft, #4C594F); margin: 0 0 18px; max-width: 58ch; }',
+    '.gm-schritt { padding: 22px 0 4px; }',
+    '.gm-weg { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }',
+    '.gm-karte { text-align: left; font: inherit; cursor: pointer; padding: 16px 18px;',
+    '  background: var(--panel, #E4E6DA); border: 1px solid var(--line, #D7D8C7);',
+    '  border-radius: 8px; color: inherit; transition: border-color .12s, transform .12s; }',
+    '.gm-karte:hover { border-color: var(--feel, #954B36); }',
+    '.gm-karte:active { transform: translateY(1px); }',
+    '.gm-karte b { display: block; font-weight: 600; font-size: 16px; margin-bottom: 3px; }',
+    '.gm-karte span { font-size: 13.5px; color: var(--ink-soft, #4C594F); line-height: 1.4; }',
+    '.gm-gruppe { margin: 0 0 16px; }',
+    '.gm-gruppe h4 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase;',
+    '  color: var(--ink-soft, #4C594F); font-weight: 600; margin: 0 0 8px; }',
+    '.gm-woerter { display: flex; flex-wrap: wrap; gap: 8px; }',
+    '.gm-wort { font: inherit; font-size: 15px; cursor: pointer; padding: 7px 14px;',
+    '  background: #fff; border: 1px solid var(--line, #D7D8C7); border-radius: 999px;',
+    '  color: inherit; transition: background .12s, border-color .12s; }',
+    '.gm-wort:hover { border-color: var(--feel, #954B36); background: var(--feel-tint, rgba(149,75,54,.14)); }',
+    '.gm-wort[aria-pressed="true"] { background: var(--feel, #954B36); border-color: var(--feel, #954B36); color: #fff; }',
+    '.gm-suche { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }',
+    '.gm-feld { font: inherit; font-size: 16px; padding: 10px 14px; flex: 1 1 240px; min-width: 0;',
+    '  border: 1px solid var(--line, #D7D8C7); border-radius: 6px; background: #fff; color: inherit; }',
+    '.gm-feld:focus { outline: 2px solid var(--feel, #954B36); outline-offset: 1px; }',
+    '.gm-knopf { font: inherit; font-size: 15px; cursor: pointer; padding: 10px 18px; border-radius: 6px;',
+    '  border: 1px solid var(--brand, #3B6E68); background: var(--brand, #3B6E68); color: #fff; }',
+    '.gm-knopf:hover { background: var(--brand-dark, #2B534F); border-color: var(--brand-dark, #2B534F); }',
+    '.gm-knopf.gm-still { background: transparent; color: var(--ink-soft, #4C594F); border-color: var(--line, #D7D8C7); }',
+    '.gm-knopf.gm-still:hover { background: var(--panel, #E4E6DA); color: var(--ink, #202B26); }',
+    '.gm-hinweis { border-left: 3px solid var(--feel, #954B36); background: var(--feel-tint, rgba(149,75,54,.14));',
+    '  padding: 14px 16px; border-radius: 0 6px 6px 0; margin: 18px 0; font-size: 14.5px; line-height: 1.5; }',
+    '.gm-hinweis p { margin: 0 0 8px; } .gm-hinweis p:last-child { margin: 0; }',
+    '.gm-ergebnis { margin-top: 24px; padding: 22px 24px; background: #fff;',
+    '  border: 1px solid var(--line, #D7D8C7); border-top: 3px solid var(--feel, #954B36); border-radius: 8px; }',
+    '.gm-satz { font-family: var(--serif, Georgia, serif); font-size: 24px; line-height: 1.35; margin: 0 0 4px; }',
+    '.gm-satz em { font-style: normal; color: var(--feel, #954B36); }',
+    '.gm-zeile { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }',
+    '.gm-fuss { font-size: 13px; color: var(--ink-soft, #4C594F); margin: 18px 0 0; line-height: 1.5; }',
+    '.gm-pfad { font-size: 13px; color: var(--ink-soft, #4C594F); margin: 0 0 14px; }',
+    '.gm-pfad button { font: inherit; font-size: 13px; background: none; border: 0; padding: 0;',
+    '  color: var(--brand, #3B6E68); cursor: pointer; text-decoration: underline; }',
+    '.gm-trenner { border: 0; border-top: 1px solid var(--line, #D7D8C7); margin: 26px 0 0; }',
+    '@media (prefers-reduced-motion: reduce) { .gm * { transition: none !important; } }'
+  ].join('\n');
+
+  var STAERKEN = [
+    { grad: 1, titel: 'eher leicht' },
+    { grad: 2, titel: 'deutlich' },
+    { grad: 3, titel: 'stark' }
+  ];
+
+  // Der zweite Schritt heißt je nach Seite der ersten Achse anders.
+  var ENERGIE = {
+    unangenehm: [
+      { q: 'ua', titel: 'Angespannt, unruhig, aufgeladen', hilfe: 'Es drängt, es kribbelt, es lässt dich nicht los.' },
+      { q: 'uk', titel: 'Schwer, müde, leer', hilfe: 'Es zieht nach unten, es kostet Kraft, es macht still.' }
+    ],
+    angenehm: [
+      { q: 'aa', titel: 'Wach, lebendig, in Bewegung', hilfe: 'Es zieht dich nach vorn, du hast Lust auf etwas.' },
+      { q: 'ak', titel: 'Ruhig, gelöst, zufrieden', hilfe: 'Es ist still und trägt. Nichts drängt.' }
+    ]
+  };
+
+  function stilEinmal() {
+    if (document.getElementById('gm-stil')) return;
+    var s = document.createElement('style');
+    s.id = 'gm-stil';
+    s.textContent = STIL;
+    document.head.appendChild(s);
+  }
+
+  function el(tag, klasse, text) {
+    var n = document.createElement(tag);
+    if (klasse) n.className = klasse;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function leeren(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+
+  function mounten(ziel, optionen) {
+    if (!ziel) throw new Error('Gefühlsmaschine: kein Zielelement übergeben.');
+    var wortschatz = global.GFK_WORTSCHATZ;
+    if (!wortschatz) throw new Error('Gefühlsmaschine: gefuehle.js muss vorher geladen sein.');
+
+    optionen = optionen || {};
+    stilEinmal();
+
+    var wurzel = el('div', 'gm');
+    var buehne = el('div');
+    var ausgabe = el('div');
+    ausgabe.setAttribute('aria-live', 'polite');
+    wurzel.appendChild(buehne);
+    wurzel.appendChild(ausgabe);
+    leeren(ziel);
+    ziel.appendChild(wurzel);
+
+    // Zustand: nur was wirklich nötig ist.
+    var stand = { seite: null, wort: null, beduerfnis: null };
+
+    // ---------- Bausteine ----------
+
+    function schritt(frage, hilfe) {
+      var s = el('div', 'gm-schritt');
+      s.appendChild(el('p', 'gm-frage', frage));
+      if (hilfe) s.appendChild(el('p', 'gm-hilfe', hilfe));
+      return s;
+    }
+
+    function pfad(teile) {
+      var p = el('p', 'gm-pfad');
+      teile.forEach(function (t, i) {
+        if (i) p.appendChild(document.createTextNode('  ›  '));
+        if (t.zurueck) {
+          var b = el('button', null, t.text);
+          b.type = 'button';
+          b.addEventListener('click', t.zurueck);
+          p.appendChild(b);
+        } else {
+          p.appendChild(document.createTextNode(t.text));
+        }
+      });
+      return p;
+    }
+
+    function karten(liste, beiKlick) {
+      var w = el('div', 'gm-weg');
+      liste.forEach(function (eintrag) {
+        var k = el('button', 'gm-karte');
+        k.type = 'button';
+        k.appendChild(el('b', null, eintrag.titel));
+        if (eintrag.hilfe) k.appendChild(el('span', null, eintrag.hilfe));
+        k.addEventListener('click', function () { beiKlick(eintrag); });
+        w.appendChild(k);
+      });
+      return w;
+    }
+
+    function wortknoepfe(woerter) {
+      var box = el('div', 'gm-woerter');
+      woerter.forEach(function (g) {
+        var b = el('button', 'gm-wort', g.wort);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', stand.wort && stand.wort.wort === g.wort ? 'true' : 'false');
+        b.addEventListener('click', function () { waehlen(g); });
+        box.appendChild(b);
+      });
+      return box;
+    }
+
+    // ---------- Einstieg ----------
+
+    function start() {
+      stand = { seite: null, wort: null, beduerfnis: null };
+      leeren(buehne);
+      leeren(ausgabe);
+
+      var s = schritt(
+        'Wie geht es dir damit?',
+        'Zwei Fragen genügen meistens. Es muss nicht genau stimmen — du kannst jederzeit zurück.'
+      );
+      s.appendChild(karten([
+        { titel: 'Eher nicht gut', hilfe: 'Etwas fehlt, etwas stört, etwas tut weh.', seite: 'unangenehm' },
+        { titel: 'Eher gut', hilfe: 'Etwas stimmt, etwas trägt, etwas erleichtert.', seite: 'angenehm' }
+      ], function (e) { energie(e.seite); }));
+      buehne.appendChild(s);
+
+      buehne.appendChild(el('hr', 'gm-trenner'));
+      buehne.appendChild(sucheBlock());
+    }
+
+    function energie(seite) {
+      stand.seite = seite;
+      leeren(buehne);
+      leeren(ausgabe);
+
+      buehne.appendChild(pfad([
+        { text: seite === 'angenehm' ? 'Eher gut' : 'Eher nicht gut', zurueck: start },
+        { text: 'Wie viel Kraft?' }
+      ]));
+
+      var s = schritt(
+        'Und wie viel Kraft steckt darin?',
+        'Nicht wie stark das Gefühl ist, sondern ob es dich antreibt oder ausbremst.'
+      );
+      s.appendChild(karten(ENERGIE[seite], function (e) { woerter(e.q); }));
+      buehne.appendChild(s);
+    }
+
+    function woerter(q) {
+      leeren(buehne);
+      leeren(ausgabe);
+
+      var info = wortschatz.QUADRANTEN[q];
+      var seite = info.angenehm ? 'angenehm' : 'unangenehm';
+      stand.seite = seite;
+
+      buehne.appendChild(pfad([
+        { text: info.angenehm ? 'Eher gut' : 'Eher nicht gut', zurueck: start },
+        { text: info.energie === 'viel' ? 'Mit Druck' : 'Ohne Druck', zurueck: function () { energie(seite); } },
+        { text: 'Wort wählen' }
+      ]));
+
+      var s = schritt(
+        'Welches Wort kommt am nächsten?',
+        'Keins trifft es genau — such das, gegen das du am wenigsten Einwände hast.'
+      );
+
+      var alle = wortschatz.ausQuadrant(q);
+      STAERKEN.forEach(function (st) {
+        var teil = alle.filter(function (g) { return g.staerke === st.grad; });
+        if (!teil.length) return;
+        var gr = el('div', 'gm-gruppe');
+        gr.appendChild(el('h4', null, st.titel));
+        gr.appendChild(wortknoepfe(teil));
+        s.appendChild(gr);
+      });
+
+      buehne.appendChild(s);
+      // Merken, damit "Nachbarn zeigen" aus dem Ergebnis hierher zurückfindet.
+      stand.quadrant = q;
+    }
+
+    // ---------- Suche ----------
+
+    function sucheBlock(vorbelegt) {
+      var s = schritt(
+        'Oder: du hast schon ein Wort',
+        'Tipp es ein. Manche Wörter klingen wie Gefühle, sagen aber mehr über die andere Person aus als über dich. Die Maschine sagt dir, welches.'
+      );
+      var reihe = el('div', 'gm-suche');
+      var feld = el('input', 'gm-feld');
+      feld.type = 'text';
+      feld.placeholder = 'z. B. hintergangen, mutlos, ohnmächtig';
+      feld.setAttribute('aria-label', 'Gefühlswort eingeben');
+      if (vorbelegt) feld.value = vorbelegt;
+
+      var knopf = el('button', 'gm-knopf', 'Nachschlagen');
+      knopf.type = 'button';
+
+      function los() { nachschlagen(feld.value); }
+      knopf.addEventListener('click', los);
+      feld.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') { ev.preventDefault(); los(); }
+      });
+
+      reihe.appendChild(feld);
+      reihe.appendChild(knopf);
+      s.appendChild(reihe);
+      s.dataset.feld = '1';
+      s._feld = feld;
+      return s;
+    }
+
+    function nachschlagen(eingabe) {
+      var ergebnis = wortschatz.suche(eingabe);
+      leeren(ausgabe);
+
+      if (ergebnis.art === 'gefuehl') {
+        waehlen(ergebnis.treffer);
+        return;
+      }
+
+      if (ergebnis.art === 'pseudo') {
+        var h = el('div', 'gm-hinweis');
+        var p1 = el('p');
+        p1.appendChild(document.createTextNode('„' + ergebnis.wort + '“ beschreibt, was die andere Person '));
+        p1.appendChild(el('em', null, 'getan'));
+        p1.appendChild(document.createTextNode(' hat — nicht, wie es dir geht. Wer es hört, hört einen Vorwurf und wehrt ihn ab.'));
+        h.appendChild(p1);
+        h.appendChild(el('p', null, 'Darunter liegt fast immer ein echtes Gefühl. Welches passt?'));
+        ausgabe.appendChild(h);
+        ausgabe.appendChild(wortknoepfe(ergebnis.vorschlaege));
+        return;
+      }
+
+      if (ergebnis.art === 'aehnlich') {
+        ausgabe.appendChild(el('p', 'gm-hilfe', 'Das Wort kenne ich nicht. Meintest du eines davon?'));
+        ausgabe.appendChild(wortknoepfe(ergebnis.treffer.slice(0, 8)));
+        return;
+      }
+
+      var k = el('div', 'gm-hinweis');
+      k.appendChild(el('p', null, 'Dieses Wort steht nicht in der Liste. Das heißt nicht, dass es falsch ist — die Liste ist begrenzt.'));
+      var z = el('p', 'gm-zeile');
+      var b = el('button', 'gm-knopf gm-still', 'Lieber in zwei Fragen suchen');
+      b.type = 'button';
+      b.addEventListener('click', start);
+      z.appendChild(b);
+      k.appendChild(z);
+      ausgabe.appendChild(k);
+    }
+
+    // ---------- Ergebnis ----------
+
+    function waehlen(gefuehl) {
+      stand.wort = gefuehl;
+      stand.beduerfnis = null;
+      stand.quadrant = gefuehl.q;
+      // Das gewählte Wort in der Liste darüber mitmarkieren, sonst sieht man
+      // beim Weiterprobieren nicht mehr, wo man gerade steht.
+      var offen = buehne.querySelectorAll('.gm-wort');
+      for (var i = 0; i < offen.length; i++) {
+        offen[i].setAttribute('aria-pressed', offen[i].textContent === gefuehl.wort ? 'true' : 'false');
+      }
+      zeigen();
+      ausgabe.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+
+    function satzText() {
+      if (!stand.wort) return '';
+      return stand.beduerfnis
+        ? 'Ich bin ' + stand.wort.wort + ', weil mir ' + stand.beduerfnis + ' wichtig ist.'
+        : 'Ich bin ' + stand.wort.wort + '.';
+    }
+
+    function zeigen() {
+      leeren(ausgabe);
+      var g = stand.wort;
+
+      var box = el('div', 'gm-ergebnis');
+
+      var satz = el('p', 'gm-satz');
+      satz.appendChild(document.createTextNode('Ich bin '));
+      satz.appendChild(el('em', null, g.wort));
+      if (stand.beduerfnis) {
+        satz.appendChild(document.createTextNode(', weil mir '));
+        satz.appendChild(el('em', null, stand.beduerfnis));
+        satz.appendChild(document.createTextNode(' wichtig ist.'));
+      } else {
+        satz.appendChild(document.createTextNode('.'));
+      }
+      box.appendChild(satz);
+
+      var gr = el('div', 'gm-gruppe');
+      gr.style.marginTop = '20px';
+      gr.appendChild(el('h4', null, 'Dahinter steckt vermutlich ein Bedürfnis nach'));
+      var chips = el('div', 'gm-woerter');
+      g.beduerfnisse.forEach(function (b) {
+        var c = el('button', 'gm-wort', b);
+        c.type = 'button';
+        c.setAttribute('aria-pressed', stand.beduerfnis === b ? 'true' : 'false');
+        c.addEventListener('click', function () {
+          stand.beduerfnis = (stand.beduerfnis === b) ? null : b;
+          zeigen();
+        });
+        chips.appendChild(c);
+      });
+      gr.appendChild(chips);
+      box.appendChild(gr);
+
+      var zeile = el('div', 'gm-zeile');
+
+      if (typeof optionen.beiAuswahl === 'function') {
+        var u = el('button', 'gm-knopf', optionen.knopftext || 'Wort übernehmen');
+        u.type = 'button';
+        u.addEventListener('click', function () {
+          optionen.beiAuswahl({ wort: g.wort, beduerfnis: stand.beduerfnis, satz: satzText(), gefuehl: g });
+        });
+        zeile.appendChild(u);
+      } else {
+        var kopie = el('button', 'gm-knopf', 'Satz kopieren');
+        kopie.type = 'button';
+        kopie.addEventListener('click', function () {
+          kopieren(satzText(), kopie);
+        });
+        zeile.appendChild(kopie);
+      }
+
+      var nachbar = el('button', 'gm-knopf gm-still', 'Passt nicht ganz');
+      nachbar.type = 'button';
+      nachbar.addEventListener('click', function () { woerter(g.q); });
+      zeile.appendChild(nachbar);
+
+      var neu = el('button', 'gm-knopf gm-still', 'Von vorn');
+      neu.type = 'button';
+      neu.addEventListener('click', start);
+      zeile.appendChild(neu);
+
+      box.appendChild(zeile);
+
+      box.appendChild(el('p', 'gm-fuss',
+        'Das Bedürfnis ist ein Vorschlag, keine Diagnose. Wenn keins passt, stimmt vielleicht das Wort noch nicht — oder dein Bedürfnis steht nicht in der Liste. Beides ist in Ordnung.'));
+
+      ausgabe.appendChild(box);
+    }
+
+    function kopieren(text, knopf) {
+      var alt = knopf.textContent;
+      function fertig(ok) {
+        knopf.textContent = ok ? 'Kopiert' : 'Ging nicht';
+        setTimeout(function () { knopf.textContent = alt; }, 1600);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { fertig(true); }, function () { fertig(false); });
+        return;
+      }
+      var f = document.createElement('textarea');
+      f.value = text;
+      f.setAttribute('readonly', '');
+      f.style.position = 'absolute';
+      f.style.left = '-9999px';
+      document.body.appendChild(f);
+      f.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(f);
+      fertig(ok);
+    }
+
+    // ---------- Los ----------
+
+    start();
+    if (optionen.startwort) {
+      leeren(buehne);
+      var block = sucheBlock(optionen.startwort);
+      buehne.appendChild(block);
+      nachschlagen(optionen.startwort);
+    }
+
+    return {
+      neu: start,
+      nachschlagen: function (w) {
+        leeren(buehne);
+        buehne.appendChild(sucheBlock(w));
+        nachschlagen(w);
+      },
+      stand: function () { return { wort: stand.wort && stand.wort.wort, beduerfnis: stand.beduerfnis, satz: satzText() }; }
+    };
+  }
+
+  global.GFK_Gefuehlsmaschine = { mounten: mounten };
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+  GFK_Gefuehlsmaschine.mounten(document.getElementById('maschine'));
+</script>
+
+</body>
+</html>
