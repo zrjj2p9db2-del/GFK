@@ -20,15 +20,21 @@
 const fs = require('fs');
 const path = require('path');
 
-// Wo die Anwendung herkommt und wo die Testfassung hinsoll. Beides lässt
-// sich überschreiben, aber die Voreinstellung passt zur Ordnerstruktur:
-// dieses Skript liegt in gefuehlsmaschine/, daneben liegen quelle/ und
-// public/. Aufruf aus der Wurzel des Repositorys:
+// An der Wurzel steht die Landingpage. Die Anwendung liegt daneben als
+// public/app.html und ist unter /app.html erreichbar — das ist zugleich
+// die Vorlage, aus der hier die Testfassung in public/test/ entsteht.
+//
+// Damit gibt es drei Adressen und keinen unsichtbaren Ordner:
+//   /            Landingpage
+//   /app.html    die Anwendung, wie sie ist
+//   /test        dieselbe Anwendung mit der Gefühlsmaschine
+//
+// Aufruf aus der Wurzel des Repositorys:
 //
 //   node gefuehlsmaschine/bauen.js
 //
 const HIER = __dirname;
-const LIVE = process.argv[2] || path.join(HIER, '..', 'quelle');
+const QUELLDATEI = process.argv[2] || path.join(HIER, '..', 'public', 'app.html');
 const ZIEL = process.argv[3] || path.join(HIER, '..', 'public', 'test');
 
 function lies(p) { return fs.readFileSync(p, 'utf8'); }
@@ -62,7 +68,27 @@ fs.mkdirSync(ZIEL, { recursive: true });
 
 // ---------------------------------------------------------------- Seite 1
 
-let seite = lies(path.join(LIVE, 'index.html'));
+if (!fs.existsSync(QUELLDATEI)) {
+  throw new Error(
+    path.resolve(QUELLDATEI) + '\ngibt es nicht.\n' +
+    'Dort wird die Anwendung erwartet — die Seite, die früher public/index.html hieß.\n' +
+    'Entweder dorthin kopieren, oder den richtigen Pfad mitgeben:\n' +
+    '  node gefuehlsmaschine/bauen.js <pfad/zur/anwendung.html>'
+  );
+}
+
+let seite = lies(QUELLDATEI);
+
+// Zeigt der Pfad versehentlich auf die Landingpage, beschwert sich das Skript
+// sonst über fehlende Karten. Besser, es sagt gleich, was wirklich los ist.
+if (!seite.includes('id="translate-panel"')) {
+  const landing = seite.includes('Diese Seite entsteht gerade');
+  throw new Error(
+    path.resolve(QUELLDATEI) + '\nist nicht die Anwendung' +
+    (landing ? ', sondern die Landingpage' : '') + '.\n' +
+    'Die Anwendung ist die Seite, die früher public/index.html hieß.'
+  );
+}
 
 // Erkennbar machen, dass das nicht die Live-Seite ist.
 seite = seite.replace(
@@ -226,7 +252,7 @@ fs.writeFileSync(path.join(ZIEL, 'gefuehlsmaschine.html'), allein);
 
 // ---------------------------------------------------------------- Bericht
 
-console.log('gelesen aus   ' + path.resolve(LIVE));
+console.log('gelesen aus   ' + path.resolve(QUELLDATEI));
 console.log('geschrieben   ' + path.resolve(ZIEL) + '\n');
 
 for (const datei of ['index.html', 'gefuehlsmaschine.html']) {
