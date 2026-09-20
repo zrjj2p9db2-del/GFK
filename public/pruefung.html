@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prüfung — GFK-Kompass</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --paper:#EFF0EA; --panel:#E4E6DA; --ink:#202B26; --ink-soft:#4C594F;
+    --line:#D7D8C7; --brand:#3B6E68; --brand-dark:#2B534F;
+    --gut:#436B49; --schlecht:#954B36; --warn:#8A6A1E;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; padding:40px 20px 80px; background:var(--paper); color:var(--ink);
+    font:16px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+  .seite { max-width:680px; margin:0 auto; }
+  h1 { font-size:24px; margin:0 0 6px; }
+  .lead { color:var(--ink-soft); margin:0 0 28px; }
+
+  .block { background:#fff; border:1px solid var(--line); border-radius:8px; padding:20px 22px; margin-bottom:16px; }
+  .block h2 { font-size:17px; margin:0 0 6px; }
+  .block p.was { color:var(--ink-soft); font-size:14.5px; margin:0 0 16px; }
+
+  button {
+    font:inherit; font-size:15px; cursor:pointer; padding:10px 18px; border-radius:6px;
+    border:1px solid var(--brand); background:var(--brand); color:#fff;
+  }
+  button:hover:not(:disabled) { background:var(--brand-dark); border-color:var(--brand-dark); }
+  button:disabled { opacity:.55; cursor:default; }
+  button.stiller { background:transparent; color:var(--ink-soft); border-color:var(--line); }
+  button.stiller:hover:not(:disabled) { background:var(--panel); color:var(--ink); }
+
+  .ergebnis { margin-top:16px; padding:16px 18px; border-radius:6px; border-left:4px solid var(--line); background:var(--panel); }
+  .ergebnis.gut      { border-left-color:var(--gut);      background:rgba(67,107,73,.10); }
+  .ergebnis.schlecht { border-left-color:var(--schlecht); background:rgba(149,75,54,.10); }
+  .ergebnis.warn     { border-left-color:var(--warn);     background:rgba(138,106,30,.12); }
+  .ergebnis .titel { font-weight:600; margin:0 0 8px; }
+  .ergebnis p { margin:0 0 8px; }
+  .ergebnis p:last-child { margin:0; }
+  .ergebnis .tun { font-size:14.5px; }
+
+  pre {
+    background:#F5F5F0; border:1px solid var(--line); border-radius:5px;
+    padding:11px 13px; overflow:auto; font-size:12.5px; line-height:1.45;
+    margin:12px 0 0; white-space:pre-wrap; word-break:break-word;
+  }
+  .warnung {
+    background:rgba(149,75,54,.12); border-left:4px solid var(--schlecht);
+    padding:16px 18px; border-radius:0 6px 6px 0; margin-bottom:24px;
+  }
+  .warnung b { display:block; margin-bottom:6px; }
+  footer { margin-top:32px; font-size:13.5px; color:var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="seite">
+
+  <h1>Prüfung</h1>
+  <p class="lead">Findet heraus, warum die Übersetzung nicht funktioniert — ohne Entwicklerwerkzeuge, ohne Logdateien.</p>
+
+  <div id="ortswarnung" class="warnung" hidden>
+    <b>Diese Datei liegt nicht auf deinem Server.</b>
+    <p id="ortstext"></p>
+  </div>
+
+  <div class="block">
+    <h2>1. Läuft der Server?</h2>
+    <p class="was">Fragt <code>/api/version</code> ab. Kostet nichts. Zeigt, ob überhaupt ein Server antwortet und mit welchem Stand.</p>
+    <button id="k1">Server prüfen</button>
+    <div id="e1"></div>
+  </div>
+
+  <div class="block">
+    <h2>2. Stimmt der Schlüssel?</h2>
+    <p class="was">
+      Sendet eine echte, sehr kurze Anfrage an <code>/api/gfk-proxy</code>.
+      Fehlt der Schlüssel, lehnt dein Server vorher ab — dann kostet die Prüfung nichts.
+      Nur wenn alles funktioniert, entstehen Kosten in Höhe einer normalen Übersetzung.
+    </p>
+    <button id="k2">Echte Anfrage senden</button>
+    <div id="e2"></div>
+  </div>
+
+  <div class="block">
+    <h2>3. Ergebnis weitergeben</h2>
+    <p class="was">Kopiert beide Ergebnisse als Text, zum Einfügen in den Chat.</p>
+    <button id="k3" class="stiller">Ergebnis kopieren</button>
+  </div>
+
+  <footer>
+    Diese Seite ist ein Werkzeug für dich, nicht für Besucher. Wenn das Problem
+    gelöst ist, kannst du sie aus <code>public/</code> löschen.
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var protokoll = [];
+
+  function merke(zeile) { protokoll.push(zeile); }
+
+  function zeige(ziel, art, titel, text, tun, roh) {
+    var d = document.getElementById(ziel);
+    d.innerHTML = '';
+    var box = document.createElement('div');
+    box.className = 'ergebnis ' + art;
+
+    var t = document.createElement('p');
+    t.className = 'titel';
+    t.textContent = titel;
+    box.appendChild(t);
+
+    if (text) {
+      var p = document.createElement('p');
+      p.textContent = text;
+      box.appendChild(p);
+    }
+    if (tun) {
+      var p2 = document.createElement('p');
+      p2.className = 'tun';
+      p2.textContent = 'Was zu tun ist: ' + tun;
+      box.appendChild(p2);
+    }
+    if (roh) {
+      var pre = document.createElement('pre');
+      pre.textContent = roh;
+      box.appendChild(pre);
+    }
+    d.appendChild(box);
+  }
+
+  // ---- Liegt die Datei überhaupt auf dem Server? ------------------------
+  // Der häufigste Grund für "die Schnittstelle antwortet nicht" ist, dass
+  // die Seite gar nicht über die Domain aufgerufen wurde. Dann gibt es
+  // keinen Server, der antworten könnte — und in den Logs steht folglich
+  // auch nichts Neues.
+  if (location.protocol !== 'http:' && location.protocol !== 'https:') {
+    document.getElementById('ortswarnung').hidden = false;
+    document.getElementById('ortstext').textContent =
+      'Du hast sie als Datei geöffnet (' + location.protocol + '). Es gibt hier keinen Server, ' +
+      'der antworten könnte — jede Anfrage muss scheitern, und in den Logs erscheint nichts. ' +
+      'Lade die Datei nach public/ hoch und rufe sie über deine Domain auf.';
+  }
+
+  // ---- Deutung der Fehlercodes ----------------------------------------
+  var DEUTUNG = {
+    auth_error_500: {
+      art: 'schlecht',
+      titel: 'Der Schlüssel fehlt in der Umgebung.',
+      text: 'Dein Server läuft, aber die Umgebungsvariable ANTHROPIC_API_KEY ist bei Clever Cloud nicht gesetzt. Die Anfrage wurde gar nicht erst an Anthropic geschickt — diese Prüfung hat dich also nichts gekostet.',
+      tun: 'Bei Clever Cloud unter Environment variables ANTHROPIC_API_KEY anlegen und die Anwendung neu starten. Der Schlüssel gehört nirgendwo sonst hin, schon gar nicht ins Repository.'
+    },
+    auth_error_401: {
+      art: 'schlecht',
+      titel: 'Der Schlüssel wird abgelehnt.',
+      text: 'Die Variable ist gesetzt, aber Anthropic weist sie zurück. Entweder ist der Schlüssel widerrufen, falsch abgetippt, oder auf dem Konto liegt kein Guthaben.',
+      tun: 'Im Anthropic-Konto prüfen, ob der Schlüssel noch gültig ist und Guthaben vorhanden ist. Notfalls einen neuen erstellen und die Variable bei Clever Cloud ersetzen.'
+    },
+    rate_limited: {
+      art: 'warn',
+      titel: 'Zu viele Anfragen.',
+      text: 'Die Bremse deines Servers oder die von Anthropic hat gegriffen.',
+      tun: 'Eine Minute warten und erneut prüfen.'
+    },
+    overloaded: {
+      art: 'warn',
+      titel: 'Anthropic ist gerade überlastet.',
+      text: 'Das liegt nicht an deiner Seite und geht meist von selbst vorbei.',
+      tun: 'In ein paar Minuten erneut versuchen.'
+    },
+    timeout: {
+      art: 'warn',
+      titel: 'Zeitüberschreitung.',
+      text: 'Die Antwort kam nicht rechtzeitig. Bei effort: high und langem Prompt ist das gelegentlich möglich.',
+      tun: 'Erneut versuchen. Häuft es sich, ist die Zeitgrenze im Server zu knapp.'
+    },
+    network_error: {
+      art: 'schlecht',
+      titel: 'Dein Server erreicht Anthropic nicht.',
+      text: 'Die Verbindung von Clever Cloud nach außen ist gestört oder blockiert.',
+      tun: 'Anwendung bei Clever Cloud neu starten. Bleibt es, liegt es an deren Netz.'
+    },
+    incomplete_response: {
+      art: 'warn',
+      titel: 'Antwort war abgeschnitten.',
+      text: 'Das Token-Budget hat für Nachdenken plus Text nicht gereicht, auch nach Verdopplung nicht.',
+      tun: 'Das ist ein inhaltliches Problem, kein Konfigurationsfehler. Meld dich damit im Chat.'
+    },
+    bad_response: {
+      art: 'warn',
+      titel: 'Antwort war unbrauchbar.',
+      text: 'Es kam etwas zurück, aber kein gültiges Ergebnis.',
+      tun: 'Das ist ein inhaltliches Problem, kein Konfigurationsfehler. Meld dich damit im Chat.'
+    },
+    bad_request: {
+      art: 'schlecht',
+      titel: 'Der Server versteht die Anfrage nicht.',
+      text: 'Das sollte nicht vorkommen und deutet darauf hin, dass Seite und Server nicht zusammenpassen.',
+      tun: 'Meld dich damit im Chat.'
+    },
+    upstream_error: {
+      art: 'schlecht',
+      titel: 'Unbekannter Fehler bei Anthropic.',
+      text: 'Der Server hat geantwortet, aber mit einem Status, den wir nicht eingeordnet haben.',
+      tun: 'Den Kasten unten kopieren und im Chat einfügen.'
+    }
+  };
+
+  // ---- 1. Server ------------------------------------------------------
+  document.getElementById('k1').addEventListener('click', function () {
+    var b = this;
+    b.disabled = true;
+    b.textContent = 'prüfe …';
+
+    fetch('/api/version', { cache: 'no-store' })
+      .then(function (r) {
+        return r.text().then(function (t) { return { status: r.status, text: t }; });
+      })
+      .then(function (a) {
+        if (a.status === 200) {
+          var d = null;
+          try { d = JSON.parse(a.text); } catch (e) {}
+          if (d) {
+            merke('Server: läuft. Prompts=' + d.prompts + ', Modell=' + d.model + ', effort=' + d.effort);
+            zeige('e1', 'gut', 'Der Server läuft.',
+              'Er meldet sich mit dem aktuellen Stand.', null,
+              'Prompt-Stand:  ' + d.prompts + '\nModell:        ' + d.model + '\neffort:        ' + d.effort);
+            return;
+          }
+        }
+        if (a.status === 404) {
+          merke('Server: /api/version gibt es nicht (404)');
+          zeige('e1', 'schlecht', 'Die Route gibt es nicht.',
+            'Es antwortet zwar etwas, aber nicht deine server.js — oder sie läuft in einem älteren Stand ohne diese Route.',
+            'Prüfen, ob die letzte Auslieferung bei Clever Cloud wirklich durchgelaufen ist.',
+            'HTTP ' + a.status + '\n' + a.text.slice(0, 300));
+          return;
+        }
+        merke('Server: unerwarteter Status ' + a.status);
+        zeige('e1', 'schlecht', 'Unerwartete Antwort (HTTP ' + a.status + ').', null,
+          'Den Kasten kopieren und im Chat einfügen.', a.text.slice(0, 400));
+      })
+      .catch(function (err) {
+        merke('Server: nicht erreichbar (' + err.message + ')');
+        zeige('e1', 'schlecht', 'Es antwortet überhaupt kein Server.',
+          'Die Anfrage kam nicht an. Entweder läuft die Anwendung bei Clever Cloud nicht, oder diese Seite wurde nicht über deine Domain aufgerufen.',
+          'Oben prüfen, ob der rote Kasten erschienen ist. Sonst: Anwendung bei Clever Cloud starten.',
+          err.message);
+      })
+      .finally(function () { b.disabled = false; b.textContent = 'Nochmal prüfen'; });
+  });
+
+  // ---- 2. Echte Anfrage ------------------------------------------------
+  document.getElementById('k2').addEventListener('click', function () {
+    var b = this;
+    b.disabled = true;
+    b.textContent = 'sende …';
+
+    fetch('/api/gfk-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'translate', text: 'Du kommst zu spät.' })
+    })
+      .then(function (r) {
+        return r.text().then(function (t) { return { status: r.status, text: t }; });
+      })
+      .then(function (a) {
+        var roh = 'HTTP ' + a.status + '\n' + a.text.slice(0, 500);
+
+        if (a.status === 200) {
+          merke('Anfrage: erfolgreich (HTTP 200)');
+          zeige('e2', 'gut', 'Es funktioniert.',
+            'Der Schlüssel stimmt, die Übersetzung kam zurück. Wenn die Seite trotzdem eine Fehlermeldung zeigt, liegt es nicht an der Schnittstelle — dann melde dich im Chat.',
+            null, roh);
+          return;
+        }
+
+        var d = null;
+        try { d = JSON.parse(a.text); } catch (e) {}
+        var code = (d && d.code) || 'unbekannt';
+        var schluessel = code;
+        if (code === 'auth_error') {
+          schluessel = a.status === 500 ? 'auth_error_500' : 'auth_error_401';
+        }
+        var deutung = DEUTUNG[schluessel];
+
+        merke('Anfrage: HTTP ' + a.status + ', code=' + code);
+
+        if (deutung) {
+          zeige('e2', deutung.art, deutung.titel, deutung.text, deutung.tun, roh);
+        } else {
+          zeige('e2', 'schlecht', 'Fehler: ' + code + ' (HTTP ' + a.status + ')', null,
+            'Den Kasten kopieren und im Chat einfügen.', roh);
+        }
+      })
+      .catch(function (err) {
+        merke('Anfrage: nicht erreichbar (' + err.message + ')');
+        zeige('e2', 'schlecht', 'Die Anfrage kam nicht an.',
+          'Es antwortet kein Server. Diese Seite wurde vermutlich nicht über deine Domain aufgerufen.',
+          'Die Datei nach public/ hochladen und über deine Domain öffnen.', err.message);
+      })
+      .finally(function () { b.disabled = false; b.textContent = 'Nochmal senden'; });
+  });
+
+  // ---- 3. Kopieren -----------------------------------------------------
+  document.getElementById('k3').addEventListener('click', function () {
+    var b = this;
+    var text = 'Prüfung GFK-Kompass\nAdresse: ' + location.href + '\n\n' +
+      (protokoll.length ? protokoll.join('\n') : '(noch nichts geprüft)');
+    function fertig(ok) {
+      b.textContent = ok ? 'Kopiert' : 'Ging nicht';
+      setTimeout(function () { b.textContent = 'Ergebnis kopieren'; }, 1600);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { fertig(true); }, function () { fertig(false); });
+    } else {
+      fertig(false);
+    }
+  });
+})();
+</script>
+</body>
+</html>
