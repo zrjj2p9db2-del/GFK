@@ -719,10 +719,98 @@
     background: var(--paper); border: 1px solid var(--line); border-radius: 8px;
     padding: 10px 16px; margin-bottom: 8px; font-size: 15px; color: var(--ink); line-height: 1.5;
   }
+
+  /* ===== Hilfe: leise Zeile unter dem Absende-Knopf ===== */
+  .hilfe-zeile { margin: 18px 0 0; font-size: 13.5px; color: var(--ink-soft); }
+  .hilfe-link {
+    background: none; border: none; padding: 0; cursor: pointer;
+    font: inherit; color: var(--brand);
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .hilfe-link:hover { color: var(--brand-dark); }
+  .hilfe-link:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 2px; }
+
+  /* ===== Hilfe: Karte bei kritischem Text ===== */
+  /* Ruhig, nicht rot. Sie steht neben dem Ergebnis, nicht an seiner Stelle. */
+  .hilfe-karte {
+    margin-top: 18px;
+    padding: 18px 20px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--brand);
+    border-radius: 10px;
+  }
+  .hilfe-karte.gefahr { border-left-color: var(--feel); }
+  /* Nach der Antwort verschwindet der Ladebalken (20 px) und alles darunter
+     rückt nach oben, während die Seite noch rollt. Ohne Abstand landete die
+     Überschrift 20 bis 30 px über dem Bildschirmrand. */
+  #result, #foreign-result, #practice-result, .hilfe-karte { scroll-margin-top: 32px; }
+  .hilfe-karte h4 { font-family: var(--serif); font-size: 17px; font-weight: 500; margin: 0 0 8px; color: var(--ink); }
+  .hilfe-karte p { margin: 0 0 10px; font-size: 14.5px; line-height: 1.55; color: var(--ink); }
+  .hilfe-karte p:last-child { margin-bottom: 0; }
+  .hilfe-karte .nummern { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .hilfe-karte .nummern a {
+    display: inline-block; padding: 8px 14px;
+    background: #fff; border: 1px solid var(--line); border-radius: 999px;
+    font-weight: 600; font-size: 15px; color: var(--ink); text-decoration: none;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .hilfe-karte .nummern a:hover { border-color: var(--brand); }
+  .hilfe-karte .nummern a small { font-weight: 400; color: var(--ink-soft); font-size: 12.5px; margin-left: 4px; }
+
+  /* ===== Hilfe: Übersicht aller Anlaufstellen, in den Farben der Seite ===== */
+  dialog.hilfe {
+    width: min(620px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: 0 20px 60px rgba(32, 43, 38, 0.25);
+    overflow: auto;
+  }
+  dialog.hilfe::backdrop { background: rgba(32, 43, 38, 0.45); }
+  .hilfe-innen { padding: 30px 30px 26px; }
+  .hilfe-innen h2 { font-family: var(--serif); font-size: 26px; font-weight: 600; margin: 0 0 10px; color: var(--ink); }
+  .hilfe-innen h2:focus { outline: none; }
+  .hilfe-innen .einleitung { font-size: 15.5px; line-height: 1.6; color: var(--ink-soft); margin: 0 0 22px; }
+  .hilfe-gruppe { margin: 0 0 16px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+  .hilfe-gruppe .wofuer {
+    display: block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--brand); font-weight: 600; margin-bottom: 4px;
+  }
+  .hilfe-gruppe p { margin: 0; font-size: 15.5px; line-height: 1.6; color: var(--ink); }
+  .hilfe-gruppe .zeit { color: var(--ink-soft); font-size: 14px; }
+  dialog.hilfe a { color: var(--brand-dark); }
+  /* Eine Telefonnummer darf nie mitten auseinanderbrechen. */
+  dialog.hilfe a.tel {
+    white-space: nowrap; font-weight: 700; color: var(--ink); text-decoration: none;
+    border-bottom: 2px solid rgba(59, 110, 104, 0.35); font-variant-numeric: tabular-nums;
+  }
+  dialog.hilfe a.tel:hover { border-bottom-color: var(--brand); }
+  .hilfe-notfall {
+    margin: 4px 0 18px; padding: 14px 16px;
+    background: rgba(149, 75, 54, 0.08); border-left: 4px solid var(--feel);
+    border-radius: 0 10px 10px 0; font-size: 15.5px; color: var(--ink);
+  }
+  .hilfe-ausland { font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); margin: 0 0 6px; }
+  .hilfe-stand { font-size: 12.5px; color: var(--ink-soft); margin: 0; }
+  .hilfe-fuss { display: flex; justify-content: flex-end; margin-top: 22px; }
+  .hilfe-zurueck {
+    background: var(--brand); color: var(--paper); border: none; border-radius: 8px;
+    padding: 13px 22px; font-family: var(--sans); font-size: 15px; font-weight: 500; cursor: pointer;
+  }
+  .hilfe-zurueck:hover { background: var(--brand-dark); }
+  .hilfe-zurueck:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(43, 83, 79, 0.35); }
+  @media (max-width: 520px) {
+    .hilfe-innen { padding: 24px 20px 20px; }
+    .hilfe-innen h2 { font-size: 22px; }
+  }
 </style>
 </head>
 <body>
-<div style="background:#954B36;color:#fff;font:500 14px/1.4 system-ui,sans-serif;padding:9px 16px;text-align:center;position:sticky;top:0;z-index:999">Testfassung — nicht die öffentliche Seite. Änderungen hier ändern nichts an <a href="/" style="color:#fff">gfk-kompass</a>.</div>
+<style>html{scroll-padding-top:72px}</style><div style="background:#954B36;color:#fff;font:500 14px/1.4 system-ui,sans-serif;padding:9px 16px;text-align:center;position:sticky;top:0;z-index:999">Testfassung — nicht die öffentliche Seite. Änderungen hier ändern nichts an <a href="/" style="color:#fff">gfk-kompass</a>.</div>
 
 <div class="page">
 
@@ -848,6 +936,8 @@
 
     <button type="button" id="submit-btn" class="primary-btn">In GFK übersetzen</button>
     <div class="progress-bar" id="progress-bar"><div class="progress-bar-fill" id="progress-bar-fill"></div></div>
+    <div role="status"><div class="hilfe-karte" id="hilfe-karte" hidden></div></div>
+    <p class="hilfe-zeile">Wenn es gerade zu viel ist: <button type="button" class="hilfe-link" data-hilfe-oeffnen>Hier sind Menschen, die zuhören.</button></p>
     <p class="error-msg" id="error-msg" hidden></p>
     </div>
 
@@ -885,6 +975,8 @@
       <p class="field-hint" id="practice-field-hint" hidden>Bitte fülle mindestens ein Feld aus.</p>
       <button type="button" id="practice-submit-btn" class="primary-btn">Rückmeldung holen</button>
       <div class="progress-bar" id="practice-progress-bar"><div class="progress-bar-fill" id="practice-progress-bar-fill"></div></div>
+      <div role="status"><div class="hilfe-karte" id="hilfe-karte-ueben" hidden></div></div>
+      <p class="hilfe-zeile">Wenn es gerade zu viel ist: <button type="button" class="hilfe-link" data-hilfe-oeffnen>Hier sind Menschen, die zuhören.</button></p>
       <p class="error-msg" id="practice-error-msg" hidden></p>
     </div>
 
@@ -1015,9 +1107,52 @@
   </section>
 
   <footer class="site-footer">
+    <p><b>Du musst das nicht allein tragen.</b> Wenn es dir gerade nicht gut geht, findest du hier <button type="button" class="hilfe-link" data-hilfe-oeffnen>Anlaufstellen, die zuhören</button>, kostenfrei und zum Teil rund um die Uhr.</p>
     <p>Dieses Werkzeug dient dem Einüben von Sprache und ersetzt keine Beratung, Mediation oder rechtliche Unterstützung. Bei akuten Konflikten rund um Umgang oder Sorgerecht können Familienberatungsstellen oder das Jugendamt weiterhelfen.</p>
     <p>Eingegebene Texte werden zur Verarbeitung an Anthropic (USA) übermittelt und dort automatisch nach spätestens 30 Tagen gelöscht – nie für das Training von KI-Modellen genutzt. Deine Eingaben laufen direkt zur KI und zurück, ohne dass diese Seite sie speichert oder einsehen kann. Bitte gib nach Möglichkeit keine vollständigen Namen oder sonstige eindeutig identifizierenden Angaben ein.</p>
   </footer>
+
+  <dialog class="hilfe" id="hilfe-dialog" aria-labelledby="hilfe-titel">
+    <div class="hilfe-innen">
+      <h2 id="hilfe-titel" tabindex="-1">Du musst das nicht allein tragen</h2>
+      <p class="einleitung">Manchmal hilft keine bessere Formulierung, sondern ein Mensch, der zuhört. Niemand muss vorher wissen, was „das Richtige“ ist. Die Beratungstelefone in Deutschland sind kostenfrei, und du musst deinen Namen nicht nennen.</p>
+
+      <div class="hilfe-gruppe">
+        <span class="wofuer">Zum Reden, Tag und Nacht</span>
+        <p>Telefonseelsorge: <a class="tel" href="tel:08001110111">0800 111 0 111</a> · <a class="tel" href="tel:08001110222">0800 111 0 222</a> · <a class="tel" href="tel:116123">116 123</a><br>
+        <span class="zeit">auch per Chat auf <a href="https://www.telefonseelsorge.de/chat/" target="_blank" rel="noopener">telefonseelsorge.de</a></span></p>
+      </div>
+
+      <div class="hilfe-gruppe">
+        <span class="wofuer">Für dich als Elternteil</span>
+        <p>Elterntelefon (Nummer gegen Kummer): <a class="tel" href="tel:08001110550">0800 111 0 550</a><br>
+        <span class="zeit">Mo, Mi, Fr 9–17 Uhr, Di und Do 9–19 Uhr</span></p>
+      </div>
+
+      <div class="hilfe-gruppe">
+        <span class="wofuer">Für dein Kind</span>
+        <p>Kinder- und Jugendtelefon: <a class="tel" href="tel:116111">116 111</a><br>
+        <span class="zeit">Mo–Sa 14–20 Uhr</span></p>
+      </div>
+
+      <div class="hilfe-gruppe">
+        <span class="wofuer">Bei Gewalt</span>
+        <p>Hilfetelefon Gewalt gegen Frauen: <a class="tel" href="tel:116016">116 016</a> <span class="zeit">rund um die Uhr</span><br>
+        Hilfetelefon Gewalt an Männern: <a class="tel" href="tel:08001239900">0800 123 99 00</a> <span class="zeit">Mo–Do 8–20, Fr 8–15 Uhr</span></p>
+      </div>
+
+      <div class="hilfe-notfall">
+        <b>Akute Gefahr</b> für dich oder ein Kind: Polizei <a class="tel" href="tel:110">110</a> · Notruf <a class="tel" href="tel:112">112</a>
+      </div>
+
+      <p class="hilfe-ausland">Österreich: Telefonseelsorge <a class="tel" href="tel:142">142</a> · Rat auf Draht <a class="tel" href="tel:147">147</a>, auch für Eltern. Schweiz: Die Dargebotene Hand <a class="tel" href="tel:143">143</a> · Pro Juventute <a class="tel" href="tel:147">147</a>.</p>
+      <p class="hilfe-stand">Stand der Angaben: September 2026</p>
+
+      <div class="hilfe-fuss">
+        <button type="button" class="hilfe-zurueck" id="hilfe-zurueck">Zurück zur Seite</button>
+      </div>
+    </div>
+  </dialog>
 
 </div>
 
@@ -1956,7 +2091,7 @@
     foreignResultSection.hidden = false;
     requestAnimationFrame(() => {
       foreignResultSection.classList.add('visible');
-      foreignResultSection.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
+      scrollZiel(foreignResultSection, 'hilfe-karte').scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
     });
   }
 
@@ -1971,6 +2106,773 @@
     }
     setTimeout(() => copyForeignBtn.textContent = original, 1600);
   });
+
+  // ---------------------------------------------------------------
+  // Einfärbung der vier Schritte
+  // ---------------------------------------------------------------
+  // Findet die Stellen der vier Schritte im GFK-Satz, damit die Seite sie
+  // einfärben kann.
+  //
+  // Für jeden Schritt werden alle möglichen Stellen gesammelt, in drei Stufen,
+  // die strengste zuerst:
+  //
+  //   1. wortgleich, wie bisher
+  //   2. wortgleich ohne Anführungszeichen und Schlusspunkt ("Kontakt." → "Kontakt")
+  //   3. kürzeste Stelle im Satz, die die Wörter des Schritts enthält, auch in
+  //      anderer Reihenfolge ("Ich bin traurig." → "bin ich traurig")
+  //
+  // Eine Stelle zählt nur, wenn sie an einer Wortgrenze beginnt: "Ruhe" wird
+  // nie mitten in "Unruhe" eingefärbt. Stufe 3 greift nur, wenn fast alle
+  // Wörter des Schritts dastehen, die Stelle nicht viel länger ist als der
+  // Schritt und sie über kein Satzzeichen reicht, das im Schritt nicht steht.
+  //
+  // Danach werden die Stellen so verteilt, dass sich nichts überschneidet und
+  // die Reihenfolge der vier Schritte stimmt. Steht "traurig" zweimal im Satz
+  // und ist das erste schon Teil der Beobachtung, nimmt das Gefühl das zweite.
+  // Lieber gar nicht einfärben als an der falschen Stelle.
+  //
+  // Alle Stellen werden im Originalsatz gezählt, nie in einer kleingeschriebenen
+  // Kopie; so verrutscht nichts, wenn ein Buchstabe beim Kleinschreiben länger
+  // wird (etwa das türkische "İ").
+  
+  
+  // Wortzeichen: Buchstaben aller Schriften. Ältere Browser kennen \p{...}
+  // nicht; dort gelten wenigstens die lateinischen Buchstaben. Als Text gebaut,
+  // nicht als /.../, damit ein alter Browser nicht schon beim Lesen abbricht.
+  const EINF_W = (() => {
+    try { new RegExp('[\\p{L}\\p{N}]', 'u'); return { k: '[\\p{L}\\p{N}]', f: 'u' }; }
+    catch (e) { return { k: '[0-9A-Za-zªµºÀ-ÖØ-öø-ɏ]', f: '' }; }
+  })();
+  const WORTZEICHEN = new RegExp(EINF_W.k, EINF_W.f);
+  const istWortzeichen = z => z !== undefined && z !== '' && WORTZEICHEN.test(z);
+  const SATZZEICHEN = /[.,;:!?]/g;
+  
+  function alleVorkommen(satz, text) {
+    const muster = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+    const re = new RegExp(muster, 'gi' + EINF_W.f);
+    const treffer = [];
+    let m;
+    while ((m = re.exec(satz)) !== null) {
+      if (m[0].length === 0) { re.lastIndex++; continue; }
+      treffer.push({ start: m.index, end: m.index + m[0].length });
+    }
+    return treffer;
+  }
+  
+  // Liefert die Kandidaten eines Schritts, nach Güte sortiert in Durchgänge:
+  //   0  wortgleich, ganze Wörter
+  //   1  ohne Anführungszeichen und Schlusspunkt, ganze Wörter
+  //   2  Wörter in anderer Reihenfolge
+  //   3  wortgleich, aber am Ende an ein längeres Wort angehängt
+  //      ("Verlässlichkeit" in "Verlässlichkeiten")
+  function kandidaten(satz, rohtext) {
+    const s = String(satz || '');
+    const t = String(rohtext || '').trim();
+    const liste = [];
+    if (!s || !t) return liste;
+  
+    function wortgleich(text, stufe) {
+      if (text.length < 2 && !istWortzeichen(text)) return;
+      const vornWort = istWortzeichen(text[0]);
+      const hintenWort = istWortzeichen(text[text.length - 1]);
+      for (const f of alleVorkommen(s, text)) {
+        const anfangOk = !vornWort || !istWortzeichen(s[f.start - 1]);
+        const endeOk = !hintenWort || !istWortzeichen(s[f.end]);
+        if (!anfangOk) continue;                     // nie mitten im Wort beginnen
+        liste.push({ start: f.start, end: f.end, gang: endeOk ? stufe : 3 });
+      }
+    }
+  
+    // Stufe 1 und 2
+    wortgleich(t, 0);
+    const kern = t.replace(/^[\s„“”"'‚‘’»«]+/, '').replace(/[\s„“”"'‚‘’»«.!?,;:]+$/, '');
+    if (kern && kern !== t) wortgleich(kern, 1);
+  
+    // Stufe 3
+    const wortRe = new RegExp(EINF_W.k + '+', 'g' + EINF_W.f);
+    const satzWoerter = [];
+    let m;
+    while ((m = wortRe.exec(s)) !== null) {
+      satzWoerter.push({ w: m[0].toLowerCase(), start: m.index, end: m.index + m[0].length });
+    }
+    const schrittWoerter = (t.match(wortRe) || []).map(w => w.toLowerCase());
+    if (schrittWoerter.length > 0 && satzWoerter.length > 0) {
+      const gesucht = new Map();
+      schrittWoerter.forEach(w => gesucht.set(w, (gesucht.get(w) || 0) + 1));
+      const n = schrittWoerter.length;
+      // Bei kurzen Schritten müssen alle Wörter da sein, bei langen fast alle.
+      const mindestens = n <= 3 ? n : Math.ceil(n * 0.8);
+      const hoechstLaenge = n + Math.max(2, Math.ceil(n * 0.5));
+      // Satzzeichen zwischen dem ersten und dem letzten Wort des Schritts.
+      const innen = t.slice(t.search(WORTZEICHEN));
+      const erlaubteZeichen = (innen.replace(new RegExp('[^' + EINF_W.k.slice(1) + '+$', EINF_W.f), '').match(SATZZEICHEN) || []).length;
+  
+      const fenster = [];
+      for (let a = 0; a < satzWoerter.length; a++) {
+        if (!gesucht.has(satzWoerter[a].w)) continue;   // beginnt mit einem gesuchten Wort
+        const rest = new Map(gesucht);
+        let gedeckt = 0;
+        for (let b = a; b < satzWoerter.length && b - a + 1 <= hoechstLaenge; b++) {
+          const w = satzWoerter[b].w;
+          if (rest.get(w) > 0) { rest.set(w, rest.get(w) - 1); gedeckt++; }
+          if (!gesucht.has(w) || gedeckt < mindestens) continue;  // endet mit einem gesuchten Wort
+          const zeichen = (s.slice(satzWoerter[a].start, satzWoerter[b].end).match(SATZZEICHEN) || []).length;
+          if (zeichen > erlaubteZeichen) break;          // reicht über ein fremdes Satzzeichen
+          fenster.push({ start: satzWoerter[a].start, end: satzWoerter[b].end, gedeckt, laenge: b - a + 1 });
+        }
+      }
+      fenster.sort((x, y) => y.gedeckt - x.gedeckt || x.laenge - y.laenge || x.start - y.start);
+      fenster.forEach(f => liste.push({ start: f.start, end: f.end, gang: 2 }));
+    }
+  
+    // Innerhalb eines Durchgangs bleibt die Reihenfolge erhalten: bei Stufe 1
+    // und 2 nach Stelle im Satz, bei Stufe 3 nach Güte.
+    return liste.map((k, i) => Object.assign(k, { i })).sort((x, y) => x.gang - y.gang || x.i - y.i);
+  }
+  
+  // Beste Stelle für einen einzelnen Schritt, ohne Rücksicht auf die anderen.
+  function schrittFinden(satz, text) {
+    const k = kandidaten(satz, text)[0];
+    return k ? { start: k.start, end: k.end } : null;
+  }
+  
+  // Stellen für alle Schritte zugleich, ohne Überschneidung, nach Stelle sortiert.
+  //
+  // Probiert alle Verteilungen durch (bei vier Schritten und höchstens acht
+  // Stellen je Schritt einige tausend) und nimmt die beste:
+  //   1. möglichst viele Schritte eingefärbt
+  //   2. möglichst in der Reihenfolge Beobachtung, Gefühl, Bedürfnis, Bitte;
+  //      so bekommt das Bedürfnis "Kontakt" das Wort nach "weil mir" und nicht
+  //      das in der Beobachtung, auch wenn die Beobachtung selbst nicht
+  //      gefunden wird
+  //   3. möglichst wortgleiche Stellen
+  //   4. sonst die frühere Stelle
+  // Vergleicht zwei Bewertungen Stelle für Stelle; kleiner ist besser.
+  function einfBesser(a, b) {
+    for (let n = 0; n < a.length; n++) if (a[n] !== b[n]) return a[n] < b[n];
+    return false;
+  }
+  const EINF_REIHENFOLGE = { 'Beobachtung': 0, 'Gefühl': 1, 'Bedürfnis': 2, 'Bitte': 3 };
+  
+  function schritteFinden(satz, schritte) {
+    const s = String(satz || '');
+    const liste = (Array.isArray(schritte) ? schritte : [])
+      .map((schritt, nr) => {
+        const category = schritt && schritt.category;
+        return {
+          category,
+          rang: Object.prototype.hasOwnProperty.call(EINF_REIHENFOLGE, category) ? EINF_REIHENFOLGE[category] : nr,
+          k: kandidaten(s, schritt && schritt.text).slice(0, 8)
+        };
+      })
+      .filter(x => x.k.length > 0);
+    if (liste.length === 0) return [];
+    if (liste.length > 5) return schritteFindenEinfach(liste);
+  
+    let beste = null;
+    const wahl = [];
+    const suche = i => {
+      if (i === liste.length) {
+        let gesetzt = 0, verdreht = 0, guete = 0, stelle = 0;
+        for (let a = 0; a < wahl.length; a++) {
+          if (!wahl[a]) continue;
+          gesetzt++;
+          guete += wahl[a].k.gang;
+          stelle += wahl[a].j;
+          for (let b = 0; b < wahl.length; b++) {
+            if (wahl[b] && liste[a].rang < liste[b].rang && wahl[a].k.start > wahl[b].k.start) verdreht++;
+          }
+        }
+        const wert = [-gesetzt, verdreht, guete, stelle];
+        if (!beste || einfBesser(wert, beste.wert)) beste = { wert, wahl: wahl.slice() };
+        return;
+      }
+      wahl[i] = null;
+      suche(i + 1);
+      liste[i].k.forEach((k, j) => {
+        for (let a = 0; a < i; a++) {
+          if (wahl[a] && !(k.end <= wahl[a].k.start || k.start >= wahl[a].k.end)) return;
+        }
+        wahl[i] = { k, j };
+        suche(i + 1);
+      });
+      wahl[i] = null;
+    };
+    suche(0);
+  
+    return beste.wahl
+      .map((w, i) => w && { start: w.k.start, end: w.k.end, category: liste[i].category })
+      .filter(Boolean)
+      .sort((x, y) => x.start - y.start);
+  }
+  
+  // Für den Fall, dass mehr als fünf Schritte kommen: der Reihe nach, ohne Suche.
+  function schritteFindenEinfach(liste) {
+    const vergeben = [];
+    for (const x of liste) {
+      const k = x.k.find(k => vergeben.every(v => k.end <= v.start || k.start >= v.end));
+      if (k) vergeben.push({ start: k.start, end: k.end, category: x.category });
+    }
+    return vergeben.sort((x, y) => x.start - y.start);
+  }
+
+  // ---------------------------------------------------------------
+  // Hilfe: Erkennung, Karte, Übersicht
+  // ---------------------------------------------------------------
+  // Die Erkennung läuft nur hier im Browser. Nichts davon wird gesendet.
+  // Erkennt in einem Text Hinweise auf eine akute Krise oder auf Gewalt.
+  // Läuft nur im Browser. Nichts davon wird gesendet oder gespeichert.
+  //
+  // Ergebnis:
+  //   krise   – die schreibende Person will nicht mehr leben oder sich etwas antun
+  //   weich   – leiser Hinweis ("Ich halte das nicht mehr aus"); zählt nur beim
+  //             eigenen Text, nicht bei einer Fremdnachricht
+  //   andere  – jemand anderes könnte sich etwas antun ("Mein Sohn ritzt sich")
+  //   gefahr  – Gewalt gegen andere oder eine Drohung damit
+  //
+  // Wer ist gemeint? "Ich will mich umbringen" ist eine Krise, "Er will mich
+  // umbringen" und "dass mein Ex mich umbringt" sind Gewalt. Was jemand
+  // anderes gesagt hat ("Mein Sohn hat gesagt: Ich will nicht mehr leben"),
+  // betrifft diesen anderen.
+  //
+  // Die Liste ist absichtlich eng. Ein Hinweis bei harmlosen Sätzen stumpft ab
+  // und wirkt bevormundend. Deshalb lösen nichts aus: "Ich schlage vor",
+  // "Du drohst mit dem Anwalt", "Du drohst mir schon wieder", "das Kind als
+  // Waffe benutzen", "Ich bringe das Kind um acht", "Er schlägt mich beim
+  // Memory", "Du bringst mich noch um!", "Du vergiftest das Kind gegen mich",
+  // und Abstreiten oder Vorwürfe wie "Ich habe mein Kind nie geschlagen" oder
+  // "Du wirfst mir Gewalt vor". Was die Liste übersieht, fängt der dauerhafte
+  // Verweis unter dem Knopf und im Fußbereich auf.
+  //
+  // Kein Lookbehind: ältere iPhones (Safari vor 16.4) kennen es nicht, und ein
+  // einziger solcher Ausdruck hält dort das ganze Skript an. Die Regeln entstehen
+  // erst beim ersten Aufruf und in einem try; geht dabei etwas schief, gibt es
+  // keine Hinweise, aber die Seite läuft weiter.
+  
+  
+  let SIGNAL_REGELN = null;
+  
+  function signalRegelnBauen() {
+    // Wortzeichen: Buchstaben aller Schriften, sonst wenigstens die lateinischen.
+    let W = '[\\p{L}\\p{N}]', F = 'u';
+    try { new RegExp(W, F); } catch (e) { W = '[0-9A-Za-zªµºÀ-ÖØ-öø-ɏ]'; F = ''; }
+    const NW = '[^' + W.slice(1);
+    // \< Wortanfang (verbraucht das Zeichen davor), \> Wortende, \L ein Wortzeichen.
+    const quelle = q => q.replace(/\\</g, '(?:^|' + NW + ')').replace(/\\>/g, '(?!' + W + ')').replace(/\\L/g, W);
+    // Ohne "i": Der Text wird vorher kleingeschrieben, die Regeln sind es auch.
+    // Das spart beim ersten Aufruf spürbar Zeit.
+    const R = q => new RegExp(quelle(q), F);
+    const RG = q => new RegExp(quelle(q), 'g' + F);
+  
+    // ------------------------------------------------------------ Bausteine
+    const PERSON = String.raw`(?:mich|dich|ihn|sie|uns|euch|das kind|die kinder|den kleinen|die kleine|den jungen|das mädchen|(?:mein|dein|unser|sein|ihr)(?:e|en)? (?:kind|kinder|sohn|söhne|tochter|töchter|frau|mann|mutter|vater))`;
+    const PERSON_ES = String.raw`(?:${PERSON}|es)`;
+    // Menschen, die als Täter in Frage kommen: "mein Ex", "der Vater", "sein Freund"
+    const TAETER_NOMEN = String.raw`\<(?:mein|meine|dein|deine|sein|seine|ihr|ihre|unser|unsere|der|die|dieser|diese)\s(?:ex|exmann|exfrau|expartner\L*|mann|frau|vater|mutter|papa|mama|partner|partnerin|freund|freundin|lebensgefährte|lebensgefährtin|stiefvater|stiefmutter|bruder|schwester|sohn|tochter|opa|oma|onkel|tante|nachbar|nachbarin|schwiegervater|schwiegermutter|kerl|typ)\>`;
+    const TAETER = R(String.raw`\<(?:er|sie|du|ihr|man|jemand)\>|${TAETER_NOMEN}`);
+    const TAETER_G = RG(String.raw`\<(?:er|sie|du|ihr|man|jemand)\>|${TAETER_NOMEN}`);
+    const ICH_G = RG(String.raw`\<ich\>`);
+    const ICH = R(String.raw`\<ich\>`);
+    const ICH_MICH_MIR = R(String.raw`\<(?:ich|mich|mir)\>`);
+    const NIE = R(String.raw`\<(?:nie|niemals)\>`);
+    const PLAN = R(String.raw`\<(?:droh\L*|gedroht|versuch\L*|angekündigt|ankündig\L*|schwör\L*|geschworen|plant|geplant|vorhat)\>`);
+    const FUELL = String.raw`(?:er|sie|du|ich|wir|ihr|immer|wieder|oft|ständig|manchmal|auch|noch|dann|mal|jetzt|sogar|schon|einfach|dauernd|regelmäßig|gestern|heute|zu|halt|gleich|fast|beinahe|fest|hart|richtig|einmal|nochmal|nochmals|jemals|wirklich|echt|brutal)`;
+  
+    // Abstreiten und Vorwürfe: Hier geht es um Gewalt, aber es ist kein Hinweis darauf.
+    const VERNEINT = R(String.raw`\<(?:nie|niemals|nimmer|kein|keine|keinen|keinem|keiner|keines)\>|\<nicht\>(?!\snur\>)|\<ohne\s(?:jede\L*\s)?(?:gewalt|schläge|waffe\L*|prügel)\>|\<(?:lehne|lehnen|lehnt|ablehnen|abgelehnt)\>`);
+    // Ein Vorwurf gilt für seinen eigenen Teilsatz ("Du wirfst mir Gewalt vor")
+    // und für den Teilsatz direkt nach "behauptet" ("Er behauptet, ich hätte ihn
+    // geschlagen"). "Er warf mich zu Boden" ist kein Vorwurf.
+    const VORWURF = R(String.raw`\<(?:wirfst|wirft|werfen|warf)\s(?:\L+\s){0,4}vor\>|\<(?:vorwerfen|vorgeworfen|vorwurf\L*|unterstell\L*|angeblich|beschuldig\L*|gelogen|lügst|lügt|erfunden|verleumd\L*)\>|\<stimmt nicht\>|\<ist nicht wahr\>`);
+    // "Du erzählst allen, ich hätte dich geschlagen": wiedergegebene Behauptung
+    const UNTERSTELLT = R(String.raw`\<ich\s(?:hätte|sei)\>`);
+    const VORWURF_EINLEITUNG = R(String.raw`\<(?:behauptest|behauptet|behaupten|behauptete|unterstellst|unterstellt|beschuldigst|beschuldigt)\>|\<(?:wirfst|wirft|werfen|warf)\s(?:\L+\s){0,4}vor$`);
+  
+    // ------------------------------------------------------------ Töten
+    const TOETEN = String.raw`(?:umbringen|umzubringen|umbringt|umbringst|umbringe|umgebracht|umbrachte|umbrachten|töten|zu töten|tötet|tötest|töte|getötet|tötete|töteten|ermorden|ermordet|ermorde|ermordete|erschießen|zu erschießen|erschieße|erschießt|erschossen|erstechen|ersteche|ersticht|erstochen|abstechen|abzustechen|erwürgen|erwürgt)`;
+    // Diese Wörter zählen nur gegen sich selbst ("mich aufhängen"), sonst sind
+    // sie Alltag ("Jacken aufhängen", "das Kind gegen mich vergiften").
+    const NUR_SELBST = String.raw`(?:vergiften|zu vergiften|aufhängen|aufzuhängen|erhängen|zu erhängen|ertränken|zu ertränken)`;
+    const ER_FORM = R(String.raw`\<(?:umbringt|tötet|ermordet|erschießt|ersticht|erwürgt|bringt|brachte)\>`);
+    const SELBST_TOETEN = [
+      { re: RG(String.raw`\<(mich|sich)(?:\s(?!nicht\>|nie\>|niemals\>)\L+){0,3}\s(${TOETEN})\>`) },
+      { re: RG(String.raw`\<(mich|sich)(?:\s(?:selbst|einfach|endlich|lieber|am|liebsten|gleich|dann|halt|doch|bald))*\s(${NUR_SELBST})\>`) },
+      { re: RG(String.raw`\<(töte|tötet|tötest|erschieße|erschießt|vergifte|vergiftest|erhänge|erhängt|ertränke|ertränkt|ersteche|ersticht)\s(?:\L+\s){0,2}(mich|sich)\>`), verbZuerst: true }
+    ];
+    const TOETEN_ALLEIN = R(String.raw`\<${TOETEN}\>`);
+    const TOETEN_HARMLOS = RG(String.raw`\<(?:zeit|langeweile)\s(?:zu\s)?töten\>|\<töte\L*\s(?:\L+\s){0,3}(?:diskussion\L*|stimmung|freude|lust|gespräch\L*|hoffnung|nerv\L*|zeit|spaß|beziehung|liebe|vertrauen|gefühl\L*|kreativität|motivation)\>`);
+  
+    const BRINGEN = String.raw`(?:bring|bringe|bringst|bringt|bringen|brachte|brachtest|brachten)`;
+    const BRING_UM = R(String.raw`\<(${BRINGEN})\>(?:\s\L+){0,3}\s(mich|sich|dich|ihn|sie|euch|uns|das kind|die kinder|(?:mein|dein|unser|sein|ihr)(?:e|en)? (?:kind|kinder|sohn|tochter|frau|mann|mutter|vater))(?:\s\L+){0,3}\sum$`);
+    // "Du bringst mich noch um!" ist eine Redensart, "Er bringt mich heute noch um" nicht.
+    const NOCH_UM = R(String.raw`\snoch\s(?:\L+\s)?um$`);
+    const ZEIT_NOCH_UM = R(String.raw`\s(?:heute|morgen|gleich|jetzt|bald|sofort|irgendwann)\snoch\s(?:\L+\s)?um$`);
+    // Wendungen, die über "und" reichen und vor dem Zerlegen verschwinden
+    const SATZ_HARMLOS = RG(String.raw`\<mord und totschlag\>|\<messer und gabel\>|\<gabel und messer\>`);
+  
+    // "mir etwas antun": ohne Füllwort, damit "Wie kannst du mir so etwas antun?" nichts auslöst.
+    const ANDERE_DATIV = String.raw`(?:dir|ihm|ihr|uns|euch|dem kind|den kindern|(?:meinem|deinem|unserem|seinem|ihrem) (?:kind|sohn)|(?:meiner|deiner|unserer|seiner|ihrer) tochter|(?:meinen|deinen|unseren|seinen|ihren) kindern)`;
+    const ANTUN = [
+      RG(String.raw`\<(?:tu|tue|tut|tust|tun)\s(?:\L+\s){0,2}(mir|sich|${ANDERE_DATIV})\s(?:etwas|was)\san\>`),
+      RG(String.raw`\<(mir|sich|${ANDERE_DATIV})\s(?:etwas|was)\s(?:antun|anzutun|antut|antust)\>`)
+    ];
+  
+    // ------------------------------------------------------------ Krise
+    // Je Teilsatz; ob "ich" oder "jemand", entscheidet der Teilsatz.
+    const KRISE_TEIL = [
+      { re: R(String.raw`\<(?:suizid|selbstmord|selbsttötung|lebensmüd|pulsader|selbstverletz)`) },
+      { re: R(String.raw`\<freitod\>`) },
+      { re: R(String.raw`\<nicht mehr leben\>(?!\s(?:wie|zusammen|mit|unter|bei|in|so)\>)`) },
+      { re: R(String.raw`\<nicht mehr am leben sein\>`) },
+      { re: R(String.raw`\<(?:will|möchte|wollte|würde|wäre|willst|möchtest|wollen)(?:\s\L+){0,4}\snicht mehr da sein\>`),
+        ohne: R(String.raw`\<(?:bei|beim|während|dabei|dort|übergabe\L*|abholen|abholung)\>`),
+        satzOhne: R(String.raw`nicht mehr da sein\s*,?\s*(?:wenn|sobald|falls|während|solange|wo)\>`) },
+      { re: R(String.raw`\<(?:will|möchte|wollte|würde|würd|willst|möchtest|wolle|mag)\>(?:\s(?!nicht\>|nie\>|für\>|vor\>)\L+){0,3}\ssterben\>(?!\s(?:für|vor)\>)`),
+        ohne: R(String.raw`\<(?:zu hause|zuhause|daheim|in ruhe|in frieden|würdevoll|friedlich|schmerzfrei|im krankenhaus|im hospiz|im heim)\>`),
+        satzOhne: R(String.raw`sterben\s*,?\s*(?:wenn|falls|sollte)\>`) },
+      { re: R(String.raw`\<(?:will|möchte|wollte)(?:\s\L+){0,2}\stot sein\>`) },
+      { re: R(String.raw`\<lieber tot\>`) },
+      { re: R(String.raw`\<wär(?:e)?\s(?:ich\s)?(?:lieber\s|am liebsten\s|besser\s|einfach\s)?tot\>(?!\s*umgefallen)`) },
+      { re: R(String.raw`\<wenn ich tot wär(?:e)?\>`) },
+      { re: R(String.raw`\<(?:mir|sich|dir)\s(?:das|mein|sein|ihr|dein)\sleben\s(?:zu\s)?nehmen\>`) },
+      { re: R(String.raw`\<(?:nehme|nehm|nimmt|nimm|nahm|nehmen)\s(?:ich\s|er\s|sie\s)?(?:mir|sich)\sdas\sleben\>`) },
+      { re: R(String.raw`\<(?:will|möchte|würde|wünschte|wünsche|wünsch)\>(?:\s\L+){0,4}\s(?:nicht mehr|nie mehr|nie wieder|nimmer)\saufwachen\>`) },
+      { re: R(String.raw`\<(?:allem|meinem leben|seinem leben|ihrem leben)\sein\sende\>`) },
+      { re: R(String.raw`\<(?:hänge|häng|hängt|hängen)\s(?:ich\s|er\s|sie\s)?(?:mich|sich)(?:\s(?!an\>|über\>|da\>|daran\>|dran\>|darüber\>|drüber\>|nicht\>|immer\>|ständig\>|dauernd\>)\L+){0,2}\sauf$`) },
+      { re: R(String.raw`\<(?:mich|sich)\s(?:\L+\s){0,2}vor\s(?:den|einen|die|eine|ein)\s(?:zug|bahn|s-bahn|u-bahn|auto|lkw|lastwagen|bus)\s(?:zu\s)?werfen\>`) },
+      { re: R(String.raw`\<(?:werfe|werf|wirft|werfen)\s(?:ich\s|er\s|sie\s)?(?:mich|sich)\s(?:\L+\s){0,2}vor\s(?:den|einen|die|eine|ein)\s(?:zug|bahn|s-bahn|u-bahn|auto|lkw|lastwagen|bus)\>`) },
+      { re: R(String.raw`(?:\<(?:springe|spring)\>|\<(?:will|möchte|wollte|werde|wird)\s(?:\L+\s){0,3}springen\>)(?:\s\L+){0,3}\s(?:von der|von einer|vom|aus dem)\s(?:\L+\s)?(?:brücke|dach|hochhaus|fenster|balkon|turm|klippe)\>|\<(?:von der|von einer|vom|aus dem)\s(?:\L+\s)?(?:brücke|dach|hochhaus|fenster|balkon|turm|klippe)\s(?:\L+\s)?springen\>`),
+        satzOhne: R(String.raw`\<(?:freibad|schwimmbad|hallenbad|trampolin|sprungturm|becken|pool|see|wasser|beim)\>`) },
+      { re: R(String.raw`\<(?:ritze|ritzt|ritzen|geritzt)\s(?:\L+\s)?(?:mich|sich)\>|\<(?:mich|sich)(?:\s\L+){0,2}\s(?:ritze|ritzt|ritzen|geritzt|zu ritzen)\>`),
+        ohne: R(String.raw`\<(?:beim|aus versehen|versehentlich|an der|an einem|an einer|am|dorn\L*|papier)\>`) }
+    ];
+    // Je Satz, weil sie über "und" oder ein Komma reichen.
+    const KRISE_SATZ = [
+      R(String.raw`\<einschlafen und (?:nicht mehr|nie mehr|nie wieder) aufwachen\>`)
+    ];
+    const KRISE_WEICH = [
+      R(String.raw`\<halte\s(?:das|es|all das|das alles|es alles)\s(?:\L+\s)?nicht mehr aus(?=\s*(?:$|,(?!\s*(?:wie|dass|wenn|was|mit|so)\>)))`),
+      R(String.raw`\<kann\s(?:einfach\s|echt\s|wirklich\s|so\s)?nicht mehr weiter(?=\s*(?:$|,(?!\s*(?:zusehen|mit|so)\>)))`)
+    ];
+  
+    // ------------------------------------------------------------ Gewalt, je Teilsatz
+    const SCHLAGEN = String.raw`(?:schlägt|schlägst|schlage|schlag|schlagen|schlagt|schlug|schlugst|schlugen)`;
+    const DATIV = String.raw`(?:mir|dir|ihm|ihr|uns|euch|dem kind|den kindern|(?:meinem|deinem|unserem|seinem|ihrem) (?:kind|sohn|mann)|(?:meiner|deiner|unserer|seiner|ihrer) (?:tochter|frau))`;
+    const KOERPER = String.raw`(?:ins|in das|in den|in die|auf den|auf die|auf das|aufs|gegen den|gegen die|gegen das)\s(?:\L+\s)?(?:gesicht|bauch|kopf|mund|nase|rücken|arm|bein|brust|ohr|auge|hintern|po|magengrube|schädel)\>`;
+    const SCHLAGEN_TEIL = [
+      R(String.raw`\<${SCHLAGEN}(?:\s${FUELL}){0,2}\s(${PERSON_ES})\>`),
+      // Steht die Person vor dem Verb, ist sie nur sicher das Opfer, wenn sie
+      // eindeutig im Akkusativ steht, ein "zu" folgt, ein Nebensatz oder ein
+      // Modalverb davor steht. "Die Kinder schlagen sich gut" ist kein Schlag.
+      R(String.raw`\<(mich|dich|ihn|uns|euch)(?:\s${FUELL}){0,2}\s(?:zu\s)?${SCHLAGEN}\>`),
+      R(String.raw`\<(${PERSON_ES})(?:\s${FUELL}){0,2}\szu\s${SCHLAGEN}\>`),
+      R(String.raw`\<(?:wenn|dass|weil|ob|als|wie|sobald|nachdem|falls)\s(?:\L+\s){1,2}(${PERSON_ES})(?:\s${FUELL}){0,2}\s${SCHLAGEN}\>`),
+      R(String.raw`\<(?:will|wollte|würde|wird|werde|könnte|kann|soll|darf|muss)\s(?:\L+\s)?(${PERSON_ES})(?:\s${FUELL}){0,2}\sschlagen\>`)
+    ];
+    // Diese gelten, auch wenn ein Partikel am Ende steht ("schlägt auf das Kind ein").
+    const SCHLAGEN_TEIL_FEST = [
+      R(String.raw`\<${SCHLAGEN}(?:\s${FUELL}){0,2}\s${DATIV}\s${KOERPER}`),
+      R(String.raw`\<${SCHLAGEN}(?:\s${FUELL}){0,2}\sauf\s${PERSON_ES}(?:\s\L+){0,2}\sein$`),
+      R(String.raw`\<(?:schlägt|schlägst|schlug|schlagen)\s(?:(?:er|sie|du|dann|gleich|sofort|einfach)\s)?zu$`)
+    ];
+    const PARTIKEL_AM_ENDE = R(String.raw`\s(?:vor|aus|ab|ein|nach|auf|an|um|fehl|breit|durch|herum|rum)$`);
+    const SCHLAGEN_HARMLOS = R(String.raw`\<(?:beim|im|bei)\s(?:\L+\s)?(?:memory|spiel|fußball|fussball|tennis|schach|rennen|wettrennen|wettlauf|uno|kartenspiel\L*|karten|brettspiel\L*|würfeln|tischtennis|badminton|armdrücken|wettkampf|turnier|quiz|mario|fifa|minecraft|monopoly|mau|mensch)\>|\<auf\s(?:\L+\s)?seite\>|\<in\s(?:\L+\s)?bann\>|\<aus dem kopf\>|\<um längen\>|\<in (?:allen fächern|jedem fach|mathe|deutsch|englisch|sport)\>`);
+    const FUER_PERSON = RG(String.raw`\<für\s(?:mich|dich|ihn|sie|uns|euch|es)\>`);
+    const RUECKBEZUG = { mich: 'ich', dich: 'du', uns: 'wir', euch: 'ihr' };
+  
+    const GEWALT_TEIL = [
+      R(String.raw`\<(?:würgt|würgte|würgen|würgst)\s(?:\L+\s)?(?:mich|dich|ihn|sie|das kind|die kinder)\>`),
+      R(String.raw`\<(?:mich|dich|ihn|das kind|die kinder)\s(?:zu\s)?würgen\>`),
+      R(String.raw`\<${PERSON}\s(?:\L+\s)?getreten\>`),
+      R(String.raw`\<missbraucht?\s${PERSON}$`),
+      R(String.raw`\<${PERSON}\s(?:(?!als\>)\L+\s)?missbraucht\>`),
+      // "bedroht mich", "hat das Kind bedroht": nur mit einer Person
+      R(String.raw`\<(?:bedroht|bedrohst|bedrohte|bedrohten|bedrohen)\s(?:\L+\s){0,2}${PERSON}\>|\<${PERSON}\s(?:\L+\s){0,3}(?:bedroht|bedrohen)\>`)
+    ];
+    // Drohen mit Gewalt als Inhalt: "Er hat gedroht, mir wehzutun." Je Satz,
+    // weil das Komma Drohung und Inhalt trennt. Nacktes Drohen ("Du drohst mir
+    // schon wieder") zählt nicht: Hier geht es fast immer um Anwalt oder Jugendamt.
+    const DROHWORT = R(String.raw`\<(?:droht|drohst|drohte|drohten|drohe|drohen|gedroht|drohung|drohungen|androhung)\>`);
+    const DROH_GEWALT = R(String.raw`\<(?:wehzutun|weh zu tun|wehtun|weh tun|zu verletzen|zusammenzuschlagen|fertigzumachen|kaltzumachen|zu entführen|entführen|anzutun|antun|antut)\>`);
+    const BEDROHT_GEFUEHL = R(String.raw`\<f(?:ü|u)hl\L*\s(?:mich|dich|sich|uns|euch)(?:\s\L+){0,3}\sbedroht|\<(?:lasse|lass|lässt)\s(?:\L+\s){0,3}bedrohen\>|\<mit\s(?:(?:dem|der|den|einem|einer|meinem|meiner|seinem|seiner|ihrem|ihrer|deinem|deiner|unserem|unserer)\s)?(?:anwalt|anwältin|anwälten|rechtsanwalt\L*|gericht\L*|familiengericht|jugendamt|klage\L*|anzeige\L*|polizei|konsequenzen|rechtlichen|kontaktabbruch|abbruch|umzug|entzug|scheidung|trennung|kündigung|gutacht\L*|verfahren|sorgerecht\L*|umgang\L*|unterhalt\L*)\>`);
+  
+    // Je Teilsatz, mit Blick auf den ganzen Satz ("nichtWenn")
+    const MEDIEN = String.raw`\<(?:film|filme|filmen|serie|serien|videospiel\L*|computerspiel\L*|ballerspiel\L*|spiel|spiele|fernsehen|fernseher|nachrichten|buch|bücher|comic\L*|game\L*|youtube|tiktok|kino|krimi|cowboy\L*|kostüm\L*|fasching|karneval|spielzeug\L*|wasserpistole)\>`;
+    const GEWALT_WORT = [
+      { re: R(String.raw`\<(?:geschlagen|verprügelt|verprügeln|verprügelst|prügelt|prügeln|prügelst|geprügelt|prügel|prügelei|schläge|schlägen|ohrfeige|ohrfeigen|ohrfeigt|geohrfeigt|faustschlag|faustschläge)\>`),
+        ohne: RG(String.raw`vor den kopf geschlagen|\<(?:uns|sich|mich|dich)(?:\s\L+)?\s(?:gut|tapfer|wacker|prima|super|toll)\sgeschlagen|\<(?:gebe|gibt|gab|geben|gegeben)\>.{0,25}geschlagen\>|\<geschlagen\s(?:geben|gegeben)\>|\<(?:bin|ist|sind|war|bist)\smit\s(?:\L+\s){0,2}geschlagen\>`),
+        nichtWenn: SCHLAGEN_HARMLOS },
+      { re: R(String.raw`\<mord\>|\<morddroh`), ohne: RG(String.raw`\<mord und totschlag\>`) },
+      { re: R(String.raw`\<(?:waffe|waffen|pistole|pistolen|gewehr|gewehre|schusswaffe\L*)\>`),
+        ohne: RG(String.raw`\<als waffen?\>|\<pistole auf die brust\>`), nichtWenn: R(MEDIEN) },
+      { re: R(String.raw`\<messer\>`),
+        ohne: RG(String.raw`\<messer und gabel\>|\<gabel und messer\>`),
+        nichtWenn: R(String.raw`${MEDIEN}|\<(?:brot\L*|brotdose|finger|geschnitten|schneiden|schneidet|schnitt|küche|essen|isst|obst|apfel|gemüse|butter|gabel|löffel|besteck|schnitz\L*|spielen|spielt)\>`) },
+      { re: R(String.raw`\<gewalt\>|\<gewalttätig|\<gewaltschutz|\<annäherungsverbot|\<näherungsverbot`),
+        ohne: RG(String.raw`\<mit aller gewalt\>|\<höherer? gewalt\>|\<elterliche[nr]? gewalt\>`), nichtWenn: R(MEDIEN) },
+      { re: R(String.raw`\<sexuell\L*\s(?:\L+\s)?(?:missbr\L*|übergriff\L*|belästig\L*|genötigt|nötigung)|\<(?:kindes|kinder)missbrauch|\<missbrauch\>`),
+        ohne: RG(String.raw`\<missbrauch\s(?:des|von|der|meines|deines|seines|ihres|unseres)\s(?:\L+\s)?(?:vertrauen\L*|umgang\L*|sorge\L*|macht|amt\L*|recht\L*|position|situation|verfahren\L*|antr\L*|daten)`) },
+      { re: R(String.raw`\<(?:wurde|wurden|worden|bin|ist|sind|war|waren)\s(?:\L+\s){0,2}missbraucht\>`),
+        nichtWenn: R(String.raw`\<(?:vertrauen|daten|namen|konto|karte|position|macht|gutmütigkeit|großzügigkeit)\>`) },
+      { re: R(String.raw`\<misshand\L*|\<misshandl\L*|\<vergewaltig|\<gewürgt\>`) }
+    ];
+  
+    // Wer etwas zitiert: "Mein Sohn hat gesagt: ..." Das Gesagte betrifft ihn.
+    const REDE = R(String.raw`\<(?:gesagt|sagt|sagte|sagten|schreibt|schrieb|schrieben|geschrieben|meint|meinte|erzählt|erzählte|ruft|rief|schrie|geschrien|brüllt|brüllte|weint|weinte|flüstert|flüsterte|droht|drohte|gedroht|textet|getextet)\>`);
+  
+    return {
+      DROHWORT, DROH_GEWALT, TAETER, ICH, ICH_MICH_MIR, NIE, PLAN, VERNEINT, VORWURF, VORWURF_EINLEITUNG, UNTERSTELLT, TAETER_G, ICH_G, ER_FORM, SELBST_TOETEN, TOETEN_ALLEIN, TOETEN_HARMLOS,
+      BRING_UM, NOCH_UM, ZEIT_NOCH_UM, SATZ_HARMLOS, ANTUN, KRISE_TEIL, KRISE_SATZ, KRISE_WEICH, SCHLAGEN_TEIL, SCHLAGEN_TEIL_FEST,
+      PARTIKEL_AM_ENDE, SCHLAGEN_HARMLOS, FUER_PERSON, RUECKBEZUG, GEWALT_TEIL, BEDROHT_GEFUEHL, GEWALT_WORT, REDE
+    };
+  }
+  
+  // Zerlegt den Text in Sätze. Jeder Satz bekommt mit, welcher Teil davon
+  // wiedergegebene Rede eines anderen ist.
+  function signaleSaetze(text, g) {
+    const roh = String(text || '').toLowerCase().replace(/[’`´]/g, "'");
+    // Ein Punkt direkt vor einem schließenden Anführungszeichen beendet den Satz nicht.
+    const saetze = roh.split(/[.!?]+(?![“”"«»‘’])|\n+/);
+    const teilDavor = t => t.split(/[,;–—]/).pop();
+    const teilDanach = t => t.split(/[,;:–—]/).filter(x => x.trim()).shift() || '';
+    const fremdeRedeEinleitung = t => g.REDE.test(t) && !g.ICH.test(t);
+    const saubern = t => t.replace(/["„“”»«‚‘()]/g, ' ').replace(/\s+/g, ' ').trim();
+  
+    const ergebnis = [];
+    for (const satz of saetze) {
+      let eigen = satz, zitat = '';
+      // "Er hat gesagt: ..."
+      const doppelpunkt = satz.indexOf(':');
+      if (doppelpunkt > 0 && fremdeRedeEinleitung(teilDavor(satz.slice(0, doppelpunkt)))) {
+        eigen = satz.slice(0, doppelpunkt);
+        zitat = satz.slice(doppelpunkt + 1);
+      } else {
+        // „...“, hat er gesagt   oder   Er schrieb „...“
+        const m = satz.match(/[„"»‚]([^“”"«‘]*)[“”"«‘]?/);
+        if (m) {
+          const davor = satz.slice(0, m.index), danach = satz.slice(m.index + m[0].length);
+          if (fremdeRedeEinleitung(teilDavor(davor)) || fremdeRedeEinleitung(teilDanach(danach))) {
+            eigen = davor + ' ' + danach;
+            zitat = m[1];
+          }
+        }
+      }
+      if (saubern(eigen)) ergebnis.push({ s: saubern(eigen), zitat: false });
+      if (saubern(zitat)) ergebnis.push({ s: saubern(zitat), zitat: true });
+    }
+    return ergebnis;
+  }
+  function signaleTeilsaetze(satz) {
+    // Auch ohne Komma: "Ich habe Angst dass er ..." Das Bindewort bleibt am
+    // Anfang des Nebensatzes stehen, einige Regeln brauchen es.
+    return satz.split(/\s*[,;:–—]\s*|\s-\s|\s(?:und|oder|aber|sondern|denn)\s|\s(?=(?:dass|weil|wenn|ob|falls|obwohl|damit|sobald|nachdem)\s)/)
+      .map(s => s.replace(/'/g, ' ').replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
+  }
+  
+  function signalePruefen(text, g) {
+    const t = { krise: false, weich: false, andere: false, gefahr: false };
+  
+    for (const { s: satzRoh, zitat } of signaleSaetze(text, g)) {
+      g.SATZ_HARMLOS.lastIndex = 0;
+      const satz = satzRoh.replace(g.SATZ_HARMLOS, ' ').replace(/\s+/g, ' ').trim();
+      const teile = signaleTeilsaetze(satz);
+      const satzPlan = g.PLAN.test(satz);
+      const satzAndere = g.TAETER.test(satz);
+      const satzIch = g.ICH.test(satz);
+      // In wiedergegebener Rede ist "ich" jemand anderes.
+      const krise = () => { if (zitat) t.andere = true; else t.krise = true; };
+      // Kein Hinweis bei Abstreiten ("nie geschlagen") oder einem Vorwurf.
+      const gefahr = (teil, i) => {
+        if (g.VERNEINT.test(teil) || g.VORWURF.test(teil) || g.VORWURF_EINLEITUNG.test(teil) || g.UNTERSTELLT.test(teil)) return;
+        if (i > 0 && g.VORWURF_EINLEITUNG.test(teile[i - 1])) return;
+        t.gefahr = true;
+      };
+      const letzte = (re, text) => { re.lastIndex = 0; let pos = -1, m; while ((m = re.exec(text)) !== null) pos = m.index; return pos; };
+  
+      // "mich umbringen", "mir etwas antun": Wer ist der Täter? Entscheidend ist,
+      // wer zuletzt vor der Stelle steht: "Ich glaube, er will mich umbringen".
+      const werIstGemeint = (teil, i, stelle, erForm) => {
+        const davor = teil.slice(0, stelle);
+        const ich = letzte(g.ICH_G, davor), taeter = letzte(g.TAETER_G, davor);
+        if (taeter > ich) { gefahr(teil, i); return; }
+        if (ich >= 0) { if (!g.NIE.test(teil)) krise(); return; }
+        if (g.TAETER.test(teil)) { gefahr(teil, i); return; }
+        if (erForm) return;                               // "Die Stille tötet mich"
+        // Ohne Täter im Teilsatz: "Er hat versucht, mich umzubringen" ist Gewalt,
+        // "Ich habe versucht, mich umzubringen" und "Der Gedanke, mich
+        // umzubringen, ..." sind eine Krise.
+        if (satzPlan && satzAndere) { gefahr(teil, i); return; }
+        if (satzPlan && !satzIch) { gefahr(teil, i); return; }
+        krise();
+      };
+  
+      if (g.KRISE_SATZ.some(r => r.test(satz))) {
+        if (zitat || !g.ICH_MICH_MIR.test(satz)) t.andere = true; else t.krise = true;
+      }
+      if (g.KRISE_WEICH.some(r => r.test(satz))) { if (zitat) t.andere = true; else t.weich = true; }
+  
+      teile.forEach((teil, i) => {
+        // Krise: Wer ist gemeint?
+        for (const k of g.KRISE_TEIL) {
+          if (!k.re.test(teil) || (k.ohne && k.ohne.test(teil)) || (k.satzOhne && k.satzOhne.test(satz))) continue;
+          if (g.ICH_MICH_MIR.test(teil)) krise(); else t.andere = true;
+        }
+  
+        // Töten mit "mich" oder "sich"; danach ohne diese Stellen weiter.
+        let rest = teil;
+        for (const { re, verbZuerst } of g.SELBST_TOETEN) {
+          re.lastIndex = 0;
+          let m;
+          while ((m = re.exec(teil)) !== null) {
+            const opfer = verbZuerst ? m[2] : m[1];
+            const verb = verbZuerst ? m[1] : m[2];
+            if (opfer === 'sich') t.andere = true;
+            // Maßgeblich ist die Stelle des Opfers: In "bringt er mich um" steht
+            // der Täter zwischen Verb und Opfer.
+            else werIstGemeint(teil, i, m.index + m[0].lastIndexOf(opfer), g.ER_FORM.test(' ' + verb + ' '));
+            rest = rest.replace(m[0], ' ');
+          }
+        }
+        g.TOETEN_HARMLOS.lastIndex = 0;
+        rest = rest.replace(g.TOETEN_HARMLOS, ' ');
+        if (g.TOETEN_ALLEIN.test(rest)) gefahr(teil, i);
+  
+        // "mir etwas antun", "sich etwas antun", "den Kindern etwas antun"
+        for (const r of g.ANTUN) {
+          r.lastIndex = 0;
+          let m;
+          while ((m = r.exec(teil)) !== null) {
+            if (m[1] === 'sich') t.andere = true;
+            else if (m[1] === 'mir') werIstGemeint(teil, i, m.index + m[0].lastIndexOf('mir'), false);
+            else gefahr(teil, i);
+          }
+        }
+  
+        // "... um" am Ende des Teilsatzes; "Du bringst mich noch um!" ist eine Redensart.
+        const b = teil.match(g.BRING_UM);
+        const redensart = g.NOCH_UM.test(teil) && !g.ZEIT_NOCH_UM.test(teil);
+        if (b && (b[2] === 'sich' || !redensart)) {
+          const verb = b[1], opfer = b[2];
+          if (opfer === 'sich') t.andere = true;
+          else if (opfer === 'mich') {
+            if (verb === 'bring' || verb === 'bringe') { if (!g.NIE.test(teil)) krise(); }
+            else werIstGemeint(teil, i, b.index + b[0].lastIndexOf(opfer), true);
+          } else if (!/^(?:das|es|dies|dieses)\s/.test(teil)) gefahr(teil, i);
+        }
+  
+        // Schlagen
+        if (!g.SCHLAGEN_HARMLOS.test(teil)) {
+          g.FUER_PERSON.lastIndex = 0;
+          const s = teil.replace(g.FUER_PERSON, ' ');
+          if (g.SCHLAGEN_TEIL_FEST.some(r => r.test(s))) gefahr(teil, i);
+          else if (!g.PARTIKEL_AM_ENDE.test(s)) {
+            for (const r of g.SCHLAGEN_TEIL) {
+              const m = s.match(r);
+              if (!m) continue;
+              const rb = g.RUECKBEZUG[m[1]];
+              if (rb && new RegExp('(?:^|\\s)' + rb + '(?:\\s|$)').test(s)) continue;   // "wir schlagen uns durch"
+              gefahr(teil, i);
+              break;
+            }
+          }
+        }
+  
+        if (!g.BEDROHT_GEFUEHL.test(teil) && g.GEWALT_TEIL.some(r => r.test(teil))) gefahr(teil, i);
+        if (g.DROHWORT.test(teil) && g.DROH_GEWALT.test(satz)) gefahr(teil, i);
+  
+        for (const r of g.GEWALT_WORT) {
+          if (r.nichtWenn && r.nichtWenn.test(satz)) continue;
+          if (r.ohne) r.ohne.lastIndex = 0;
+          const s = r.ohne ? teil.replace(r.ohne, ' ') : teil;
+          if (r.re.test(s)) { gefahr(teil, i); break; }
+        }
+      });
+    }
+    return t;
+  }
+  
+  function signale(text) {
+    try {
+      if (!SIGNAL_REGELN) SIGNAL_REGELN = signalRegelnBauen();
+      return signalePruefen(text, SIGNAL_REGELN);
+    } catch (e) {
+      return { krise: false, weich: false, andere: false, gefahr: false };
+    }
+  }
+  
+  // Baut die Regeln und übersetzt jeden Ausdruck einmal, verteilt auf kleine
+  // Schritte im Leerlauf nach dem Laden. Sonst fiele diese Arbeit (auf einem
+  // älteren Handy fast eine Sekunde) genau auf den ersten Klick.
+  function signaleVorwaermen() {
+    try { if (!SIGNAL_REGELN) SIGNAL_REGELN = signalRegelnBauen(); } catch (e) { return; }
+    const alle = [];
+    const sammeln = x => {
+      if (x instanceof RegExp) alle.push(x);
+      else if (Array.isArray(x)) x.forEach(sammeln);
+      else if (x && typeof x === 'object') Object.keys(x).forEach(k => sammeln(x[k]));
+    };
+    sammeln(SIGNAL_REGELN);
+    // Im Leerlauf, wo der Browser das kann; Safari kennt requestIdleCallback nicht.
+    const spaeter = f => (typeof requestIdleCallback === 'function')
+      ? requestIdleCallback(f, { timeout: 3000 })
+      : setTimeout(f, 60);
+    let i = 0;
+    const schritt = () => {
+      const ende = Math.min(i + 3, alle.length);
+      for (; i < ende; i++) {
+        try {
+          // Einmal mit einfachen und einmal mit typografischen Zeichen: Manche
+          // Browser übersetzen für beide Arten von Text getrennt.
+          alle[i].test('ich will nicht mehr leben, er schlägt mich');
+          alle[i].test('„ich will nicht mehr leben“ – er schlägt mich');
+          alle[i].lastIndex = 0;
+        } catch (e) { /* nichts */ }
+      }
+      if (i < alle.length) spaeter(schritt);
+    };
+    spaeter(schritt);
+  }
+
+  function scrollZiel(abschnitt, karteId) {
+    const k = document.getElementById(karteId);
+    return (k && !k.hidden) ? k : abschnitt;
+  }
+
+  const hilfeDialog = document.getElementById('hilfe-dialog');
+  let hilfeVorher = null;
+
+  function hilfeOeffnen() {
+    hilfeVorher = document.activeElement;
+    if (typeof hilfeDialog.showModal === 'function') hilfeDialog.showModal();
+    else hilfeDialog.setAttribute('open', '');
+    document.getElementById('hilfe-titel').focus();
+  }
+  function hilfeSchliessen() {
+    if (typeof hilfeDialog.close === 'function') hilfeDialog.close();
+    else hilfeDialog.removeAttribute('open');
+  }
+  hilfeDialog.addEventListener('close', () => { if (hilfeVorher && hilfeVorher.focus) hilfeVorher.focus(); });
+  hilfeDialog.addEventListener('click', e => { if (e.target === hilfeDialog) hilfeSchliessen(); });
+  document.getElementById('hilfe-zurueck').addEventListener('click', hilfeSchliessen);
+  document.addEventListener('click', e => {
+    if (e.target.closest && e.target.closest('[data-hilfe-oeffnen]')) hilfeOeffnen();
+  });
+
+  const HILFE_TEL = (nr, text, zusatz) =>
+    '<a href="tel:' + nr + '">' + text + (zusatz ? '<small>' + zusatz + '</small>' : '') + '</a>';
+  const HILFE_ALLE = '<p><button type="button" class="hilfe-link" data-hilfe-oeffnen>Alle Anlaufstellen ansehen</button></p>';
+
+  const HILFE_SEELSORGE = '<div class="nummern">' + HILFE_TEL('08001110111', '0800 111 0 111') + HILFE_TEL('116123', '116 123') + '</div>';
+
+  // Welche Karte? Bei einer Fremdnachricht ist "ich" die andere Person, und
+  // ein leiser Hinweis ("Ich halte das nicht mehr aus") zählt dort nicht.
+  function hilfeKarteInhalt(t, fremd, ergebnis) {
+    const selbst = !fremd && (t.krise || t.weich);
+    const andere = t.andere || (fremd && t.krise);
+    const wo = fremd ? 'In dieser Nachricht' : 'In deinem Text';
+    const kommt = '<span class="hilfe-kommt">' + ergebnis + ' </span>';
+    const JEMAND = (davor) => '<p>' + davor + 'Wenn du fürchtest, dass sich jemand gerade etwas antut, ruf den Notruf 112. Und für dich selbst: Die Telefonseelsorge ist Tag und Nacht erreichbar, kostenfrei und anonym.</p>' +
+      '<div class="nummern">' + HILFE_TEL('112', '112', 'Notruf') + HILFE_TEL('08001110111', '0800 111 0 111') + HILFE_TEL('116123', '116 123') + '</div>';
+
+    if (t.gefahr) {
+      let dazu = '';
+      if (fremd && t.krise) {
+        dazu = '<p>Die Nachricht klingt auch, als ginge es der anderen Person sehr schlecht. Wenn du fürchtest, dass sie sich etwas antut, ruf den Notruf 112. Für dich selbst ist die Telefonseelsorge Tag und Nacht da.</p>' + HILFE_SEELSORGE;
+      } else if (andere) {
+        dazu = '<p>' + wo + ' geht es auch darum, dass sich jemand etwas antun könnte. Wenn du das fürchtest, ruf den Notruf 112. Für dich selbst ist die Telefonseelsorge Tag und Nacht da.</p>' + HILFE_SEELSORGE;
+      } else if (selbst) {
+        dazu = '<p>Und wenn du einfach mit jemandem reden möchtest: Die Telefonseelsorge ist Tag und Nacht erreichbar.</p>' + HILFE_SEELSORGE;
+      }
+      return {
+        art: 'gefahr',
+        html:
+          '<h4>' + wo + ' geht es um Gewalt oder eine Drohung.</h4>' +
+          '<p>Wenn du oder ein Kind gerade in Gefahr seid, ruf den Notruf.</p>' +
+          '<div class="nummern">' + HILFE_TEL('110', '110', 'Polizei') + HILFE_TEL('112', '112', 'Notruf') + '</div>' +
+          '<p>Beraten lassen kannst du dich beim Hilfetelefon Gewalt gegen Frauen, rund um die Uhr, oder montags bis freitags beim Hilfetelefon Gewalt an Männern.</p>' +
+          '<div class="nummern">' + HILFE_TEL('116016', '116 016') + HILFE_TEL('08001239900', '0800 123 99 00') + '</div>' +
+          dazu +
+          HILFE_ALLE
+      };
+    }
+    if (fremd && t.krise) {
+      return {
+        art: 'krise',
+        html:
+          '<h4>Diese Nachricht klingt, als ginge es der anderen Person sehr schlecht.</h4>' +
+          '<p>Wenn du fürchtest, dass sie sich etwas antut, ruf den Notruf 112. Und für dich selbst: Die Telefonseelsorge ist Tag und Nacht erreichbar, kostenfrei und anonym.</p>' +
+          '<div class="nummern">' + HILFE_TEL('112', '112', 'Notruf') + HILFE_TEL('08001110111', '0800 111 0 111') + HILFE_TEL('116123', '116 123') + '</div>' +
+          HILFE_ALLE
+      };
+    }
+    if (selbst) {
+      return {
+        art: 'krise',
+        html:
+          '<h4>Es klingt, als ginge es dir gerade sehr schlecht.</h4>' +
+          '<p>' + kommt + 'Wenn du jetzt lieber mit einem Menschen sprechen möchtest: Die Telefonseelsorge ist Tag und Nacht erreichbar, kostenfrei und anonym.</p>' +
+          HILFE_SEELSORGE +
+          (andere ? '<p>Wenn du fürchtest, dass sich jemand anderes gerade etwas antut, ruf den Notruf 112.</p>' : '') +
+          HILFE_ALLE
+      };
+    }
+    if (andere) {
+      return {
+        art: 'krise',
+        html:
+          '<h4>' + wo + ' geht es darum, dass sich jemand etwas antun könnte.</h4>' +
+          JEMAND(fremd ? '' : kommt) +
+          HILFE_ALLE
+      };
+    }
+    return null;
+  }
+
+  function hilfeKommtWeg(karte) {
+    const k = karte.querySelector('.hilfe-kommt');
+    if (k) k.remove();
+  }
+
+  function hilfeKarteZeigen(karte, text, fremd, ergebnis) {
+    const k = text ? hilfeKarteInhalt(signale(text), fremd, ergebnis) : null;
+    if (!k) { karte.hidden = true; karte.innerHTML = ''; return; }
+    karte.className = 'hilfe-karte ' + k.art;
+    karte.innerHTML = k.html;
+    karte.hidden = false;
+  }
+
+  const hilfeKarte = document.getElementById('hilfe-karte');
+  const hilfeKarteUeben = document.getElementById('hilfe-karte-ueben');
+
+  // Läuft neben dem eigentlichen Absenden her und hält es nicht auf: Der Text
+  // wird beim Klick festgehalten, geprüft wird erst, wenn die Anfrage schon
+  // unterwegs ist.
+  submitBtn.addEventListener('click', () => {
+    if (submitBtn.disabled) return;
+    const fremd = richtung === 'fremd';
+    const text = textarea.value.trim();
+    setTimeout(() => hilfeKarteZeigen(hilfeKarte, text, fremd,
+      fremd ? 'Die Einschätzung kommt gleich.' : 'Deine Übersetzung kommt gleich.'), 0);
+  });
+  practiceSubmitBtn.addEventListener('click', () => {
+    if (practiceSubmitBtn.disabled) return;
+    // Jedes Feld als eigene Zeile: Ein Feld ohne Schlusspunkt soll nicht mit
+    // dem nächsten zu einem Satz verschmelzen.
+    const text = [practiceObs, practiceFeel, practiceNeed, practiceReq].map(f => f.value).join('\n').trim();
+    setTimeout(() => hilfeKarteZeigen(hilfeKarteUeben, text, false, 'Deine Rückmeldung kommt gleich.'), 0);
+  });
+
+  // Die Erkennung schon im Leerlauf vorbereiten, nicht erst beim ersten Klick.
+  setTimeout(signaleVorwaermen, 1200);
+
+  // Wer die Richtung oder den Bereich wechselt, soll keine alte Karte sehen.
+  // Nur die Karte einer noch laufenden Anfrage bleibt stehen.
+  document.querySelectorAll('.richtung button, #mode-translate-btn, #mode-practice-btn, #group-werkzeuge-btn, #group-uebungen-btn')
+    .forEach(b => b.addEventListener('click', () => {
+      if (!submitBtn.disabled) hilfeKarte.hidden = true;
+      if (!practiceSubmitBtn.disabled) hilfeKarteUeben.hidden = true;
+    }));
 
   submitBtn.addEventListener('click', async () => {
     const text = textarea.value.trim();
@@ -2014,6 +2916,7 @@
       errorMsg.textContent = messageForError(err);
       errorMsg.hidden = false;
     } finally {
+      hilfeKommtWeg(hilfeKarte);
       submitBtn.disabled = false;
       richtungKnoepfe.forEach(b => { b.disabled = false; });
       submitBtn.textContent = RICHTUNG_TEXTE[richtung].knopf;
@@ -2078,24 +2981,12 @@
   }
 
   function buildHighlightedSentence(sentence, steps) {
-    let matches = [];
-    steps.forEach(step => {
-      if (!step.text) return;
-      const idx = sentence.toLowerCase().indexOf(String(step.text).toLowerCase());
-      if (idx !== -1) {
-        matches.push({ start: idx, end: idx + step.text.length, category: step.category });
-      }
-    });
-
-    matches.sort((a, b) => a.start - b.start);
-    const clean = [];
-    let lastEnd = 0;
-    matches.forEach(m => {
-      if (m.start >= lastEnd) {
-        clean.push(m);
-        lastEnd = m.end;
-      }
-    });
+    // Findet die Schritte auch, wenn sie nicht Wort für Wort im Satz stehen,
+    // etwa "Ich bin traurig." im Satz als "bin ich traurig". Liefert Stellen
+    // ohne Überschneidung, nach Stelle sortiert. Geht dabei etwas schief,
+    // erscheint der Satz ohne Farben, aber er erscheint.
+    let clean = [];
+    try { clean = schritteFinden(sentence, steps); } catch (e) { clean = []; }
 
     let html = '';
     let cursor = 0;
@@ -2146,7 +3037,7 @@
     resultSection.hidden = false;
     requestAnimationFrame(() => {
       resultSection.classList.add('visible');
-      resultSection.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
+      scrollZiel(resultSection, 'hilfe-karte').scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
     });
   }
 
@@ -2201,6 +3092,7 @@
       practiceErrorMsg.textContent = messageForError(err);
       practiceErrorMsg.hidden = false;
     } finally {
+      hilfeKommtWeg(hilfeKarteUeben);
       practiceSubmitBtn.disabled = false;
       practiceSubmitBtn.textContent = 'Rückmeldung holen';
     }
@@ -2242,7 +3134,7 @@ Bitte: ${req || '(leer)'}`;
     practiceResultSection.hidden = false;
     requestAnimationFrame(() => {
       practiceResultSection.classList.add('visible');
-      practiceResultSection.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
+      scrollZiel(practiceResultSection, 'hilfe-karte-ueben').scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
     });
   }
 </script>
