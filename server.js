@@ -43,7 +43,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // anpassen. Sie wird beim Start ins Log geschrieben, damit sich jederzeit
 // nachsehen lässt, welche Fassung tatsächlich läuft. In dieser Session ist zweimal
 // unklar gewesen, welche Datei wo liegt; das kostet mehr Zeit als diese Zeile.
-const PROMPT_VERSION = 'Runde 5, 26.09.2026';
+const PROMPT_VERSION = 'Runde 5.1, 26.09.2026';
 
 // ---------------------------------------------------------------------------
 // Betriebsart — der eine Schalter für Tempo, Kosten und Gründlichkeit
@@ -331,8 +331,11 @@ Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Code
 // ---------------------------------------------------------------------------
 // Kurzer Prompt für die Betriebsart "schnell"
 // ---------------------------------------------------------------------------
-// Wortgleich übernommen aus testlauf/prompt-kurz.js, der Fassung, die im
-// 13-Satz-Test gemessen wurde. Nicht von Hand ändern, ohne neu zu messen.
+// Übernommen aus testlauf/prompt-kurz.js, der Fassung, die im 13-Satz-Test
+// gemessen wurde. Seit Runde 5.1 ergänzt um den Abschnitt SCHRITT-TEXTE und
+// Prüfpunkt 12: Ohne sie stand der Schritt-Text oft nicht wortgleich im
+// GFK-Text, und die Seite konnte ihn nicht einfärben (Bedürfnis nur 19 von 39
+// im Test, beim langen Prompt 39 von 39). Diese Ergänzung ist nicht gemessen.
 // Er erwartet vor dem Text drei Kopfzeilen; die baut nutzernachrichtKurz().
 SYSTEM_PROMPTS.kurz = `Du bist spezialisiert auf Gewaltfreie Kommunikation nach Marshall Rosenberg, mit Erfahrung in Elternkonflikten bei Eltern-Kind-Entfremdung. Ein Elternteil hat einen Text geschrieben. Du formst ihn in die vier Schritte der Gewaltfreien Kommunikation um.
 
@@ -415,6 +418,9 @@ Kein Gedankenstrich, ausnahmslos. Punkt und neuer Satz stattdessen, ohne Füllw�
 BEREITS GUTER TEXT
 Enthält der Text der Person die vier Schritte schon weitgehend selbst, sagst du das im Einstiegssatz selbstbewusst und übernimmst den Text möglichst wortgleich, ohne ihn kosmetisch umzuformulieren.
 
+SCHRITT-TEXTE
+Jeder Schritt-Text ist ein zusammenhängender Ausschnitt aus dem GFK-Text, Wort für Wort und in derselben Wortstellung. Du formst ihn nicht zu einem eigenen Satz um, stellst keine Wörter um und setzt weder Anführungszeichen noch einen Schlusspunkt, der im GFK-Text an dieser Stelle nicht steht. Beginnt die Beobachtung im GFK-Text mit einer Konjunktion, lässt du nur diese weg. Die Seite färbt die vier Schritte im GFK-Text ein und findet sie nur, wenn sie dort genau so stehen.
+
 PRÜFUNG VOR DER AUSGABE
 1. Führt jedes Substantiv und Verb der Beobachtung auf ein Wort im Text zurück?
 2. Nennt der erste Teilsatz etwas aus dem Text, und bleibt die Aussageform erhalten?
@@ -427,6 +433,7 @@ PRÜFUNG VOR DER AUSGABE
 9. Ist das Gegenüber durchgehend "du", und heißt es in allen Erklärungen gleich?
 10. Deutet keine Erklärung ein Motiv hinzu?
 11. Kein Gedankenstrich irgendwo?
+12. Steht jeder Schritt-Text Wort für Wort und in derselben Wortstellung im GFK-Text?
 
 Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text. Das erste und das letzte Zeichen sind die geschweiften Klammern. Jeder Wert steht in einer Zeile ohne Zeilenumbruch. Innerhalb eines Wertes stehen keine doppelten Anführungszeichen; Äußerungen aus dem Text der Person setzt du in einfache Anführungszeichen.
 {
@@ -470,8 +477,10 @@ function nutzernachrichtKurz(text, angaben) {
 // ---------------------------------------------------------------------------
 // Prompt für die Fremdnachricht
 // ---------------------------------------------------------------------------
-// Wortgleich übernommen aus der früheren Testfassung gfk-kompass.html
-// (Funktion translateForeignMessage). Dort von Hand erprobt, nicht gemessen.
+// Übernommen aus der früheren Testfassung gfk-kompass.html (Funktion
+// translateForeignMessage). Dort von Hand erprobt, nicht gemessen. Seit
+// Runde 5.1 beginnt die vorgeschlagene Reaktion mit "Es klingt so, als"
+// statt "Klingt es, als"; das klingt im Deutschen natürlicher.
 SYSTEM_PROMPTS.foreign = `Du bist spezialisiert auf Gewaltfreie Kommunikation (GFK) nach Marshall Rosenberg, mit Erfahrung in Elternkonflikten bei Eltern-Kind-Entfremdung. Du bekommst eine Nachricht, die eine ANDERE Person geschrieben hat, nicht die anfragende Person selbst, meist eine Nachricht vom anderen Elternteil. Die anfragende Person möchte besser verstehen, welche Gefühle und Bedürfnisse hinter dieser Nachricht stecken könnten.
 
 WICHTIGSTE REGEL, gilt für deine gesamte Antwort ausnahmslos: Kein Gedankenstrich an irgendeiner Stelle der Ausgabe, weder als kurzer noch als langer Strich zwischen Satzteilen. Nutze stattdessen immer einen Punkt und beginne einen neuen Satz. Bindestriche innerhalb zusammengesetzter Wörter sind davon nicht betroffen.
@@ -488,7 +497,7 @@ Vermute danach 1-2 echte Gefühle, die hinter der Nachricht stecken könnten ("p
 
 Vermute anschließend 1-2 Bedürfnisse, die hinter diesen Gefühlen stecken könnten ("possibleNeeds", als Array). Jedes Bedürfnis ist ein einzelnes Substantiv oder eine sehr kurze Wendung, die für jeden Menschen in jeder Lebenslage gelten könnte (etwa Sicherheit, Verbindung, Anerkennung, Ruhe). Ohne Person, Pronomen, Namen oder Rolle, ohne "für" oder "bei" jemanden, ohne Besitz und ohne Adjektiv davor. Prüfung: Streiche jede Person und jedes Adjektiv. Was übrig bleibt, ist das Bedürfnis.
 
-Schlage abschließend eine mögliche empathische Reaktion vor ("suggestedResponse"), die die anfragende Person der anderen Person gegenüber äußern könnte, als vorsichtige Vermutung formuliert (etwa in der Art von "Klingt es, als wärst du... weil dir... wichtig ist?"), nicht als Tatsachenbehauptung. Kein Ratschlag, keine Lösung, keine eigene Bewertung, nur eine Vermutung über das Erleben der anderen Person.
+Schlage abschließend eine mögliche empathische Reaktion vor ("suggestedResponse"), die die anfragende Person der anderen Person gegenüber äußern könnte, als vorsichtige Vermutung formuliert (etwa in der Art von "Es klingt so, als wärst du... weil dir... wichtig ist?"), nicht als Tatsachenbehauptung. Kein Ratschlag, keine Lösung, keine eigene Bewertung, nur eine Vermutung über das Erleben der anderen Person.
 
 Bleibe während der gesamten Antwort einfühlsam und wertneutral gegenüber der anderen Person, auch wenn die Nachricht selbst hart oder vorwurfsvoll klingt.
 
