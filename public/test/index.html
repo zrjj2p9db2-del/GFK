@@ -1,3 +1,4 @@
+<!-- VERSION: Runde 3, 16.09.2026 (Frontend) -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -609,6 +610,115 @@
   }
 
   .site-footer p + p { margin-top: 12px; }
+
+  /* ===== Umschalter Eigener Text / Fremdnachricht ===== */
+  /* Gleiche Bildsprache wie Werkzeuge / Spiele, aber kompakt: die Knöpfe sind
+     so breit wie ihr Text, die Schrift ist die Grundschrift. */
+  .richtung {
+    display: inline-flex;
+    gap: 6px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 5px;
+    margin: 4px 0 18px;
+  }
+  .richtung button {
+    background: none;
+    border: none;
+    padding: 10px 18px;
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .richtung button:hover:not(.aktiv) { color: var(--ink); background: rgba(59, 110, 104, 0.07); }
+  .richtung button.aktiv {
+    background: var(--brand);
+    color: var(--paper);
+    box-shadow: inset 0 0 0 2px var(--paper), 0 0 0 2px var(--brand);
+  }
+  .richtung button:disabled { cursor: default; }
+  .richtung button:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(43, 83, 79, 0.35); }
+  .richtung button.aktiv:focus-visible { box-shadow: inset 0 0 0 2px var(--paper), 0 0 0 2px var(--brand), 0 0 0 5px rgba(43, 83, 79, 0.3); }
+
+  /* ===== Gegenüber ===== */
+  .gegenueber { margin: 0 0 18px; }
+  .gegenueber-frage {
+    display: block;
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 10px;
+  }
+  .gegenueber-frage span { font-weight: 400; color: var(--ink-soft); }
+  .wahl { display: flex; flex-wrap: wrap; gap: 8px; }
+  /* Ein kleiner Kreis vorn unterscheidet diese Auswahlknöpfe von den
+     Beispiel-Knöpfen: die einen wählen aus, die anderen füllen Text ein. */
+  .wahl button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 8px 15px 8px 11px;
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .wahl button::before {
+    content: '';
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink-soft);
+    box-sizing: border-box;
+    flex-shrink: 0;
+    transition: border 0.15s ease, background 0.15s ease;
+  }
+  .wahl button:hover { border-color: var(--brand); }
+  .wahl button[aria-pressed="true"] {
+    border-color: var(--brand);
+    background: rgba(59, 110, 104, 0.09);
+    color: var(--brand-dark);
+    font-weight: 500;
+  }
+  .wahl button[aria-pressed="true"]::before { border: 4px solid var(--brand); background: var(--paper); }
+  .wahl button:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(43, 83, 79, 0.3); }
+  .gegenueber-frei {
+    display: block;
+    margin-top: 10px;
+    width: 100%;
+    max-width: 360px;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    font-family: var(--sans);
+    font-size: 14.5px;
+    color: var(--ink);
+  }
+  .gegenueber-frei:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(59, 110, 104, 0.15); }
+  /* Ohne diese Zeile gewinnt "display: block" oben gegen das hidden-Attribut,
+     und das Feld stünde immer da, auch wenn niemand "Jemand anderes" wählt. */
+  .gegenueber-frei[hidden] { display: none; }
+  .gegenueber-notiz { font-size: 13px; color: var(--ink-soft); margin: 9px 0 0; }
+  .gegenueber-notiz b { font-weight: 500; color: var(--ink); }
+
+  /* ===== Ergebnis Fremdnachricht ===== */
+  .possible-list { list-style: none; padding: 0; margin: 4px 0 16px; }
+  /* Helle Fläche mit Rand wie beim Kasten "Eine mögliche Reaktion". In der
+     alten Testfassung stand hier die Farbe des Ergebnisbereichs selbst, damit
+     verschwanden die Kästchen im Hintergrund. */
+  .possible-list li {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px 16px; margin-bottom: 8px; font-size: 15px; color: var(--ink); line-height: 1.5;
+  }
 </style>
 </head>
 <body>
@@ -699,8 +809,27 @@
       </div>
 
     <div id="translate-panel">
-    <h2 id="input-heading">Dein Text</h2>
-    <p class="hint">Füge eine Nachricht, einen Kommentar oder einen Satz ein, den du schreiben möchtest – oder einen, den du bekommen hast und verstehen willst.</p>
+    <h2 id="input-heading">Eigener Text</h2>
+
+    <div class="richtung" role="group" aria-label="Welche Art von Text?">
+      <button type="button" class="aktiv" data-richtung="eigen" aria-pressed="true">Eigener Text</button>
+      <button type="button" data-richtung="fremd" aria-pressed="false">Fremdnachricht</button>
+    </div>
+
+    <p class="hint" id="richtung-hinweis">Füge eine Nachricht ein, die du schreiben möchtest – wir formulieren sie gemeinsam in gewaltfreie Kommunikation um.</p>
+
+    <div class="gegenueber" id="gegenueber-block">
+      <span class="gegenueber-frage" id="gegenueber-frage">An wen geht deine Nachricht? <span>(freiwillig)</span></span>
+      <div class="wahl" role="group" aria-labelledby="gegenueber-frage">
+        <button type="button" data-wer="elternteil" aria-pressed="false">Anderer Elternteil</button>
+        <button type="button" data-wer="kind" aria-pressed="false">Mein Kind</button>
+        <button type="button" data-wer="behoerde" aria-pressed="false">Behörde / Jugendamt</button>
+        <button type="button" data-wer="andere" aria-pressed="false">Jemand anderes</button>
+      </div>
+      <label class="sr-only" for="gegenueber-frei">Wer genau?</label>
+      <input type="text" class="gegenueber-frei" id="gegenueber-frei" maxlength="60" autocomplete="off" placeholder="Wer? z. B. meine Mutter, die Lehrerin" hidden>
+      <p class="gegenueber-notiz" id="gegenueber-notiz">Hilft, Anrede und Blickwinkel zu treffen.</p>
+    </div>
 
     <label class="sr-only" for="input-text">Dein Text</label>
     <textarea id="input-text" rows="5" maxlength="600" placeholder="z. B. „Du lässt mich einfach nicht mit meinem Kind sprechen, das machst du doch mit Absicht.“"></textarea>
@@ -861,6 +990,24 @@
     <button type="button" class="text-btn" id="copy-everyday-btn">Text kopieren</button>
   </section>
 
+  <section class="result" id="foreign-result" aria-live="polite" hidden>
+    <p class="gfk-intro" id="foreign-intro"></p>
+    <h2>Was gesagt wurde</h2>
+    <p id="foreign-observation"></p>
+
+    <h3>Mögliche Gefühle dahinter</h3>
+    <ul class="possible-list" id="foreign-feelings"></ul>
+
+    <h3>Mögliche Bedürfnisse dahinter</h3>
+    <ul class="possible-list" id="foreign-needs"></ul>
+
+    <h3 id="foreign-response-heading">Eine mögliche Reaktion</h3>
+    <div class="everyday-box" id="foreign-response-box">
+      <p id="foreign-response"></p>
+    </div>
+    <button type="button" class="text-btn" id="copy-foreign-response-btn">Text kopieren</button>
+  </section>
+
   <section class="result" id="practice-result" aria-live="polite" hidden>
     <h2>Deine Rückmeldung</h2>
     <p class="gfk-intro" id="practice-overall"></p>
@@ -892,6 +1039,7 @@
   const fieldHint = document.getElementById('field-hint');
   const errorMsg = document.getElementById('error-msg');
   const resultSection = document.getElementById('result');
+  const foreignResultSection = document.getElementById('foreign-result');
   const gfkIntro = document.getElementById('gfk-intro');
   const gfkQuote = document.getElementById('gfk-quote');
   const breakdownList = document.getElementById('breakdown');
@@ -950,6 +1098,8 @@
     resultSection.classList.remove('visible');
     practiceResultSection.hidden = true;
     practiceResultSection.classList.remove('visible');
+    foreignResultSection.hidden = true;
+    foreignResultSection.classList.remove('visible');
     lastWerkzeugMode = mode;
   }
 
@@ -990,6 +1140,8 @@
       resultSection.classList.remove('visible');
       practiceResultSection.hidden = true;
       practiceResultSection.classList.remove('visible');
+      foreignResultSection.hidden = true;
+      foreignResultSection.classList.remove('visible');
     }
     if (isWerkzeuge) setWerkzeugMode(lastWerkzeugMode);
     else showExercise(lastUebungMode);
@@ -1560,13 +1712,28 @@
     });
   });
 
-  async function withRetry(fn, retries = 1, delayMs = 1200) {
+  // Der Server wiederholt vorübergehende Fehler inzwischen selbst und unsichtbar.
+  // Hier bleibt nur ein einziger zusätzlicher Versuch für den Fall, dass die
+  // Verbindung des Besuchers selbst kurz aussetzt. Bei Fehlern, die ein sofortiger
+  // zweiter Versuch nur verschlimmern würde (Ratenbegrenzung) oder die sich nicht
+  // von allein beheben (zu langer Text), wird nicht wiederholt.
+  // Erscheint beim Laden in der Browser-Konsole.
+  console.log('GFK-Kompass Frontend, Runde 3, 16.09.2026');
+
+  const NON_RETRYABLE_CODES = ['rate_limited', 'too_long', 'bad_request', 'auth_error'];
+
+  // Der Browser wiederholt nicht mehr selbst. Der Server versucht es bereits
+  // zweimal, und jeder Versuch, der eine Antwort bekommt, wird bezahlt — auch
+  // wenn er danach verworfen wird. Eine zweite Wiederholungsschicht im Browser
+  // hat jeden gescheiterten Klick verdoppelt. Wer es nochmal will, klickt nochmal.
+  async function withRetry(fn, retries = 0, delayMs = 1500) {
     let lastErr;
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         return await fn();
       } catch (err) {
         lastErr = err;
+        if (NON_RETRYABLE_CODES.includes(err.code)) throw err;
         if (attempt < retries) {
           await new Promise(resolve => setTimeout(resolve, delayMs));
         }
@@ -1574,6 +1741,236 @@
     }
     throw lastErr;
   }
+
+  // Übersetzt den Fehlercode des Servers in einen Satz, mit dem ein Besucher
+  // etwas anfangen kann. Früher sah jeder Fehler gleich aus, auch wenn "kurz
+  // warten" und "gerade überlastet" völlig unterschiedliche Reaktionen erfordern.
+  const ERROR_MESSAGES = {
+    rate_limited: 'Gerade sind sehr viele Anfragen unterwegs. Bitte warte etwa eine Minute und versuche es dann noch einmal.',
+    overloaded: 'Der Dienst ist im Moment stark ausgelastet. Bitte versuche es in ein paar Sekunden noch einmal.',
+    timeout: 'Die Antwort hat zu lange gedauert. Bitte versuche es noch einmal.',
+    too_long: 'Der Text ist zu lang. Bitte kürze ihn etwas.',
+    incomplete_response: 'Die Antwort kam unvollständig zurück. Bitte versuche es noch einmal, gern mit einem etwas kürzeren Text.',
+    bad_response: 'Die Antwort kam unvollständig zurück. Bitte versuche es noch einmal, gern mit einem etwas kürzeren Text.',
+    offline: 'Es sieht so aus, als wäre die Internetverbindung unterbrochen. Bitte prüfe die Verbindung und versuche es noch einmal.'
+  };
+
+  function messageForError(err) {
+    if (!navigator.onLine) return ERROR_MESSAGES.offline;
+    return ERROR_MESSAGES[err && err.code] ||
+      'Das hat gerade nicht geklappt. Bitte versuche es in ein paar Sekunden erneut.';
+  }
+
+  // Fragt die API an und wirft bei Fehlern einen Error, der den Code des Servers
+  // mitträgt, damit oben die passende Meldung gewählt werden kann.
+  async function requestGfk(mode, text, angaben) {
+    let response;
+    try {
+      response = await fetch("/api/gfk-proxy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(angaben ? { mode: mode, text: text, angaben: angaben } : { mode: mode, text: text })
+      });
+    } catch (err) {
+      const netErr = new Error('Verbindung fehlgeschlagen');
+      netErr.code = 'network_error';
+      throw netErr;
+    }
+
+    let json = null;
+    try {
+      json = await response.json();
+    } catch (err) {
+      json = null;
+    }
+
+    if (!response.ok) {
+      const apiErr = new Error('API request failed');
+      apiErr.code = (json && json.code) || 'upstream_error';
+      apiErr.status = response.status;
+      throw apiErr;
+    }
+
+    if (!json) {
+      const shapeErr = new Error('Leere Antwort');
+      shapeErr.code = 'bad_response';
+      throw shapeErr;
+    }
+
+    return json;
+  }
+
+  // ---------------------------------------------------------------
+  // Eigener Text / Fremdnachricht und das Gegenüber
+  // ---------------------------------------------------------------
+  const RICHTUNG_TEXTE = {
+    eigen: {
+      titel: 'Eigener Text',
+      hinweis: 'Füge eine Nachricht ein, die du schreiben möchtest – wir formulieren sie gemeinsam in gewaltfreie Kommunikation um.',
+      platzhalter: 'z. B. „Du lässt mich einfach nicht mit meinem Kind sprechen, das machst du doch mit Absicht.“',
+      knopf: 'In GFK übersetzen',
+      laeuft: 'Wird übersetzt …',
+      frage: 'An wen geht deine Nachricht?',
+      notiz: 'Hilft, Anrede und Blickwinkel zu treffen.'
+    },
+    fremd: {
+      titel: 'Fremdnachricht',
+      hinweis: 'Füge eine Nachricht ein, die du von der anderen Person bekommen hast – wir vermuten gemeinsam, welche Gefühle und Bedürfnisse dahinterstecken könnten.',
+      platzhalter: 'z. B. „Du bist eine schlechte Mutter, das Kind will sowieso nicht mehr zu dir.“',
+      knopf: 'Gefühle & Bedürfnisse vermuten',
+      laeuft: 'Wird vermutet …',
+      frage: 'Von wem kommt die Nachricht?',
+      notiz: 'Hilft einzuordnen, aus welcher Lage heraus sie geschrieben wurde.'
+    }
+  };
+
+  let richtung = 'eigen';
+  let gegenueberWahl = null;
+  // Betriebsart des Servers. Beim Übersetzen wirkt das Gegenüber nur in
+  // "schnell"; in "gruendlich" bekommt der lange Prompt den reinen Text.
+  // Dort wird das Feld bei "Eigener Text" ausgeblendet, statt etwas zu
+  // versprechen, das nicht passiert. Die Abfrage kostet nichts.
+  let betrieb = 'schnell';
+
+  const gegenueberBlock = document.getElementById('gegenueber-block');
+  const richtungKnoepfe = document.querySelectorAll('.richtung button');
+  const wahlKnoepfe = document.querySelectorAll('.wahl button');
+  const gegenueberFrei = document.getElementById('gegenueber-frei');
+  const gegenueberNotiz = document.getElementById('gegenueber-notiz');
+  const gegenueberFrage = document.getElementById('gegenueber-frage');
+  const richtungHinweis = document.getElementById('richtung-hinweis');
+  const inputHeading = document.getElementById('input-heading');
+  const beispielBlock = document.querySelector('#translate-panel .examples');
+
+  function gegenueberWirkt() {
+    return !(richtung === 'eigen' && betrieb === 'gruendlich');
+  }
+
+  function gegenueberSichtbarkeit() {
+    gegenueberBlock.hidden = !gegenueberWirkt();
+  }
+
+  fetch('/api/version', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(v => {
+      if (v && typeof v.betrieb === 'string') {
+        betrieb = v.betrieb;
+        gegenueberSichtbarkeit();
+      }
+    })
+    .catch(() => {});
+
+  function gegenueberNotizSetzen() {
+    if (richtung === 'eigen' && gegenueberWahl === 'behoerde') {
+      gegenueberNotiz.innerHTML = 'Deine Nachricht wird mit <b>„Sie“</b> formuliert.';
+    } else {
+      gegenueberNotiz.textContent = RICHTUNG_TEXTE[richtung].notiz;
+    }
+  }
+
+  function richtungSetzen(r) {
+    // Während eine Anfrage läuft, bleibt die Richtung stehen. Sonst landete
+    // das Ergebnis eines eigenen Textes in der Anzeige der Fremdnachricht.
+    if (submitBtn.disabled || !RICHTUNG_TEXTE[r]) return;
+    richtung = r;
+    const t = RICHTUNG_TEXTE[r];
+    richtungKnoepfe.forEach(b => {
+      const an = b.dataset.richtung === r;
+      b.classList.toggle('aktiv', an);
+      b.setAttribute('aria-pressed', String(an));
+    });
+    gegenueberSichtbarkeit();
+    inputHeading.textContent = t.titel;
+    richtungHinweis.textContent = t.hinweis;
+    textarea.placeholder = t.platzhalter;
+    submitBtn.textContent = t.knopf;
+    gegenueberFrage.firstChild.nodeValue = t.frage + ' ';
+    // Die Beispiele sind eigene Sätze; zu einer Fremdnachricht passen sie nicht.
+    if (beispielBlock) beispielBlock.hidden = (r === 'fremd');
+    fieldHint.hidden = true;
+    errorMsg.hidden = true;
+    resultSection.hidden = true;
+    resultSection.classList.remove('visible');
+    foreignResultSection.hidden = true;
+    foreignResultSection.classList.remove('visible');
+    gegenueberNotizSetzen();
+  }
+
+  richtungKnoepfe.forEach(b => {
+    b.addEventListener('click', () => richtungSetzen(b.dataset.richtung));
+  });
+
+  wahlKnoepfe.forEach(b => {
+    b.addEventListener('click', () => {
+      // Nochmal klicken hebt die Wahl auf: das Feld ist freiwillig.
+      gegenueberWahl = (gegenueberWahl === b.dataset.wer) ? null : b.dataset.wer;
+      wahlKnoepfe.forEach(x => x.setAttribute('aria-pressed', String(x.dataset.wer === gegenueberWahl)));
+      gegenueberFrei.hidden = (gegenueberWahl !== 'andere');
+      if (gegenueberWahl === 'andere') gegenueberFrei.focus();
+      gegenueberNotizSetzen();
+    });
+  });
+
+  // Was an den Server geht. Ohne Wahl wird nichts mitgeschickt, dann läuft
+  // alles genau wie vorher.
+  function gegenueberAngaben() {
+    if (!gegenueberWahl || !gegenueberWirkt()) return null;
+    const a = { wer: gegenueberWahl };
+    if (gegenueberWahl === 'andere') {
+      const f = gegenueberFrei.value.trim();
+      if (f) a.frei = f.slice(0, 60);
+    }
+    return a;
+  }
+
+  async function foreignToGFK(text, angaben) {
+    const parsed = await requestGfk("foreign", text, angaben);
+    const liste = x => Array.isArray(x) && x.length > 0 && x.every(v => typeof v === 'string');
+    if (!parsed || typeof parsed.observation !== 'string' ||
+        !liste(parsed.possibleFeelings) || !liste(parsed.possibleNeeds)) {
+      const shapeErr = new Error('Unexpected response shape');
+      shapeErr.code = 'bad_response';
+      throw shapeErr;
+    }
+    return parsed;
+  }
+
+  function renderForeignResult(data) {
+    // intro und suggestedResponse sind Nebenfelder. Der Server entfernt sie,
+    // wenn sie keine Texte sind; hier wird trotzdem nichts vorausgesetzt.
+    const introText = typeof data.intro === 'string' ? data.intro.trim() : '';
+    const intro = document.getElementById('foreign-intro');
+    intro.textContent = introText;
+    intro.hidden = !introText;
+    document.getElementById('foreign-observation').textContent = data.observation;
+    document.getElementById('foreign-feelings').innerHTML =
+      data.possibleFeelings.map(f => '<li>' + escapeHtml(f) + '</li>').join('');
+    document.getElementById('foreign-needs').innerHTML =
+      data.possibleNeeds.map(n => '<li>' + escapeHtml(n) + '</li>').join('');
+    const antwort = typeof data.suggestedResponse === 'string' ? data.suggestedResponse.trim() : '';
+    document.getElementById('foreign-response').textContent = antwort;
+    document.getElementById('foreign-response-heading').hidden = !antwort;
+    document.getElementById('foreign-response-box').hidden = !antwort;
+    copyForeignBtn.hidden = !antwort;
+
+    foreignResultSection.hidden = false;
+    requestAnimationFrame(() => {
+      foreignResultSection.classList.add('visible');
+      foreignResultSection.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
+    });
+  }
+
+  const copyForeignBtn = document.getElementById('copy-foreign-response-btn');
+  copyForeignBtn.addEventListener('click', async () => {
+    const original = 'Text kopieren';
+    try {
+      await navigator.clipboard.writeText(document.getElementById('foreign-response').textContent);
+      copyForeignBtn.textContent = 'Kopiert';
+    } catch (err) {
+      copyForeignBtn.textContent = 'Kopieren nicht möglich';
+    }
+    setTimeout(() => copyForeignBtn.textContent = original, 1600);
+  });
 
   submitBtn.addEventListener('click', async () => {
     const text = textarea.value.trim();
@@ -1583,25 +1980,43 @@
       return;
     }
 
+    const fremd = richtung === 'fremd';
+    const t = RICHTUNG_TEXTE[richtung];
+    const angaben = gegenueberAngaben();
+
     fieldHint.hidden = true;
     errorMsg.hidden = true;
     resultSection.hidden = true;
     resultSection.classList.remove('visible');
+    foreignResultSection.hidden = true;
+    foreignResultSection.classList.remove('visible');
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Wird übersetzt …';
+    richtungKnoepfe.forEach(b => { b.disabled = true; });
+    submitBtn.textContent = t.laeuft;
     startProgress(progressBar, progressBarFill);
 
+    // Wer während der Anfrage zu "Selbst üben" oder zu den Spielen wechselt,
+    // soll das Ergebnis nicht unter einem fremden Bereich finden.
+    const nochHier = () => !translatePanel.hidden && !werkzeugeGroup.hidden;
+
     try {
-      const data = await withRetry(() => translateToGFK(text));
-      finishProgress(progressBar, progressBarFill);
-      renderResult(text, data);
+      if (fremd) {
+        const data = await withRetry(() => foreignToGFK(text, angaben));
+        finishProgress(progressBar, progressBarFill);
+        if (nochHier()) renderForeignResult(data);
+      } else {
+        const data = await withRetry(() => translateToGFK(text, angaben));
+        finishProgress(progressBar, progressBarFill);
+        if (nochHier()) renderResult(text, data);
+      }
     } catch (err) {
       stopProgress(progressBar, progressBarFill);
-      errorMsg.textContent = 'Das hat gerade nicht geklappt. Bitte versuche es in ein paar Sekunden erneut.';
+      errorMsg.textContent = messageForError(err);
       errorMsg.hidden = false;
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = 'In GFK übersetzen';
+      richtungKnoepfe.forEach(b => { b.disabled = false; });
+      submitBtn.textContent = RICHTUNG_TEXTE[richtung].knopf;
     }
   });
 
@@ -1633,23 +2048,15 @@
     fill.style.width = '0%';
   }
 
-  async function translateToGFK(text) {
-    const response = await fetch("/api/gfk-proxy", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "translate", text: text })
-    });
-
-    if (!response.ok) {
-      throw new Error('API request failed');
-    }
-
-    const json = await response.json();
-    const raw = json.content.map(block => block.text || '').join('\n').trim();
-    const parsed = extractJson(raw);
+  // Der Server prüft die Antwort inzwischen selbst und liefert ein fertiges Objekt.
+  // Das Herausschneiden von JSON aus dem Rohtext entfällt deshalb hier.
+  async function translateToGFK(text, angaben) {
+    const parsed = await requestGfk("translate", text, angaben);
 
     if (!parsed.gfkSentence || !Array.isArray(parsed.steps)) {
-      throw new Error('Unexpected response shape');
+      const shapeErr = new Error('Unexpected response shape');
+      shapeErr.code = 'bad_response';
+      throw shapeErr;
     }
     return parsed;
   }
@@ -1662,15 +2069,6 @@
       'Bitte': 'cat-req'
     };
     return map[category] || '';
-  }
-
-  function extractJson(raw) {
-    const start = raw.indexOf('{');
-    const end = raw.lastIndexOf('}');
-    if (start === -1 || end === -1 || end < start) {
-      throw new Error('Kein JSON-Objekt in der Antwort gefunden');
-    }
-    return JSON.parse(raw.slice(start, end + 1));
   }
 
   function escapeHtml(str) {
@@ -1800,7 +2198,7 @@
       renderPracticeResult(data);
     } catch (err) {
       stopProgress(practiceProgressBar, practiceProgressBarFill);
-      practiceErrorMsg.textContent = 'Das hat gerade nicht geklappt. Bitte versuche es in ein paar Sekunden erneut.';
+      practiceErrorMsg.textContent = messageForError(err);
       practiceErrorMsg.hidden = false;
     } finally {
       practiceSubmitBtn.disabled = false;
@@ -1814,22 +2212,12 @@ Gefühl: ${feel || '(leer)'}
 Bedürfnis: ${need || '(leer)'}
 Bitte: ${req || '(leer)'}`;
 
-    const response = await fetch("/api/gfk-proxy", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "practice", text: userContent })
-    });
-
-    if (!response.ok) {
-      throw new Error('API request failed');
-    }
-
-    const json = await response.json();
-    const raw = json.content.map(block => block.text || '').join('\n').trim();
-    const parsed = extractJson(raw);
+    const parsed = await requestGfk("practice", userContent);
 
     if (!Array.isArray(parsed.steps)) {
-      throw new Error('Unexpected response shape');
+      const shapeErr = new Error('Unexpected response shape');
+      shapeErr.code = 'bad_response';
+      throw shapeErr;
     }
     return parsed;
   }
