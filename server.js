@@ -43,13 +43,70 @@ app.use(express.static(path.join(__dirname, 'public')));
 // anpassen. Sie wird beim Start ins Log geschrieben, damit sich jederzeit
 // nachsehen lässt, welche Fassung tatsächlich läuft. In dieser Session ist zweimal
 // unklar gewesen, welche Datei wo liegt; das kostet mehr Zeit als diese Zeile.
-const PROMPT_VERSION = 'Runde 4, 16.09.2026';
+const PROMPT_VERSION = 'Runde 5, 26.09.2026';
 
-const MODEL = 'claude-sonnet-5';
-const EFFORT = 'high';
+// ---------------------------------------------------------------------------
+// Betriebsart — der eine Schalter für Tempo, Kosten und Gründlichkeit
+// ---------------------------------------------------------------------------
+// Umschalten ohne Code: bei Clever Cloud die Umgebungsvariable BETRIEB auf
+// "schnell" oder "gruendlich" setzen und neu starten. Ohne Variable: schnell.
+//
+// Gemessen im 13-Satz-Test, je 39 Durchläufe (September 2026):
+//
+//                         Kosten   ohne harten   erfindet in der   "das macht
+//                         je Aufr. Fehler        Beobachtung       mich ..."
+//   schnell  (Haiku, kurz)  0,7 ct   18 von 39      54 %              21 %
+//   gruendlich (Sonnet high) 5,5 ct  10 von 39      26 %               8 %
+//
+// "schnell" ist billiger, deutlich schneller und im Gesamtbild besser, erfindet
+// aber öfter etwas in der Beobachtung. "gruendlich" ist der Stand aus Runde 4.
+//
+// Einschränkung der Messung: Im Test wurde Haiku das Gegenüber jeweils genannt.
+// Seit Runde 5 fragt die Seite es ab, freiwillig. Wählt jemand nichts, schickt
+// der Server die Vorgabe "nicht angegeben, bestimme es aus dem Text"; dann
+// kann das Ergebnis etwas unter den gemessenen Werten liegen.
+//
+// Das Gegenüber wirkt beim Übersetzen nur in "schnell". Der lange Prompt in
+// "gruendlich" bestimmt es selbst aus dem Text und bekommt weiterhin den
+// reinen Text, so wie er gemessen wurde. Die Seite blendet das Feld dort aus.
+//
+// Der Übungsmodus bleibt in beiden Betriebsarten bei Sonnet: Haiku ist dort
+// nie gemessen worden, und ungeprüft wird nichts umgestellt.
+const BETRIEB = (process.env.BETRIEB || 'schnell').trim().toLowerCase();
+
+// "foreign" ist die Fremdnachricht: Gefühle und Bedürfnisse hinter einer
+// Nachricht vermuten, die jemand anderes geschrieben hat. Ihr Prompt stammt
+// aus der früheren Testfassung (gfk-kompass.html) und ist dort von Hand
+// erprobt, aber nie im 13-Satz-Test gemessen worden. Die Aufgabe ist
+// deutlich einfacher als das Übersetzen, deshalb läuft sie in "schnell"
+// ebenfalls über Haiku.
+const BETRIEBSARTEN = {
+  schnell: {
+    translate: { model: 'claude-haiku-4-5-20251001', effort: null,   prompt: 'kurz' },
+    foreign:   { model: 'claude-haiku-4-5-20251001', effort: null,   prompt: 'foreign' },
+    practice:  { model: 'claude-sonnet-5',           effort: 'high', prompt: 'practice' }
+  },
+  gruendlich: {
+    translate: { model: 'claude-sonnet-5',           effort: 'high', prompt: 'translate' },
+    foreign:   { model: 'claude-sonnet-5',           effort: 'high', prompt: 'foreign' },
+    practice:  { model: 'claude-sonnet-5',           effort: 'high', prompt: 'practice' }
+  }
+};
+
+if (!BETRIEBSARTEN[BETRIEB]) {
+  console.error(`[gfk] Unbekannte Betriebsart "${BETRIEB}", nehme "schnell"`);
+}
+const AKTIV = BETRIEBSARTEN[BETRIEB] || BETRIEBSARTEN.schnell;
+const BETRIEB_NAME = BETRIEBSARTEN[BETRIEB] ? BETRIEB : 'schnell';
+
+// Nur noch für Anzeige und Protokoll. Welches Modell eine Anfrage wirklich
+// bekommt, entscheidet AKTIV je Modus.
+const MODEL = AKTIV.translate.model;
+const EFFORT = AKTIV.translate.effort || 'nicht unterstützt';
 
 const MODE_CONFIG = {
   translate: { maxTokens: 8000, maxInputChars: 2000 },
+  foreign: { maxTokens: 8000, maxInputChars: 2000 },
   practice: { maxTokens: 4000, maxInputChars: 2000 }
 };
 
@@ -62,7 +119,15 @@ const MAX_TOKENS_CEILING = 16000;
 // 429 (zu viele Anfragen) gehört ausdrücklich dazu: das ist der häufigste
 // vorübergehende Fehler bei Lastspitzen und geht nach kurzem Warten fast immer durch.
 const RETRYABLE_STATUS_CODES = [408, 409, 425, 429, 500, 502, 503, 529];
-const MAX_ATTEMPTS = 4;
+// Früher 4. Jeder Versuch, der eine Antwort bekommt, wird bezahlt — auch wenn
+// die Antwort danach verworfen wird. Vier Versuche mit verdoppeltem Budget
+// konnten einen einzigen Klick auf über einen Euro treiben und dauerten
+// Minuten, auf die niemand wartet. Zwei Versuche fangen die gelegentliche
+// Störung ab; scheitert auch der zweite, ist ein dritter selten erfolgreicher.
+const MAX_ATTEMPTS = 2;
+
+// Nur zum Testen überschreibbar, im Betrieb nie setzen.
+const ANTHROPIC_URL = process.env.ANTHROPIC_URL || 'https://api.anthropic.com/v1/messages';
 const REQUEST_TIMEOUT_MS = 120000;
 
 function sleep(ms) {
@@ -264,6 +329,242 @@ Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Code
 };
 
 // ---------------------------------------------------------------------------
+// Kurzer Prompt für die Betriebsart "schnell"
+// ---------------------------------------------------------------------------
+// Wortgleich übernommen aus testlauf/prompt-kurz.js, der Fassung, die im
+// 13-Satz-Test gemessen wurde. Nicht von Hand ändern, ohne neu zu messen.
+// Er erwartet vor dem Text drei Kopfzeilen; die baut nutzernachrichtKurz().
+SYSTEM_PROMPTS.kurz = `Du bist spezialisiert auf Gewaltfreie Kommunikation nach Marshall Rosenberg, mit Erfahrung in Elternkonflikten bei Eltern-Kind-Entfremdung. Ein Elternteil hat einen Text geschrieben. Du formst ihn in die vier Schritte der Gewaltfreien Kommunikation um.
+
+RANGFOLGE
+Bei jedem Zweifel gilt diese Reihenfolge:
+1. Wahrheitstreue. Nichts steht in der Antwort, was nicht im Text der Person angelegt ist.
+2. Gewaltfreiheit. Kein Vorwurf, keine Bewertung fremden Verhaltens, keine Forderung.
+3. Sendbarkeit. Der Text lässt sich abschicken.
+4. Kürze.
+
+DAS GEGENÜBER
+Es wird dir genannt. Du bestimmst es nicht selbst. Du sprichst es im GFK-Text, in allen vier Schritt-Texten und in der flüssigen Version durchgehend mit "du" an, bei der Rolle Behörde mit "Sie". Andere Personen bleiben in dritter Person und behalten die Bezeichnung aus dem Text der Person.
+
+Wo der Text das Gegenüber handeln oder etwas unterlassen lässt, ist das Gegenüber das Subjekt dieses Verbs. Ausgeschlossen ist ein Satz, in dem stattdessen die schreibende Person etwas nicht bekommt, nicht hört oder nicht erhält. Ausgeschlossen ist ebenso ein Satz, in dem eine Handlung ohne Handelnden steht.
+
+WORTLAUT
+Jedes Substantiv und jedes Verb deiner Beobachtung führt auf ein Wort im Text der Person zurück. Du fügst keine Situation, keinen Vorfall, keinen Ort und keine Handlung hinzu, die dort nicht stehen, und gleichfalls nichts, was nur naheliegt. Enthält der Text eine wörtliche Äußerung, verwendest du sie unverändert. Zeitangaben, Gegenstände und Besitzverhältnisse übernimmst du genau so, wie sie dort stehen.
+
+Ist der Text pauschal, bleibt die Beobachtung pauschal. Das ist richtig und kein Mangel.
+
+BEOBACHTUNG
+Wertfrei, ohne einordnende Verben. Der erste Teilsatz nennt etwas, das im Text der Person steht. Ein Teilsatz, der allein sagt, dass die Person hinschaut oder die Lage überdenkt, nennt nichts und entfällt.
+
+Enthält der Text nur eine Bewertung und keine Handlung, kennzeichnest du sie als Wahrnehmung der schreibenden Person, in einem kurzen Einschub und nicht als Einleitung. Die Aussageform des Textes bleibt erhalten: Ein Vergleich bleibt ein Vergleich. Du ersetzt die wertenden Wörter, nicht die Aussage, um die es der Person geht.
+
+Beschreibt der Text eine Haltung, ein Motiv oder eine Eigenschaft des Gegenübers, löst du dieses Wort in etwas auf, das die schreibende Person wahrnimmt. Du ersetzt es nicht durch ein schwächeres Wort derselben Art.
+
+GEFÜHL
+Ein echtes Gefühl in einem oder zwei Wörtern. Prüfe mit der Probe "Darauf reagiere ich [Wort]": klingt es stimmig, ist es ein Gefühl; klingt es wie eine Handlung an der Person, ist es keines.
+
+"ich" ist das Subjekt des Gefühlsverbs, und das Bedürfnis ist die einzige Begründung. Daraus folgt: kein Verursacher vor dem Gefühlsverb, kein Wort, das das Gefühl auf das Verhalten zurückführt (kein deshalb, dabei, darüber, dadurch, daher, darum, davon), und kein "ich fühle mich" mit einem Partizip. Dass eine solche Form im Alltag geläufig ist, ändert daran nichts, denn sie weist dem Gegenüber die Verantwortung für das Gefühl zu.
+
+Probe: Streiche den Wenn-Satz. Der Rest muss allein stehen und darf auf nichts zurückverweisen.
+
+Nennst du zwei Gefühle, steht das gewichtigere zuerst. Gewichtiger ist das Wort, ohne das der Satz die Lage nicht mehr trifft.
+
+BEDÜRFNIS
+Im Schritt-Text steht ein einzelnes Substantiv, höchstens zwei mit "und". Es endet mit dem Substantiv. Kein Verhältniswort dahinter, keine Person, kein Pronomen, keine Rolle, kein Besitz, kein abstufendes Adjektiv, kein unbestimmter Artikel, kein Verb, kein Nebensatz. Probe: Streiche Person, Adjektiv und alles hinter dem Substantiv; bleibt nichts übrig, war es kein Bedürfnis.
+
+Im GFK-Text darf dasselbe Bedürfnis natürlich eingebettet werden. Die Einbettung enthält keine Bewertung fremden Verhaltens; eine solche Bewertung gehört in die Bitte.
+
+BITTE
+Eine offene Frage nach einer bestimmten, beobachtbaren Handlung, die das Gegenüber im Moment tun kann und ablehnen darf. Keine Forderung, kein Vergleich mit Dritten, kein eingefordertes Gefühl, keine dauerhafte Verhaltensänderung.
+
+Jedes Substantiv der Bitte, das etwas Geschehenes, Geschicktes oder Vorhandenes bezeichnet, steht im Text der Person. Neu sein darf allein die vorgeschlagene Handlung.
+
+Prüfe vor der Form den Sinn: Kann das Gegenüber das tun, und hilft es dem Bedürfnis? Eine Bitte, die vom Gegenüber verlangt, einen Vorwurf gegen sich zu bestätigen oder zu belegen, ist keine Bitte.
+
+Ist die Beobachtung als Wahrnehmung gekennzeichnet, richtet sich die Bitte auf den Austausch über diese Wahrnehmung und nicht auf die Änderung des wahrgenommenen Verhaltens. Sie ist erfüllbar, ohne dass das Gegenüber etwas einräumt, und sie nennt ihren Gegenstand mit den Wörtern der Beobachtung. Ein Gespräch ohne benannten Gegenstand ist keine Bitte. Berichtet der Text eine Tatsache, darf die Bitte eine Handlung zu dieser Sache benennen.
+
+DIE FLÜSSIGE VERSION
+Ein Registerwechsel, keine Kurzfassung und keine Abschrift. So, wie ein Mensch es am Telefon sagen würde.
+
+Kein Satz der flüssigen Version steht wörtlich im GFK-Text, und keiner steht dort bis auf einzelne ausgetauschte Wörter, die Bitte eingeschlossen. Probe: Lege jeden Satz neben den GFK-Text. Gleicher Aufbau mit ein oder zwei anderen Wörtern ist eine Abschrift. Dann setzt du andere Satzgrenzen, beginnst mit einem anderen Wort und ordnest die Teile anders.
+
+Gleich bleiben dürfen das Gefühlswort, die Substantive des Bedürfnisses sowie Bezeichnungen und Angaben aus dem Text der Person.
+
+Genau ein Gefühl, und zwar das erste aus dem GFK-Text.
+
+Das Bedürfnis darf wegfallen oder knapper eingebettet sein. Bleibt es genannt, sind es dieselben Substantive wie im Schritt-Text, bei zweien beide, keines auf andere Personen verschoben und keines in eine Absicht mit Verb verwandelt.
+
+Es gibt keine feste Länge. Der Hebel ist der Satzbau. Jeder Bezug steht im Text selbst: Ein Wort, das nur mit dem GFK-Text verständlich wird, ist ein Fehler.
+
+Die Regeln zu Gefühl, Bedürfnis, Bitte, Wortlaut und Gegenüber gelten hier genauso. "ich" ist das Subjekt des Gefühlsverbs, kein Verursacher davor, kein Rückverweis auf das Verhalten, kein "ich fühle mich" mit Partizip.
+
+Ist der Text der Person bereits gut formuliert und klingt er schon gesprochen, darf die flüssige Version dem GFK-Text gleichen. Jede Angabe aus dem Text bleibt dann erhalten oder fällt ganz weg, wird aber nicht durch eine Einordnung ersetzt.
+
+DIE ERKLÄRUNGEN
+Jede Erklärung sagt in höchstens 30 Wörtern, warum dieser Schritt so gebaut ist, ausgehend von einem Wort aus dem Text der Person. Du sprichst die schreibende Person mit "du" an und schreibst "dein Text".
+
+Du deutest kein Motiv hinzu. Kein Wunsch, keine Sorge, keine Hoffnung und keine Absicht, die im Text nicht steht. Ein Bedürfnis benennst du als Bedürfnis, statt es auszumalen. Erlaubt ist der Hinweis, dass ein Bedürfnis unabhängig von seiner Erfüllung besteht.
+
+Das Gegenüber heißt in allen vier Erklärungen gleich, und zwar mit der Rolle, die dir genannt wurde, aus Sicht der schreibenden Person. Niemals "du", denn "du" ist in den Erklärungen die schreibende Person.
+
+Spricht der Text von "mein Kind" oder "dein Kind" und geht er an den anderen Elternteil, darf ein Halbsatz der Erklärung zur Beobachtung darauf hinweisen, dass "unser Kind" die gemeinsame Elternschaft betont. Der Wortlaut im Text bleibt unverändert.
+
+STIL, FÜR JEDES TEXTFELD
+Kein Gedankenstrich, ausnahmslos. Punkt und neuer Satz stattdessen, ohne Füllwörter und ohne umständliche Nebensätze.
+
+BEREITS GUTER TEXT
+Enthält der Text der Person die vier Schritte schon weitgehend selbst, sagst du das im Einstiegssatz selbstbewusst und übernimmst den Text möglichst wortgleich, ohne ihn kosmetisch umzuformulieren.
+
+PRÜFUNG VOR DER AUSGABE
+1. Führt jedes Substantiv und Verb der Beobachtung auf ein Wort im Text zurück?
+2. Nennt der erste Teilsatz etwas aus dem Text, und bleibt die Aussageform erhalten?
+3. Ist "ich" das Subjekt des Gefühlsverbs, ohne Verursacher und ohne Rückverweis? Getrennt geprüft für den GFK-Text und die flüssige Version.
+4. Steht in der flüssigen Version genau ein Gefühl, und zwar das erste aus dem GFK-Text?
+5. Ist der Bedürfnis-Schritt ein Substantiv ohne Anhängsel, und nennt die flüssige Version dasselbe oder keines?
+6. Ist die Bitte sinnvoll erfüllbar, und nennt sie ihren Gegenstand?
+7. Ist das Gegenüber Subjekt dort, wo es im Text handelt oder unterlässt?
+8. Steht kein Satz der flüssigen Version bis auf einzelne Wörter im GFK-Text?
+9. Ist das Gegenüber durchgehend "du", und heißt es in allen Erklärungen gleich?
+10. Deutet keine Erklärung ein Motiv hinzu?
+11. Kein Gedankenstrich irgendwo?
+
+Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text. Das erste und das letzte Zeichen sind die geschweiften Klammern. Jeder Wert steht in einer Zeile ohne Zeilenumbruch. Innerhalb eines Wertes stehen keine doppelten Anführungszeichen; Äußerungen aus dem Text der Person setzt du in einfache Anführungszeichen.
+{
+  "intro": "...",
+  "gfkSentence": "...",
+  "steps": [
+    {"category": "Beobachtung", "text": "...", "explanation": "..."},
+    {"category": "Gefühl", "text": "...", "explanation": "..."},
+    {"category": "Bedürfnis", "text": "...", "explanation": "..."},
+    {"category": "Bitte", "text": "...", "explanation": "..."}
+  ],
+  "everydaySentence": "..."
+}`;
+
+// Aus prompt-kurz.js übernommen, ergänzt um die Rolle "andere". Ohne Angaben
+// greifen die Vorgaben: senden, Gegenüber aus dem Text bestimmen, Anrede du.
+// Mit Angaben kommen sie aus nutzernachricht() weiter unten.
+function nutzernachrichtKurz(text, angaben) {
+  const a = angaben || {};
+  const richtungen = {
+    senden: 'Die Person will diesen Text jemandem sagen.',
+    verstehen: 'Jemand hat diesen Text zu der Person gesagt.',
+    situation: 'Die Person beschreibt eine Situation.'
+  };
+  const rollen = {
+    elternteil: 'Anrede: du.',
+    kind: 'Anrede: du.',
+    behoerde: 'Anrede: Sie.',
+    andere: 'Anrede: du.'
+  };
+  return [
+    `Richtung: ${richtungen[a.richtung] || richtungen.senden}`,
+    `Gegenüber: ${a.gegenueber || 'nicht angegeben, bestimme es aus dem Text'}`,
+    `Rolle des Gegenübers: ${a.rolle || 'elternteil'}. ${rollen[a.rolle] || rollen.elternteil}`,
+    '',
+    'Text der Person:',
+    text
+  ].join('\n');
+}
+
+// ---------------------------------------------------------------------------
+// Prompt für die Fremdnachricht
+// ---------------------------------------------------------------------------
+// Wortgleich übernommen aus der früheren Testfassung gfk-kompass.html
+// (Funktion translateForeignMessage). Dort von Hand erprobt, nicht gemessen.
+SYSTEM_PROMPTS.foreign = `Du bist spezialisiert auf Gewaltfreie Kommunikation (GFK) nach Marshall Rosenberg, mit Erfahrung in Elternkonflikten bei Eltern-Kind-Entfremdung. Du bekommst eine Nachricht, die eine ANDERE Person geschrieben hat, nicht die anfragende Person selbst, meist eine Nachricht vom anderen Elternteil. Die anfragende Person möchte besser verstehen, welche Gefühle und Bedürfnisse hinter dieser Nachricht stecken könnten.
+
+WICHTIGSTE REGEL, gilt für deine gesamte Antwort ausnahmslos: Kein Gedankenstrich an irgendeiner Stelle der Ausgabe, weder als kurzer noch als langer Strich zwischen Satzteilen. Nutze stattdessen immer einen Punkt und beginne einen neuen Satz. Bindestriche innerhalb zusammengesetzter Wörter sind davon nicht betroffen.
+
+Das Vermeiden von Gedankenstrichen darf nicht dazu führen, dass du stattdessen umständliche Nebensätze baust oder Füllwörter aufeinanderstapelst. Bleib bei kurzen, klaren Sätzen.
+
+WICHTIG: Es handelt sich NICHT um den Text der anfragenden Person, sondern um eine Nachricht von jemand anderem an sie. Sprich deshalb nie von "deinem Text", sondern von "dieser Nachricht". Die anfragende Person selbst darfst du weiterhin mit "du" ansprechen, wo es passt.
+
+Schreibe zuerst einen kurzen, einfühlsamen Einstiegssatz (max. 20 Wörter), der anerkennt, dass eine solche Nachricht zu bekommen nicht leicht sein muss, ohne die Nachricht selbst zu bewerten oder die andere Person zu verurteilen.
+
+Fasse dann kurz und wertfrei zusammen, was in der Nachricht sachlich gesagt oder verlangt wird ("observation"), ohne beleidigende oder verletzende Formulierungen der anderen Person wörtlich zu wiederholen. Nimm dabei nichts in die Zusammenfassung auf, was nicht in der Nachricht steht.
+
+Vermute danach 1-2 echte Gefühle, die hinter der Nachricht stecken könnten ("possibleFeelings", als Array). Gehe davon aus, dass auch eine hart oder vorwurfsvoll klingende Nachricht meist ein echtes, verletzliches Gefühl verdeckt (etwa Angst, Überforderung, Verletzung, Hilflosigkeit). Unterstelle nicht einfach Bosheit als Erklärung. Formuliere ausdrücklich als Vermutung ("könnte", "vielleicht", "möglicherweise"), nie als Tatsache. Prüfe jedes Gefühlswort mit dem Testsatz "Darauf reagiert die Person mit [Wort]". Klingt er stimmig, ist es ein echtes Gefühl. Klingt er seltsam oder beschreibt er eine Handlung, ist es ein Pseudogefühl und ungeeignet.
+
+Vermute anschließend 1-2 Bedürfnisse, die hinter diesen Gefühlen stecken könnten ("possibleNeeds", als Array). Jedes Bedürfnis ist ein einzelnes Substantiv oder eine sehr kurze Wendung, die für jeden Menschen in jeder Lebenslage gelten könnte (etwa Sicherheit, Verbindung, Anerkennung, Ruhe). Ohne Person, Pronomen, Namen oder Rolle, ohne "für" oder "bei" jemanden, ohne Besitz und ohne Adjektiv davor. Prüfung: Streiche jede Person und jedes Adjektiv. Was übrig bleibt, ist das Bedürfnis.
+
+Schlage abschließend eine mögliche empathische Reaktion vor ("suggestedResponse"), die die anfragende Person der anderen Person gegenüber äußern könnte, als vorsichtige Vermutung formuliert (etwa in der Art von "Klingt es, als wärst du... weil dir... wichtig ist?"), nicht als Tatsachenbehauptung. Kein Ratschlag, keine Lösung, keine eigene Bewertung, nur eine Vermutung über das Erleben der anderen Person.
+
+Bleibe während der gesamten Antwort einfühlsam und wertneutral gegenüber der anderen Person, auch wenn die Nachricht selbst hart oder vorwurfsvoll klingt.
+
+Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text:
+{
+  "intro": "...",
+  "observation": "...",
+  "possibleFeelings": ["...", "..."],
+  "possibleNeeds": ["...", "..."],
+  "suggestedResponse": "..."
+}`;
+
+// ---------------------------------------------------------------------------
+// Angaben aus der Oberfläche: das Gegenüber
+// ---------------------------------------------------------------------------
+// Die Seite schickt neben dem Text optional mit, an wen die Nachricht geht
+// oder von wem sie kommt. Alles, was von außen kommt, wird hier auf eine
+// feste Liste zurückgeführt. Nur das freie Feld bei "Jemand anderes" ist
+// Freitext; es wird gekürzt und von Steuerzeichen und Zeilenumbrüchen
+// befreit, damit es die Kopfzeilen an das Modell nicht verschieben kann.
+const GEGENUEBER = {
+  elternteil: { gegenueber: 'der andere Elternteil', rolle: 'elternteil', absender: 'der andere Elternteil' },
+  kind:       { gegenueber: 'mein Kind', rolle: 'kind', absender: 'das eigene Kind der Person' },
+  behoerde:   { gegenueber: 'eine Behörde, etwa das Jugendamt', rolle: 'behoerde', absender: 'eine Behörde, etwa das Jugendamt' },
+  andere:     { gegenueber: 'eine andere Person', rolle: 'andere', absender: 'eine andere Person' }
+};
+
+function angabenPruefen(roh) {
+  const a = (roh && typeof roh === 'object' && !Array.isArray(roh)) ? roh : {};
+  const wer = (typeof a.wer === 'string' && Object.prototype.hasOwnProperty.call(GEGENUEBER, a.wer)) ? a.wer : null;
+  let frei = '';
+  if (wer === 'andere' && typeof a.frei === 'string') {
+    frei = a.frei
+      .replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 60)
+      .trim();
+  }
+  return { wer, frei };
+}
+
+// Baut die Nachricht an das Modell. Die Angaben kommen nur dort hinein, wo
+// der Prompt sie auch erwartet. Übersetzen mit dem langen Prompt und Üben
+// bekommen weiterhin den reinen Text, so wie sie gemessen wurden.
+function nutzernachricht(mode, e, text, angaben) {
+  const g = angaben.wer ? GEGENUEBER[angaben.wer] : null;
+  const frei = (angaben.wer === 'andere' && angaben.frei) ? angaben.frei : '';
+
+  if (mode === 'translate' && e.prompt === 'kurz') {
+    // Ohne Angabe genau die Vorgaben, mit Angabe genau die drei Kopfzeilen,
+    // mit denen Haiku im 13-Satz-Test gelaufen ist.
+    if (!g) return nutzernachrichtKurz(text);
+    return nutzernachrichtKurz(text, {
+      richtung: 'senden',
+      gegenueber: frei || g.gegenueber,
+      rolle: g.rolle
+    });
+  }
+
+  if (mode === 'foreign') {
+    if (!g) return text;
+    // Als Doppelpunkt-Zeile statt als Satz: das freie Feld steht im Nominativ
+    // ("meine Mutter"), und so bleibt es auch grammatisch richtig.
+    const zeilen = ['Absender der Nachricht: ' + (frei || g.absender) + '.'];
+    if (angaben.wer === 'behoerde') {
+      zeilen.push('Die vorgeschlagene Reaktion spricht die Behörde mit Sie an.');
+    }
+    zeilen.push('', 'Nachricht:', text);
+    return zeilen.join('\n');
+  }
+
+  return text;
+}
+
+// ---------------------------------------------------------------------------
 // Antwort des Modells auswerten
 // ---------------------------------------------------------------------------
 // Das Modell kann vor dem eigentlichen Text sogenannte Denk-Blöcke zurückgeben.
@@ -320,8 +621,29 @@ function extractJsonObject(raw) {
 // Prüft, ob die Antwort die Form hat, die das Frontend erwartet. Passt sie nicht,
 // wird serverseitig ein weiterer Versuch unternommen — das merkt der Besucher nicht,
 // während ein Fehlschlag im Browser direkt als Fehlermeldung sichtbar wäre.
+// Nebenfelder, die fehlen dürfen, aber in falscher Form die Anzeige im
+// Browser zum Absturz brächten. Statt die ganze Antwort zu verwerfen und
+// einen zweiten, bezahlten Versuch zu starten, wird nur das Nebenfeld
+// entfernt. Die Pflichtfelder prüft isValidPayload.
+function bereinigen(mode, payload) {
+  if (mode === 'foreign') {
+    if (typeof payload.intro !== 'string') delete payload.intro;
+    if (typeof payload.suggestedResponse !== 'string') delete payload.suggestedResponse;
+  }
+  return payload;
+}
+
 function isValidPayload(mode, payload) {
   if (!payload || typeof payload !== 'object') return false;
+
+  // Die Fremdnachricht hat ein eigenes Format ohne die vier Schritte.
+  if (mode === 'foreign') {
+    const liste = x => Array.isArray(x) && x.length > 0 &&
+      x.every(v => typeof v === 'string' && v.trim());
+    return typeof payload.observation === 'string' && payload.observation.trim() !== '' &&
+      liste(payload.possibleFeelings) && liste(payload.possibleNeeds);
+  }
+
   if (!Array.isArray(payload.steps) || payload.steps.length !== 4) return false;
 
   if (mode === 'translate') {
@@ -337,7 +659,7 @@ function isValidPayload(mode, payload) {
 // ---------------------------------------------------------------------------
 // Gibt immer ein Objekt zurück, wirft nie. Entweder {ok: true, payload} oder
 // {ok: false, status, code} mit einem für das Frontend verständlichen Fehlercode.
-async function callAnthropic(mode, text) {
+async function callAnthropic(mode, text, angaben) {
   const config = MODE_CONFIG[mode];
   let maxTokens = config.maxTokens;
   let lastFailure = { status: 502, code: 'upstream_error' };
@@ -348,7 +670,27 @@ async function callAnthropic(mode, text) {
     const startedAt = Date.now();
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const e = AKTIV[mode];
+      const anfrage = {
+        model: e.model,
+        max_tokens: maxTokens,
+        // Zwischenspeicher: der Prompt wird einmal geschrieben und danach für
+        // ein Zehntel des Preises gelesen. Fehlte in der vorigen Fassung
+        // dieser Datei — dadurch wurde der lange Prompt jedes Mal voll bezahlt.
+        system: [{
+          type: 'text',
+          text: SYSTEM_PROMPTS[e.prompt],
+          cache_control: { type: 'ephemeral' }
+        }],
+        messages: [{
+          role: 'user',
+          content: nutzernachricht(mode, e, text, angaben || { wer: null, frei: '' })
+        }]
+      };
+      // Haiku kennt "effort" nicht und lehnt jede Anfrage damit ab (HTTP 400).
+      if (e.effort) anfrage.output_config = { effort: e.effort };
+
+      const response = await fetch(ANTHROPIC_URL, {
         method: 'POST',
         signal: controller.signal,
         headers: {
@@ -356,13 +698,7 @@ async function callAnthropic(mode, text) {
           'x-api-key': process.env.ANTHROPIC_API_KEY,
           'anthropic-version': '2023-06-01'
         },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: maxTokens,
-          output_config: { effort: EFFORT },
-          system: SYSTEM_PROMPTS[mode],
-          messages: [{ role: 'user', content: text }]
-        })
+        body: JSON.stringify(anfrage)
       });
 
       // Body immer erst als Text lesen. Kommt eine Fehlerseite vom Proxy statt JSON
@@ -428,7 +764,7 @@ async function callAnthropic(mode, text) {
       }
 
       logAttempt({ mode, attempt, status: 200, ms: Date.now() - startedAt, note: 'ok', usage });
-      return { ok: true, payload };
+      return { ok: true, payload: bereinigen(mode, payload) };
     } catch (err) {
       // Hierher kommen abgebrochene Verbindungen, DNS-Aussetzer und Timeouts.
       // In der alten Fassung sprang ein solcher Fehler an allen Wiederholungs-
@@ -477,9 +813,12 @@ function logAttempt({ mode, attempt, status, ms, note, usage, retry }) {
     `status=${status}`,
     `dauer=${ms}ms`
   ];
+  parts.push(`modell=${(AKTIV[mode] || {}).model || '?'}`);
   if (usage) {
     parts.push(`tokens_ein=${usage.input_tokens ?? '?'}`);
     parts.push(`tokens_aus=${usage.output_tokens ?? '?'}`);
+    if (usage.cache_read_input_tokens) parts.push(`cache_lesen=${usage.cache_read_input_tokens}`);
+    if (usage.cache_creation_input_tokens) parts.push(`cache_neu=${usage.cache_creation_input_tokens}`);
   }
   parts.push(`ergebnis=${note}`);
   if (retry) parts.push('→ wiederholt');
@@ -561,7 +900,8 @@ function heute() {
 }
 
 function buchen(mode, usage) {
-  const preis = PREISE[MODEL] || PREIS_UNBEKANNT;
+  const modell = (AKTIV[mode] || {}).model || MODEL;
+  const preis = PREISE[modell] || PREIS_UNBEKANNT;
 
   const ein = usage.input_tokens || 0;
   const aus = usage.output_tokens || 0;
@@ -586,6 +926,10 @@ function buchen(mode, usage) {
   t.cacheLesen += cacheLesen;
   t.usd += usd;
   t.modi[mode] = (t.modi[mode] || 0) + 1;
+  // Je Modell mitzählen, damit nach einem Wechsel der Betriebsart sichtbar
+  // bleibt, welcher Tag mit welchem Modell gelaufen ist.
+  t.modelle = t.modelle || {};
+  t.modelle[modell] = (t.modelle[modell] || 0) + 1;
 
   // Alte Tage wegwerfen, damit die Datei nicht endlos wächst.
   const tage = Object.keys(kassenbuch.tage).sort();
@@ -654,7 +998,14 @@ app.post('/api/gfk-proxy', async (req, res) => {
   }
 
   const { mode, text } = req.body || {};
-  const config = MODE_CONFIG[mode];
+  // Freiwillig. Fehlt es oder ist es unbrauchbar, läuft alles wie bisher.
+  const angaben = angabenPruefen((req.body || {}).angaben);
+  // Nur eigene Einträge von MODE_CONFIG zählen. Ohne diese Prüfung kämen
+  // "constructor" oder "__proto__" durch, weil jedes Objekt sie erbt, und
+  // eine Liste ["foreign"] würde still zu "foreign" umgewandelt.
+  const config = (typeof mode === 'string' && Object.prototype.hasOwnProperty.call(MODE_CONFIG, mode))
+    ? MODE_CONFIG[mode]
+    : null;
 
   if (!config || typeof text !== 'string' || !text.trim()) {
     return res.status(400).json({ code: 'bad_request', error: 'mode und text werden benötigt' });
@@ -669,7 +1020,7 @@ app.post('/api/gfk-proxy', async (req, res) => {
     return res.status(500).json({ code: 'auth_error', error: 'Serverkonfiguration unvollständig' });
   }
 
-  const result = await callAnthropic(mode, text.trim());
+  const result = await callAnthropic(mode, text.trim(), angaben);
 
   if (!result.ok) {
     return res.status(result.status).json({ code: result.code, error: 'Anfrage nicht erfolgreich' });
@@ -685,7 +1036,16 @@ app.post('/api/gfk-proxy', async (req, res) => {
 // Damit lässt sich jederzeit prüfen, welcher Stand tatsächlich läuft, ohne
 // Dateien auf GitHub vergleichen zu müssen: einfach /api/version aufrufen.
 app.get('/api/version', (req, res) => {
-  res.json({ prompts: PROMPT_VERSION, model: MODEL, effort: EFFORT });
+  res.json({
+    prompts: PROMPT_VERSION,
+    betrieb: BETRIEB_NAME,
+    model: MODEL,
+    effort: EFFORT,
+    uebersetzen: AKTIV.translate,
+    fremdnachricht: AKTIV.foreign,
+    ueben: AKTIV.practice,
+    versuche: MAX_ATTEMPTS
+  });
 });
 
 // Die Kostenübersicht. Geschützt durch ein Kennwort in der Umgebungsvariable
@@ -713,7 +1073,12 @@ app.get('/api/kosten', (req, res) => {
     seit: kassenbuch.seit,
     heute: heute(),
     modell: MODEL,
+    betrieb: BETRIEB_NAME,
     preise: PREISE[MODEL] || PREIS_UNBEKANNT,
+    modelle: {
+      uebersetzen: { modell: AKTIV.translate.model, preise: PREISE[AKTIV.translate.model] || PREIS_UNBEKANNT },
+      ueben:       { modell: AKTIV.practice.model,  preise: PREISE[AKTIV.practice.model]  || PREIS_UNBEKANNT }
+    },
     dauerhaft: eingehaengt,
     ordner: KOSTEN_ORDNER,
     schreibfehler: kostenSchreibfehler,
@@ -722,5 +1087,5 @@ app.get('/api/kosten', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`GFK-Kompass Server läuft auf Port ${PORT} (Prompts: ${PROMPT_VERSION}, Modell ${MODEL}, effort ${EFFORT})`);
+  console.log(`GFK-Kompass Server läuft auf Port ${PORT} — Betrieb "${BETRIEB_NAME}": übersetzen mit ${AKTIV.translate.model} (${AKTIV.translate.prompt}), Fremdnachricht mit ${AKTIV.foreign.model}, üben mit ${AKTIV.practice.model}, max. ${MAX_ATTEMPTS} Versuche`);
 });
