@@ -79,6 +79,21 @@ if (!fs.existsSync(QUELLDATEI)) {
 
 let seite = lies(QUELLDATEI);
 
+// Die teuerste Verwechslung, die hier schon einmal passiert ist: eine ältere
+// Fassung der Seite erwartet die Rohantwort von Anthropic (json.content).
+// Der Server liefert seit Runde 4 aber das fertig ausgepackte Ergebnis. Die
+// alte Seite hält jede ERFOLGREICHE Antwort für einen Fehler, zeigt "Das hat
+// gerade nicht geklappt" und schickt dieselbe Anfrage noch einmal — jede
+// davon voll bezahlt, jede weggeworfen. Lieber hier abbrechen.
+if (seite.includes('json.content.map')) {
+  throw new Error(
+    path.resolve(QUELLDATEI) + '\nist eine ältere Fassung der Seite, die nicht zum Server passt.\n' +
+    'Sie erwartet die Rohantwort von Anthropic, der Server liefert seit Runde 4\n' +
+    'das fertige Ergebnis. Jede erfolgreiche Anfrage würde als Fehler angezeigt\n' +
+    'und trotzdem bezahlt. Nimm die aktuelle app.html.'
+  );
+}
+
 // Zeigt der Pfad versehentlich auf die Landingpage, beschwert sich das Skript
 // sonst über fehlende Karten. Besser, es sagt gleich, was wirklich los ist.
 if (!seite.includes('id="translate-panel"')) {
@@ -96,7 +111,11 @@ seite = seite.replace(
   '<title>TEST — GFK-Kompass</title>\n<meta name="robots" content="noindex, nofollow">'
 );
 
+// Das Band klebt oben am Bildschirm. Ohne scroll-padding rollt die Seite
+// Ergebnis und Hilfe-Karte genau unter das Band, und ihre Überschrift ist
+// verdeckt. Auf dem Handy ist das Band bis zu drei Zeilen hoch.
 const BANNER = [
+  '<style>html{scroll-padding-top:72px}</style>',
   '<div style="background:#954B36;color:#fff;font:500 14px/1.4 system-ui,sans-serif;',
   'padding:9px 16px;text-align:center;position:sticky;top:0;z-index:999">',
   'Testfassung — nicht die öffentliche Seite. Änderungen hier ändern nichts an ',
