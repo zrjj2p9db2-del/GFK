@@ -43,7 +43,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // anpassen. Sie wird beim Start ins Log geschrieben, damit sich jederzeit
 // nachsehen lässt, welche Fassung tatsächlich läuft. In dieser Session ist zweimal
 // unklar gewesen, welche Datei wo liegt; das kostet mehr Zeit als diese Zeile.
-const PROMPT_VERSION = 'Runde 5.1, 26.09.2026';
+const PROMPT_VERSION = 'Runde 6.1 (Rückfrage), 27.09.2026';
 
 // ---------------------------------------------------------------------------
 // Betriebsart — der eine Schalter für Tempo, Kosten und Gründlichkeit
@@ -84,14 +84,26 @@ const BETRIEBSARTEN = {
   schnell: {
     translate: { model: 'claude-haiku-4-5-20251001', effort: null,   prompt: 'kurz' },
     foreign:   { model: 'claude-haiku-4-5-20251001', effort: null,   prompt: 'foreign' },
-    practice:  { model: 'claude-sonnet-5',           effort: 'high', prompt: 'practice' }
+    practice:  { model: 'claude-sonnet-5',           effort: 'high', prompt: 'practice' },
+    pruefer:   { model: 'claude-haiku-4-5-20251001', effort: null,   prompt: 'pruefer' }
   },
   gruendlich: {
     translate: { model: 'claude-sonnet-5',           effort: 'high', prompt: 'translate' },
     foreign:   { model: 'claude-sonnet-5',           effort: 'high', prompt: 'foreign' },
-    practice:  { model: 'claude-sonnet-5',           effort: 'high', prompt: 'practice' }
+    practice:  { model: 'claude-sonnet-5',           effort: 'high', prompt: 'practice' },
+    pruefer:   { model: 'claude-haiku-4-5-20251001', effort: null,   prompt: 'pruefer' }
   }
 };
+
+// Der Prüfer der Rückfrage (seit Runde 6.0) läuft in beiden Betriebsarten mit
+// Haiku. Er steht in BETRIEBSARTEN, damit Protokoll und Kostenzähler sein
+// Modell kennen, aber bewusst NICHT in MODE_CONFIG: Von außen lässt er sich
+// nicht als eigener Modus aufrufen, nur vor einer Übersetzung.
+// Frist: Entscheidung des Betreibers vom 27.09.2026. Erwartet sind 1,5 bis
+// 2,5 Sekunden; wer länger braucht, wird übergangen, und es wird ohne Frage
+// übersetzt. So bleibt die Antwortzeit auch im schlechtesten Fall unter 15 s.
+const PRUEFER_FRIST_MS = 4000;
+const PRUEFER_MAX_TOKENS = 300;
 
 if (!BETRIEBSARTEN[BETRIEB]) {
   console.error(`[gfk] Unbekannte Betriebsart "${BETRIEB}", nehme "schnell"`);
@@ -181,6 +193,8 @@ GRUNDSATZ: WORTLAUT ERHALTEN
 
 Ändere nur, was einer Regel unten widerspricht. Alles andere übernimmst du so, wie die Person es geschrieben hat: ihre Wörter, ihre Zeitangaben, ihre Bezeichnungen für Personen und deren Besitzverhältnisse. "Mein Kind", "unser Kind" und "dein Kind" bleiben genau so, wie sie im Original stehen, und werden nicht gegeneinander ausgetauscht. Die einzige planmäßige Änderung an der Bezeichnung einer Person ist, dass das Gegenüber zum "du" wird.
 
+Steht unter dem Originaltext eine Antwort der Person auf eine Nachfrage, gehört sie zum Originaltext. Alles, was in dieser Anleitung für den Originaltext gilt, gilt für Originaltext und Antwort zusammen. Nennt die Antwort ein Tun, Lassen oder Sagen des Gegenübers, ist das die Beobachtung; das Deutungswort aus dem ersten Teil entfällt dann in der Beobachtung oder wird zu Gefühl und Bedürfnis.
+
 Ist der Originaltext bereits weitgehend gewaltfrei formuliert (eine Beobachtung ohne Wertung, ein echtes Gefühl, ein erkennbares Bedürfnis, eine Bitte als Frage), dann sag das im Einstiegssatz deutlich und ohne Einschränkung, in der Art von "Das ist schon eine richtig gute GFK-Formulierung!", und übernimm den Text im GFK-Text nahezu wortgleich. Keine kosmetische Umformulierung, nur um etwas verändert zu haben. Nutzer fügen ein Ergebnis oft erneut ein, um zu sehen, ob es noch besser wird; ein guter Text muss dann als guter Text stehen bleiben.
 
 NATÜRLICHER KLANG, GILT FÜR JEDES TEXTFELD
@@ -210,6 +224,7 @@ Ein Wort, das dem Gegenüber eine Haltung, ein Motiv oder eine Eigenschaft zusch
 - Enthält der Originaltext ein Zitat oder eine bestimmte Situation, verwende genau diese, auch wenn daneben "immer" oder "nie" steht. Das Zitat ist der Sachverhalt selbst; leite es nicht als einen Fall unter vielen ein. "Immer" und "nie" entfallen, weil sie Verallgemeinerungen sind.
 - Enthält der Originaltext nur eine pauschale Aussage über das Verhalten des Gegenübers, bleibt die Beobachtung ebenso pauschal. Das ist kein Mangel, sondern richtig. Nenne dann das, was die Person wahrnimmt, ausdrücklich als ihre Wahrnehmung, ohne eine Situation dazuzuerfinden.
 - Enthält der Originaltext nur eine Bewertung des Gegenübers und gar keine Handlung, ist die so übersetzte Wahrnehmung die ganze Beobachtung, ebenfalls ohne erfundene Handlung. Die Aussageform des Originals bleibt erhalten: Ein Vergleich bleibt ein Vergleich. Ersetzt werden nur die wertenden Wörter, nicht die Aussage, um die es der Person geht.
+- Steht unter dem Originaltext der Hinweis, dass die Person nach einem Vorfall gefragt wurde und keinen genannt hat, dann enthält der Originaltext keine Beobachtung. Die Beobachtung nennt dann allein, was die Person wahrnimmt, nach den Regeln dieses Abschnitts. Kein Tun, kein Lassen, keine Äußerung, kein Zeitpunkt, kein Ort und keine Kontaktform kommt hinzu, auch nicht als das, was naheliegt. Die Erklärung zur Beobachtung sagt in einem Halbsatz, dass der Originaltext keinen bestimmten Vorfall nennt.
 
 Die Beobachtung beginnt mit dem Sachverhalt. Prüfung für den ersten Teilsatz: Er nennt etwas, das im Originaltext steht. Ein Teilsatz, der nur sagt, dass die Person hinschaut oder die Lage betrachtet, nennt nichts aus dem Originaltext und entfällt; die Kennzeichnung als Wahrnehmung ist ein kurzer Einschub, keine Einleitung davor. Wer im Originaltext handelt oder etwas unterlässt, ist auch hier das Subjekt, wie in Schritt 0 beschrieben; Zeitangaben und Gegenstände aus dem Originaltext bleiben stehen.
 
@@ -285,6 +300,7 @@ Gehe diese Punkte durch, bevor du antwortest:
 9. Besitzverhältnisse und Bezeichnungen aus dem Original unverändert.
 10. Erklärungen: das Gegenüber in allen vier gleich benannt, nie als "du"; kein Wunsch, keine Sorge und kein Motiv, das nicht im Originaltext steht.
 11. Jeder "text" ist wortwörtlich Teil von "gfkSentence".
+12. Steht eine Antwort auf eine Nachfrage unter dem Originaltext: Ist sie die Grundlage der Beobachtung? Steht dort der Hinweis auf einen fehlenden Vorfall: Kommt in Beobachtung, Bitte und flüssiger Version nichts hinzu, was nicht im Originaltext steht?
 
 Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text:
 {
@@ -354,7 +370,11 @@ Wo der Text das Gegenüber handeln oder etwas unterlassen lässt, ist das Gegen�
 WORTLAUT
 Jedes Substantiv und jedes Verb deiner Beobachtung führt auf ein Wort im Text der Person zurück. Du fügst keine Situation, keinen Vorfall, keinen Ort und keine Handlung hinzu, die dort nicht stehen, und gleichfalls nichts, was nur naheliegt. Enthält der Text eine wörtliche Äußerung, verwendest du sie unverändert. Zeitangaben, Gegenstände und Besitzverhältnisse übernimmst du genau so, wie sie dort stehen.
 
+Steht unter dem Text eine Antwort der Person auf eine Nachfrage, gehört sie zum Text der Person. Alles, was hier und in den Abschnitten unten für den Text gilt, gilt für Text und Antwort zusammen. Nennt die Antwort ein Tun, Lassen oder Sagen des Gegenübers, ist das die Beobachtung; das Deutungswort aus dem ersten Teil entfällt dann in der Beobachtung oder wird zu Gefühl und Bedürfnis.
+
 Ist der Text pauschal, bleibt die Beobachtung pauschal. Das ist richtig und kein Mangel.
+
+Steht unter dem Text der Hinweis, dass die Person nach einem Vorfall gefragt wurde und keinen genannt hat, dann enthält der Text keine Beobachtung. Die Beobachtung nennt dann allein, was die Person wahrnimmt, nach den Regeln unter BEOBACHTUNG. Kein Tun, kein Lassen, keine Äußerung, kein Zeitpunkt, kein Ort und keine Kontaktform kommt hinzu, auch nicht als das, was naheliegt. Die Erklärung zur Beobachtung sagt in einem Halbsatz, dass der Text keinen bestimmten Vorfall nennt.
 
 BEOBACHTUNG
 Wertfrei, ohne einordnende Verben. Der erste Teilsatz nennt etwas, das im Text der Person steht. Ein Teilsatz, der allein sagt, dass die Person hinschaut oder die Lage überdenkt, nennt nichts und entfällt.
@@ -387,7 +407,7 @@ Prüfe vor der Form den Sinn: Kann das Gegenüber das tun, und hilft es dem Bed�
 Ist die Beobachtung als Wahrnehmung gekennzeichnet, richtet sich die Bitte auf den Austausch über diese Wahrnehmung und nicht auf die Änderung des wahrgenommenen Verhaltens. Sie ist erfüllbar, ohne dass das Gegenüber etwas einräumt, und sie nennt ihren Gegenstand mit den Wörtern der Beobachtung. Ein Gespräch ohne benannten Gegenstand ist keine Bitte. Berichtet der Text eine Tatsache, darf die Bitte eine Handlung zu dieser Sache benennen.
 
 DIE FLÜSSIGE VERSION
-Ein Registerwechsel, keine Kurzfassung und keine Abschrift. So, wie ein Mensch es am Telefon sagen würde.
+Ein Registerwechsel und keine Abschrift, kürzer als der GFK-Text. So, wie ein Mensch es am Telefon sagen würde, in Alltagssprache.
 
 Kein Satz der flüssigen Version steht wörtlich im GFK-Text, und keiner steht dort bis auf einzelne ausgetauschte Wörter, die Bitte eingeschlossen. Probe: Lege jeden Satz neben den GFK-Text. Gleicher Aufbau mit ein oder zwei anderen Wörtern ist eine Abschrift. Dann setzt du andere Satzgrenzen, beginnst mit einem anderen Wort und ordnest die Teile anders.
 
@@ -397,7 +417,7 @@ Genau ein Gefühl, und zwar das erste aus dem GFK-Text.
 
 Das Bedürfnis darf wegfallen oder knapper eingebettet sein. Bleibt es genannt, sind es dieselben Substantive wie im Schritt-Text, bei zweien beide, keines auf andere Personen verschoben und keines in eine Absicht mit Verb verwandelt.
 
-Es gibt keine feste Länge. Der Hebel ist der Satzbau. Jeder Bezug steht im Text selbst: Ein Wort, das nur mit dem GFK-Text verständlich wird, ist ein Fehler.
+Die flüssige Version hat weniger Wörter als der GFK-Text. Der Hebel ist der Satzbau: kurze Sätze, alltägliche Wörter, nichts doppelt. Jeder Bezug steht im Text selbst: Ein Wort, das nur mit dem GFK-Text verständlich wird, ist ein Fehler.
 
 Die Regeln zu Gefühl, Bedürfnis, Bitte, Wortlaut und Gegenüber gelten hier genauso. "ich" ist das Subjekt des Gefühlsverbs, kein Verursacher davor, kein Rückverweis auf das Verhalten, kein "ich fühle mich" mit Partizip.
 
@@ -429,11 +449,12 @@ PRÜFUNG VOR DER AUSGABE
 5. Ist der Bedürfnis-Schritt ein Substantiv ohne Anhängsel, und nennt die flüssige Version dasselbe oder keines?
 6. Ist die Bitte sinnvoll erfüllbar, und nennt sie ihren Gegenstand?
 7. Ist das Gegenüber Subjekt dort, wo es im Text handelt oder unterlässt?
-8. Steht kein Satz der flüssigen Version bis auf einzelne Wörter im GFK-Text?
+8. Steht kein Satz der flüssigen Version bis auf einzelne Wörter im GFK-Text, und hat sie weniger Wörter als der GFK-Text?
 9. Ist das Gegenüber durchgehend "du", und heißt es in allen Erklärungen gleich?
 10. Deutet keine Erklärung ein Motiv hinzu?
 11. Kein Gedankenstrich irgendwo?
 12. Steht jeder Schritt-Text Wort für Wort und in derselben Wortstellung im GFK-Text?
+13. Steht eine Antwort auf eine Nachfrage unter dem Text: Ist sie die Grundlage der Beobachtung? Steht dort der Hinweis auf einen fehlenden Vorfall: Kommt in Beobachtung, Bitte und flüssiger Version nichts hinzu, was nicht im Text steht?
 
 Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text. Das erste und das letzte Zeichen sind die geschweiften Klammern. Jeder Wert steht in einer Zeile ohne Zeilenumbruch. Innerhalb eines Wertes stehen keine doppelten Anführungszeichen; Äußerungen aus dem Text der Person setzt du in einfache Anführungszeichen.
 {
@@ -511,6 +532,38 @@ Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Code
 }`;
 
 // ---------------------------------------------------------------------------
+// Prompt für den Prüfer der Rückfrage (seit Runde 6.0)
+// ---------------------------------------------------------------------------
+// Wortgleich aus prompt-rueckfrage.txt, Block 1. Er entscheidet vor der
+// Übersetzung, ob der eigene Text eine Beobachtung enthält, und stellt
+// sonst genau eine Frage. Keine Mustersätze, auch keine verneinten: das
+// prüft werkstatt/prompt-test.js.
+SYSTEM_PROMPTS.pruefer = `Du prüfst einen Text, den ein Elternteil in einem Familienkonflikt geschrieben hat, auf eine einzige Sache: ob er eine Beobachtung im Sinne der Gewaltfreien Kommunikation enthält. Du übersetzt nichts und bewertest nichts. Dir wird genannt, an wen der Text geht.
+
+WAS EINE BEOBACHTUNG IST
+Eine Beobachtung ist, was eine Kamera oder ein Tonband festhalten könnte: ein Tun, ein Lassen, eine Äußerung oder ein Ereignis, das dem Gegenüber zuzuordnen ist. Sie braucht keinen Zeitpunkt und keinen einzelnen Vorfall. Ein wiederholtes oder pauschal beschriebenes Verhalten zählt, solange das Verhalten selbst benannt ist. Eine Bewertung daneben ändert daran nichts; dann ist die Beobachtung vorhanden, nur wertend.
+
+Keine Beobachtung ist, was nur im Inneren des Gegenübers liegt oder nur ein Urteil über es ausspricht: eine Absicht, eine Haltung, eine Eigenschaft, ein Gefühl, das ihm zugeschrieben wird, ein Vergleich solcher Zuschreibungen, oder ein Verb, das ein Verhalten allein durch seine Wirkung auf die schreibende Person benennt. Ebenso keine Beobachtung ist ein Text, der nur das eigene Erleben der schreibenden Person beschreibt.
+
+DIE PROBE
+Streiche gedanklich jedes Wort, das wertet, deutet oder ein Motiv unterstellt. Bleibt ein Verb oder ein Substantiv übrig, das ein Tun, Lassen oder Sagen des Gegenübers bezeichnet, ist die Beobachtung vorhanden. Bleibt nichts übrig, fehlt sie. Im Zweifel fehlt sie.
+
+DIE NACHFRAGE
+Fehlt die Beobachtung, stellst du der schreibenden Person genau eine Frage. Das du darin meint die schreibende Person. Die Frage hat höchstens 25 Wörter, keine Einleitung und keine Erklärung. Sie fragt danach, was das Gegenüber zuletzt getan, gelassen oder gesagt hat, und darf nach dem Zeitpunkt fragen. Sie greift das Wort der Person auf, das die Deutung trägt, und benennt das Gegenüber so, wie es dir genannt wurde oder wie die Person es im Text nennt.
+
+Die Frage enthält keine Handlung, keine Äußerung, keine Kontaktform, keinen Ort und kein Ereignis, das nicht im Text steht, auch nicht als Möglichkeit, Vermutung oder Auswahl. Sie bittet die Person nicht, ihren Vorwurf zu bestätigen oder zu begründen. Sie sagt der Person nicht, was an ihrem Text fehlt, und sie lehrt nichts.
+
+Prüfe die Frage vor der Ausgabe: Jedes Substantiv und jedes Verb darin steht entweder im Text der Person oder bezeichnet allgemein ein Tun, Lassen, Sagen oder einen Zeitpunkt. Alles andere streichst du.
+
+DEUTUNGSWÖRTER
+Fehlt die Beobachtung, nennst du die Wörter aus dem Text, die die Deutung, Bewertung oder Absicht tragen, in der Schreibweise des Textes, höchstens drei.
+
+Antworte ausschließlich mit einem JSON-Objekt, ohne Codeblock-Markierung, ohne Text davor oder danach. Jeder Wert steht in einer Zeile; innerhalb eines Wertes stehen keine doppelten Anführungszeichen. Ist die Beobachtung vorhanden:
+{"beobachtung": "vorhanden"}
+Fehlt sie:
+{"beobachtung": "fehlt", "deutung": ["...", "..."], "frage": "..."}`;
+
+// ---------------------------------------------------------------------------
 // Angaben aus der Oberfläche: das Gegenüber
 // ---------------------------------------------------------------------------
 // Die Seite schickt neben dem Text optional mit, an wen die Nachricht geht
@@ -540,23 +593,92 @@ function angabenPruefen(roh) {
   return { wer, frei };
 }
 
+// Zweite Runde der Rückfrage: Frage und Antwort kommen vom Browser zurück.
+// Freitext von außen, deshalb wie das freie Feld beim Gegenüber bereinigt:
+// keine Steuerzeichen, keine Zeilenumbrüche, gekürzt. Frage höchstens 200,
+// Antwort höchstens 500 Zeichen (Entscheidung vom 27.09.2026). Eine leere
+// Antwort heißt: übersprungen. Kein Objekt: keine zweite Runde.
+function ergaenzungPruefen(roh) {
+  if (roh === null || typeof roh !== 'object' || Array.isArray(roh)) return null;
+  const glatt = (x, max) => (typeof x === 'string')
+    ? x.replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max).trim()
+    : '';
+  const frage = glatt(roh.frage, 200);
+  const antwort = glatt(roh.antwort, 500);
+  return { frage, antwort: antwort || null };
+}
+
+// Zusatzzeilen unter dem Text (prompt-rueckfrage.txt, Block 6), nach einer
+// Leerzeile. Ohne Frage entfällt deren Zeile. Wortgleich mit
+// werkstatt/testlauf/nachrichten.js.
+function zusatzzeilen(e) {
+  const z = [''];
+  if (e.frage) z.push(`Nachfrage an die Person: ${e.frage}`);
+  z.push(`Antwort der Person: ${e.antwort ? e.antwort : 'keine. Die Person wurde nach einem Vorfall gefragt und hat keinen genannt.'}`);
+  return '\n' + z.join('\n');
+}
+
+// Nachricht an den Prüfer (prompt-rueckfrage.txt, Block 2). Wie beim kurzen
+// Prompt, aber ohne Richtung und ohne Anrede. Ohne Angabe die Vorgaben.
+// werkstatt/testlauf/nachrichten.js baut dieselbe Nachricht für die Messung;
+// der Prüfstand vergleicht beide.
+function nutzernachrichtPruefer(text, angaben) {
+  const g = angaben && angaben.wer ? GEGENUEBER[angaben.wer] : null;
+  const frei = (angaben && angaben.wer === 'andere' && angaben.frei) ? angaben.frei : '';
+  return [
+    `Gegenüber: ${frei || (g ? g.gegenueber : 'nicht angegeben, bestimme es aus dem Text')}`,
+    `Rolle des Gegenübers: ${g ? g.rolle : 'elternteil'}`,
+    '',
+    'Text der Person:',
+    text
+  ].join('\n');
+}
+
+// Prüft die Antwort des Prüfers (Konzept 4.2). Alles, was nicht eindeutig
+// passt, gilt als "vorhanden": Dann wird nicht gefragt, sondern übersetzt.
+// Nichts sperrt. Dieselben Regeln stehen in werkstatt/testlauf/pruefungen.js
+// (prueferAntwortPruefen); der Prüfstand vergleicht beide.
+function prueferAntwort(obj, text) {
+  const nichtFragen = ergebnis => ({ fragt: false, ergebnis });
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return nichtFragen('ungueltig');
+  if (obj.beobachtung === 'vorhanden') return nichtFragen('vorhanden');
+  if (obj.beobachtung !== 'fehlt' || typeof obj.frage !== 'string') return nichtFragen('ungueltig');
+  const frage = obj.frage.trim();
+  if (frage.length < 10 || frage.length > 200 || !frage.includes('?') ||
+      /[\r\n\u2028\u2029]/.test(frage) || /[–—]/.test(frage)) {
+    return nichtFragen('ungueltig');
+  }
+  // Deutungswörter: nur, was wirklich im Text steht, höchstens drei.
+  const klein = text.toLowerCase();
+  const deutung = (Array.isArray(obj.deutung) ? obj.deutung : [])
+    .filter(d => typeof d === 'string')
+    .map(d => d.trim())
+    .filter(d => d.length >= 2 && d.length <= 40 && klein.includes(d.toLowerCase()))
+    .slice(0, 3);
+  return { fragt: true, ergebnis: 'fehlt', frage, deutung };
+}
+
 // Baut die Nachricht an das Modell. Die Angaben kommen nur dort hinein, wo
 // der Prompt sie auch erwartet. Übersetzen mit dem langen Prompt und Üben
 // bekommen weiterhin den reinen Text, so wie sie gemessen wurden.
-function nutzernachricht(mode, e, text, angaben) {
+function nutzernachricht(mode, e, text, angaben, ergaenzung) {
   const g = angaben.wer ? GEGENUEBER[angaben.wer] : null;
   const frei = (angaben.wer === 'andere' && angaben.frei) ? angaben.frei : '';
+  // Zweite Runde der Rückfrage: Zusatzzeilen unter den Text, in beiden
+  // Betriebsarten. Ohne Ergänzung bleibt die Nachricht wortgleich.
+  const zusatz = (mode === 'translate' && ergaenzung) ? zusatzzeilen(ergaenzung) : '';
 
   if (mode === 'translate' && e.prompt === 'kurz') {
     // Ohne Angabe genau die Vorgaben, mit Angabe genau die drei Kopfzeilen,
     // mit denen Haiku im 13-Satz-Test gelaufen ist.
-    if (!g) return nutzernachrichtKurz(text);
+    if (!g) return nutzernachrichtKurz(text) + zusatz;
     return nutzernachrichtKurz(text, {
       richtung: 'senden',
       gegenueber: frei || g.gegenueber,
       rolle: g.rolle
-    });
+    }) + zusatz;
   }
+  if (mode === 'translate') return text + zusatz;
 
   if (mode === 'foreign') {
     if (!g) return text;
@@ -668,7 +790,7 @@ function isValidPayload(mode, payload) {
 // ---------------------------------------------------------------------------
 // Gibt immer ein Objekt zurück, wirft nie. Entweder {ok: true, payload} oder
 // {ok: false, status, code} mit einem für das Frontend verständlichen Fehlercode.
-async function callAnthropic(mode, text, angaben) {
+async function callAnthropic(mode, text, angaben, ergaenzung) {
   const config = MODE_CONFIG[mode];
   let maxTokens = config.maxTokens;
   let lastFailure = { status: 502, code: 'upstream_error' };
@@ -693,7 +815,7 @@ async function callAnthropic(mode, text, angaben) {
         }],
         messages: [{
           role: 'user',
-          content: nutzernachricht(mode, e, text, angaben || { wer: null, frei: '' })
+          content: nutzernachricht(mode, e, text, angaben || { wer: null, frei: '' }, ergaenzung || null)
         }]
       };
       // Haiku kennt "effort" nicht und lehnt jede Anfrage damit ab (HTTP 400).
@@ -801,6 +923,65 @@ async function callAnthropic(mode, text, angaben) {
   return { ok: false, ...lastFailure };
 }
 
+// ---------------------------------------------------------------------------
+// Der Prüfer der Rückfrage (seit Runde 6.0)
+// ---------------------------------------------------------------------------
+// Läuft vor der Übersetzung eines eigenen Textes, wenn die Seite die Frage
+// zeigen kann (rueckfrage: true). Genau ein Versuch mit eigener Frist. Wirft
+// nie; bei jedem Fehler gilt die Beobachtung als vorhanden, und die
+// Übersetzung läuft wie ohne Prüfer.
+// Protokoll: eine Zeile, ergebnis=vorhanden, fehlt, ungueltig, zeit oder
+// fehler. Kein Nutzertext, keine Frage, keine Deutungswörter.
+async function callPruefer(text, angaben) {
+  const e = AKTIV.pruefer;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PRUEFER_FRIST_MS);
+  const startedAt = Date.now();
+  const log = (status, ergebnis, usage) => logAttempt({
+    mode: 'pruefer', attempt: 1, von: 1, status, ms: Date.now() - startedAt, note: ergebnis, usage
+  });
+
+  try {
+    const anfrage = {
+      model: e.model,
+      max_tokens: PRUEFER_MAX_TOKENS,
+      system: [{ type: 'text', text: SYSTEM_PROMPTS[e.prompt], cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: nutzernachrichtPruefer(text, angaben) }]
+    };
+    if (e.effort) anfrage.output_config = { effort: e.effort };
+
+    const response = await fetch(ANTHROPIC_URL, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify(anfrage)
+    });
+    const bodyText = await response.text();
+    let data = null;
+    try { data = JSON.parse(bodyText); } catch (err) { data = null; }
+
+    if (!response.ok) {
+      log(response.status, 'fehler');
+      return { fragt: false };
+    }
+    const usage = (data && data.usage) || {};
+    const antwort = (data && data.stop_reason === 'max_tokens')
+      ? { fragt: false, ergebnis: 'ungueltig' }
+      : prueferAntwort(extractJsonObject(extractText(data)), text);
+    log(200, antwort.ergebnis, usage);
+    return antwort;
+  } catch (err) {
+    log(0, err.name === 'AbortError' ? 'zeit' : 'fehler');
+    return { fragt: false };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function codeForStatus(status) {
   if (status === 429) return 'rate_limited';
   if (status === 401 || status === 403) return 'auth_error';
@@ -815,10 +996,10 @@ function codeForStatus(status) {
 // Eine Zeile pro Versuch. Damit lässt sich in den Clever-Cloud-Logs direkt ablesen,
 // WARUM eine Anfrage gescheitert ist, statt es aus der Fehlermeldung im Browser
 // erraten zu müssen. Es wird bewusst kein Nutzertext protokolliert.
-function logAttempt({ mode, attempt, status, ms, note, usage, retry }) {
+function logAttempt({ mode, attempt, von, status, ms, note, usage, retry }) {
   const parts = [
     `[gfk] mode=${mode}`,
-    `versuch=${attempt}/${MAX_ATTEMPTS}`,
+    `versuch=${attempt}/${von || MAX_ATTEMPTS}`,
     `status=${status}`,
     `dauer=${ms}ms`
   ];
@@ -923,10 +1104,7 @@ function buchen(mode, usage) {
      cacheSchreiben * preis.ein * 1.25 +
      cacheLesen * preis.ein * 0.1) / 1e6;
 
-  const tag = heute();
-  const t = kassenbuch.tage[tag] || (kassenbuch.tage[tag] = {
-    versuche: 0, ein: 0, aus: 0, cacheSchreiben: 0, cacheLesen: 0, usd: 0, modi: {}
-  });
+  const t = tagEintrag();
 
   t.versuche += 1;
   t.ein += ein;
@@ -940,12 +1118,34 @@ function buchen(mode, usage) {
   t.modelle = t.modelle || {};
   t.modelle[modell] = (t.modelle[modell] || 0) + 1;
 
-  // Alte Tage wegwerfen, damit die Datei nicht endlos wächst.
-  const tage = Object.keys(kassenbuch.tage).sort();
-  while (tage.length > KOSTEN_TAGE) delete kassenbuch.tage[tage.shift()];
+  speichernBald();
+}
 
-  // Nicht bei jedem Versuch auf die Platte schreiben, sondern gesammelt.
-  // Geht dabei der letzte Zählstand verloren, sind es Bruchteile eines Cents.
+// Der Eintrag für heute; legt ihn an, wenn es ihn noch nicht gibt.
+function tagEintrag() {
+  const tag = heute();
+  if (!kassenbuch.tage[tag]) {
+    kassenbuch.tage[tag] = { versuche: 0, ein: 0, aus: 0, cacheSchreiben: 0, cacheLesen: 0, usd: 0, modi: {} };
+    // Alte Tage wegwerfen, damit die Datei nicht endlos wächst.
+    const tage = Object.keys(kassenbuch.tage).sort();
+    while (tage.length > KOSTEN_TAGE) delete kassenbuch.tage[tage.shift()];
+  }
+  return kassenbuch.tage[tag];
+}
+
+// Zähler der Rückfrage je Tag (Entscheidung vom 27.09.2026), ohne Nutzertext:
+//   gefragt        der Prüfer hat eine Frage gestellt, sie ging an die Seite
+//   uebersprungen  zweite Runde ohne Antwort (ab Schritt 6 des Plans)
+function zaehlen(name) {
+  const t = tagEintrag();
+  t.rueckfrage = t.rueckfrage || {};
+  t.rueckfrage[name] = (t.rueckfrage[name] || 0) + 1;
+  speichernBald();
+}
+
+// Nicht bei jedem Versuch auf die Platte schreiben, sondern gesammelt.
+// Geht dabei der letzte Zählstand verloren, sind es Bruchteile eines Cents.
+function speichernBald() {
   if (!schreibTimer) {
     schreibTimer = setTimeout(() => {
       schreibTimer = null;
@@ -1029,7 +1229,26 @@ app.post('/api/gfk-proxy', async (req, res) => {
     return res.status(500).json({ code: 'auth_error', error: 'Serverkonfiguration unvollständig' });
   }
 
-  const result = await callAnthropic(mode, text.trim(), angaben);
+  // Rückfrage bei fehlender Beobachtung (seit Runde 6.0). Nur beim eigenen
+  // Text, nur wenn die Seite die Frage auch zeigen kann (rueckfrage: true,
+  // genau dieser Wert), und nie ein zweites Mal: Trägt die Anfrage schon eine
+  // Ergänzung, ist das die zweite Runde. Seiten ohne diese Angabe, etwa eine
+  // ältere, noch offene Fassung, bekommen die Übersetzung wie bisher.
+  const body = req.body || {};
+  const zweiteRunde = body.ergaenzung !== null && typeof body.ergaenzung === 'object' && !Array.isArray(body.ergaenzung);
+  if (mode === 'translate' && body.rueckfrage === true && !zweiteRunde) {
+    const pruefung = await callPruefer(text.trim(), angaben);
+    if (pruefung.fragt) {
+      zaehlen('gefragt');
+      return res.status(200).json({ rueckfrage: { frage: pruefung.frage, deutung: pruefung.deutung } });
+    }
+  }
+
+  // Zweite Runde: Frage und Antwort gehen als Zusatzzeilen an den Übersetzer.
+  const ergaenzung = (mode === 'translate' && zweiteRunde) ? ergaenzungPruefen(body.ergaenzung) : null;
+  if (ergaenzung && !ergaenzung.antwort) zaehlen('uebersprungen');
+
+  const result = await callAnthropic(mode, text.trim(), angaben, ergaenzung);
 
   if (!result.ok) {
     return res.status(result.status).json({ code: result.code, error: 'Anfrage nicht erfolgreich' });
@@ -1053,6 +1272,7 @@ app.get('/api/version', (req, res) => {
     uebersetzen: AKTIV.translate,
     fremdnachricht: AKTIV.foreign,
     ueben: AKTIV.practice,
+    pruefer: Object.assign({}, AKTIV.pruefer, { frist_ms: PRUEFER_FRIST_MS }),
     versuche: MAX_ATTEMPTS
   });
 });
@@ -1086,7 +1306,8 @@ app.get('/api/kosten', (req, res) => {
     preise: PREISE[MODEL] || PREIS_UNBEKANNT,
     modelle: {
       uebersetzen: { modell: AKTIV.translate.model, preise: PREISE[AKTIV.translate.model] || PREIS_UNBEKANNT },
-      ueben:       { modell: AKTIV.practice.model,  preise: PREISE[AKTIV.practice.model]  || PREIS_UNBEKANNT }
+      ueben:       { modell: AKTIV.practice.model,  preise: PREISE[AKTIV.practice.model]  || PREIS_UNBEKANNT },
+      pruefer:     { modell: AKTIV.pruefer.model,   preise: PREISE[AKTIV.pruefer.model]   || PREIS_UNBEKANNT }
     },
     dauerhaft: eingehaengt,
     ordner: KOSTEN_ORDNER,
