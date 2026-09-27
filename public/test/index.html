@@ -756,24 +756,33 @@
   #result, #foreign-result, #practice-result, .hilfe-karte { scroll-margin-top: 32px; }
   .hilfe-karte h4 { font-family: var(--serif); font-size: 17px; font-weight: 500; margin: 0 0 8px; color: var(--ink); }
 
-  /* Rückfrage bei fehlender Beobachtung (seit Runde 6.1) */
-  .rueckfrage-karte {
-    margin-top: 18px;
-    padding: 18px 20px;
+  /* Fassung ohne Vorfall: Hinweis und Einladung (seit Runde 6.4) */
+  .deutung-hinweis { margin: 0 0 4px; font-size: 14.5px; line-height: 1.55; color: var(--ink-soft); }
+  .deutung-hinweis mark { background: var(--obs-tint); color: var(--ink); padding: 0 3px; border-radius: 3px; }
+  details.einladung {
+    margin: 18px 0 0;
+    padding: 12px 16px;
     background: var(--paper);
     border: 1px solid var(--line);
     border-left: 4px solid var(--obs);
     border-radius: 10px;
-    scroll-margin-top: 32px;
   }
-  .rueckfrage-karte h3 { font-size: 18px; margin: 0 0 8px; outline: none; }
-  .rueckfrage-karte p { margin: 0 0 10px; font-size: 14.5px; line-height: 1.55; color: var(--ink); }
-  .rueckfrage-karte .rueckfrage-frage { font-size: 16px; font-weight: 500; }
-  .rueckfrage-karte .rueckfrage-woerter { color: var(--ink-soft); }
-  .rueckfrage-woerter mark { background: var(--obs-tint); color: var(--ink); padding: 0 3px; border-radius: 3px; }
-  .rueckfrage-karte textarea { min-height: 84px; }
-  .rueckfrage-knoepfe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
-  .rueckfrage-knoepfe .primary-btn { margin-top: 10px; }
+  details.einladung summary {
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: var(--obs);
+    list-style: none;
+  }
+  details.einladung summary::-webkit-details-marker { display: none; }
+  details.einladung summary::before { content: '+ '; }
+  details.einladung[open] summary::before { content: '– '; }
+  .einladung-inhalt { margin-top: 12px; }
+  .einladung-frage { margin: 0 0 10px; font-size: 15.5px; font-weight: 500; line-height: 1.5; color: var(--ink); }
+  .einladung textarea { min-height: 84px; }
+  .einladung .primary-btn { margin-top: 10px; }
+  .einladung-fehler { margin: 8px 0 0; font-size: 14px; color: var(--feel); }
   .ohne-vorfall { font-size: 13.5px; color: var(--obs); }
   #compare-original { white-space: pre-line; }
   .hilfe-karte p { margin: 0 0 10px; font-size: 14.5px; line-height: 1.55; color: var(--ink); }
@@ -969,20 +978,6 @@
     <div role="status"><div class="hilfe-karte" id="hilfe-karte" hidden></div></div>
     <p class="hilfe-zeile">Wenn es gerade zu viel ist: <button type="button" class="hilfe-link" data-hilfe-oeffnen>Hier sind Menschen, die zuhören.</button></p>
     <p class="error-msg" id="error-msg" hidden></p>
-
-    <section class="rueckfrage-karte" id="rueckfrage-karte" aria-labelledby="rueckfrage-titel" hidden>
-      <h3 id="rueckfrage-titel" tabindex="-1">Eine kurze Frage</h3>
-      <p>Damit in deiner Nachricht nur steht, was wirklich passiert ist:</p>
-      <p class="rueckfrage-frage" id="rueckfrage-frage"></p>
-      <p class="rueckfrage-woerter" id="rueckfrage-woerter" hidden></p>
-      <label class="sr-only" for="rueckfrage-antwort">Deine Antwort</label>
-      <textarea id="rueckfrage-antwort" rows="3" maxlength="500" placeholder="Ein, zwei Sätze reichen."></textarea>
-      <span class="char-counter" id="rueckfrage-zaehler">0 / 500</span>
-      <div class="rueckfrage-knoepfe">
-        <button type="button" class="primary-btn" id="rueckfrage-weiter">Weiter mit Antwort</button>
-        <button type="button" class="text-btn" id="rueckfrage-ohne">Ohne Antwort weiter</button>
-      </div>
-    </section>
     </div>
 
     <div id="practice-panel" hidden>
@@ -1101,8 +1096,21 @@
   <section class="result" id="result" aria-live="polite" hidden>
     <p class="gfk-intro" id="gfk-intro"></p>
     <h2 id="result-titel">So könnte es klingen</h2>
+    <p class="deutung-hinweis" id="deutung-hinweis" hidden></p>
     <blockquote class="gfk-quote" id="gfk-quote"></blockquote>
     <button type="button" class="text-btn" id="copy-btn">Text kopieren</button>
+
+    <details class="einladung" id="einladung" hidden>
+      <summary>Weißt du noch, was genau passiert ist? Dann wird die Nachricht klarer.</summary>
+      <div class="einladung-inhalt">
+        <p class="einladung-frage" id="einladung-frage"></p>
+        <label class="sr-only" for="einladung-antwort">Was genau passiert ist</label>
+        <textarea id="einladung-antwort" rows="3" maxlength="500" placeholder="Ein, zwei Sätze reichen."></textarea>
+        <span class="char-counter" id="einladung-zaehler">0 / 500</span>
+        <p class="einladung-fehler" id="einladung-fehler" role="alert" hidden></p>
+        <button type="button" class="primary-btn" id="einladung-los">Mit dieser Angabe neu übersetzen</button>
+      </div>
+    </details>
 
     <h3>So ist der Satz aufgebaut</h3>
     <ol class="breakdown" id="breakdown"></ol>
@@ -1893,7 +1901,7 @@
   // zweiter Versuch nur verschlimmern würde (Ratenbegrenzung) oder die sich nicht
   // von allein beheben (zu langer Text), wird nicht wiederholt.
   // Erscheint beim Laden in der Browser-Konsole.
-  console.log('GFK-Kompass Frontend, Runde 6.1, 27.09.2026');
+  console.log('GFK-Kompass Frontend, Runde 6.4, 27.09.2026');
 
   const NON_RETRYABLE_CODES = ['rate_limited', 'too_long', 'bad_request', 'auth_error'];
 
@@ -1941,7 +1949,7 @@
   async function requestGfk(mode, text, angaben, extra) {
     let response;
     try {
-      // extra: Angaben zur Rückfrage (rueckfrage, ergaenzung), sonst nichts.
+      // extra: rueckfrage (erste Runde) oder ergaenzung (Nachtrag), sonst nichts.
       const koerper = Object.assign({ mode: mode, text: text }, angaben ? { angaben: angaben } : {}, extra || {});
       response = await fetch("/api/gfk-proxy", {
         method: "POST",
@@ -2070,7 +2078,6 @@
     resultSection.classList.remove('visible');
     foreignResultSection.hidden = true;
     foreignResultSection.classList.remove('visible');
-    frageSchliessen();
     gegenueberNotizSetzen();
   }
 
@@ -2919,8 +2926,6 @@
 
   submitBtn.addEventListener('click', async () => {
     const text = textarea.value.trim();
-    // Neu absenden ist immer eine erste Runde; eine offene Frage gilt nicht mehr.
-    frageSchliessen();
     if (!text) {
       fieldHint.hidden = false;
       textarea.focus();
@@ -2954,10 +2959,7 @@
       } else {
         const data = await withRetry(() => translateToGFK(text, angaben, RUECKFRAGE ? { rueckfrage: true } : null));
         finishProgress(progressBar, progressBarFill);
-        if (nochHier()) {
-          if (data.rueckfrage) await frageBehandeln(text, angaben, data.rueckfrage);
-          else renderResult(text, data);
-        }
+        if (nochHier()) renderResult(text, data, { angaben: angaben });
       }
     } catch (err) {
       stopProgress(progressBar, progressBarFill);
@@ -2972,117 +2974,119 @@
   });
 
   // ---------------------------------------------------------------
-  // Rückfrage bei fehlender Beobachtung (seit Runde 6.1)
+  // Fassung ohne Vorfall und Einladung (seit Runde 6.4)
   // ---------------------------------------------------------------
   // Steht im eigenen Text kein Verhalten, das man sehen oder hören könnte,
-  // fragt der Server einmal nach, statt einen Vorfall zu erfinden. Die Frage
-  // ist freiwillig. Aus: RUECKFRAGE = false, dann übersetzt die Seite wie
-  // vor Runde 6.1 und der Server fragt nie.
+  // übersetzt der Server trotzdem sofort, erfindet aber keinen Vorfall, und
+  // schickt die Frage des Prüfers mit. Die Seite zeigt erst das Ergebnis,
+  // darunter zugeklappt die Einladung, den Vorfall nachzutragen. Wer nichts
+  // ergänzt, hat nichts verloren. Aus: RUECKFRAGE = false, dann prüft der
+  // Server nicht und übersetzt wie vor Runde 6.1.
   const RUECKFRAGE = true;
 
-  const rfKarte = document.getElementById('rueckfrage-karte');
-  const rfTitel = document.getElementById('rueckfrage-titel');
-  const rfFrage = document.getElementById('rueckfrage-frage');
-  const rfWoerter = document.getElementById('rueckfrage-woerter');
-  const rfAntwort = document.getElementById('rueckfrage-antwort');
-  const rfZaehler = document.getElementById('rueckfrage-zaehler');
-  const rfWeiter = document.getElementById('rueckfrage-weiter');
-  const rfOhne = document.getElementById('rueckfrage-ohne');
   const resultTitel = document.getElementById('result-titel');
+  const deutungHinweis = document.getElementById('deutung-hinweis');
+  const einladung = document.getElementById('einladung');
+  const einladungFrage = document.getElementById('einladung-frage');
+  const einladungAntwort = document.getElementById('einladung-antwort');
+  const einladungZaehler = document.getElementById('einladung-zaehler');
+  const einladungFehler = document.getElementById('einladung-fehler');
+  const einladungLos = document.getElementById('einladung-los');
+  const EINLADUNG_KNOPF = 'Mit dieser Angabe neu übersetzen';
 
-  // Die Frage gehört zum Text, zu dem sie gestellt wurde. Die zweite Anfrage
-  // nimmt diesen Text, nicht das, was inzwischen im Feld steht.
-  let offeneFrage = null;
+  // Die Einladung gehört zu dem Text, dessen Ergebnis gerade dasteht. Der
+  // Nachtrag nimmt diesen Text, nicht das, was inzwischen im Feld steht.
+  let einladungFuer = null;
 
-  function frageSchliessen() {
-    offeneFrage = null;
-    rfKarte.hidden = true;
+  function einladungZaehlerSetzen() {
+    einladungZaehler.textContent = einladungAntwort.value.length + ' / 500';
+  }
+  einladungAntwort.addEventListener('input', () => {
+    einladungZaehlerSetzen();
+    einladungFehler.hidden = true;
+  });
+  einladung.addEventListener('toggle', () => {
+    if (einladung.open) einladungAntwort.focus({ preventScroll: true });
+  });
+
+  // Die Wörter stammen aus dem Text der Person: nur als Text einsetzen.
+  function deutungSetzen(woerter) {
+    deutungHinweis.textContent = '';
+    if (!woerter.length) { deutungHinweis.hidden = true; return; }
+    deutungHinweis.appendChild(document.createTextNode(woerter.length === 1
+      ? 'Dieses Wort ist deine Deutung, keine Beschreibung: '
+      : 'Diese Wörter sind deine Deutung, keine Beschreibung: '));
+    woerter.forEach((w, i) => {
+      if (i) deutungHinweis.appendChild(document.createTextNode(', '));
+      const m = document.createElement('mark');
+      m.textContent = '„' + w + '“';
+      deutungHinweis.appendChild(m);
+    });
+    deutungHinweis.hidden = false;
   }
 
-  function rfZaehlerSetzen() {
-    rfZaehler.textContent = rfAntwort.value.length + ' / 500';
-  }
-  rfAntwort.addEventListener('input', rfZaehlerSetzen);
-
-  async function frageBehandeln(text, angaben, rf) {
-    offeneFrage = { text: text, angaben: angaben, frage: rf.frage };
-    // Neben der Karte "Es klingt, als ginge es dir gerade sehr schlecht" wird
-    // nicht nachgefragt (Entscheidung vom 27.09.2026). Die Seite überspringt
-    // selbst; das Ergebnis ist als Fassung ohne Vorfall gekennzeichnet.
+  // Hinweis und Einladung zum angezeigten Ergebnis. Ohne Frage des Servers
+  // (Beobachtung vorhanden, Nachtrag, Rückfrage aus) bleiben beide weg.
+  // Neben der Karte "Es klingt, als ginge es dir gerade sehr schlecht" und
+  // neben der leisen Hilfe-Karte auch (Entscheidung vom 27.09.2026).
+  function einladungSetzen(text, angaben, ov) {
+    einladungFuer = null;
+    einladung.open = false;
+    einladung.hidden = true;
+    deutungHinweis.hidden = true;
+    einladungAntwort.value = '';
+    einladungZaehlerSetzen();
+    einladungFehler.hidden = true;
+    if (!ov) return;
     let s = null;
     try { s = signale(text); } catch (e) { s = null; }
-    if (s && (s.krise || s.weich)) {
-      await zweiteRunde(null);
-      return;
-    }
-    rfFrage.textContent = rf.frage;
-    rfWoerter.textContent = '';
-    if (rf.deutung.length) {
-      rfWoerter.appendChild(document.createTextNode(rf.deutung.length === 1
-        ? 'Dieses Wort ist deine Deutung, keine Beschreibung: '
-        : 'Diese Wörter sind deine Deutung, keine Beschreibung: '));
-      rf.deutung.forEach((w, i) => {
-        if (i) rfWoerter.appendChild(document.createTextNode(', '));
-        const m = document.createElement('mark');
-        m.textContent = '„' + w + '“';
-        rfWoerter.appendChild(m);
-      });
-      rfWoerter.hidden = false;
-    } else {
-      rfWoerter.hidden = true;
-    }
-    rfAntwort.value = '';
-    rfZaehlerSetzen();
-    rfKarte.hidden = false;
-    requestAnimationFrame(() => {
-      const ziel = hilfeKarte.hidden ? rfKarte : hilfeKarte;
-      ziel.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
-      rfTitel.focus({ preventScroll: true });
-    });
+    if (s && (s.krise || s.weich)) return;
+    deutungSetzen(ov.deutung);
+    einladungFrage.textContent = ov.frage;
+    einladungFuer = { text: text, angaben: angaben, frage: ov.frage };
+    einladung.hidden = false;
   }
 
-  // Zweite Anfrage: derselbe Text, dazu Frage und Antwort (oder keine).
-  async function zweiteRunde(antwort) {
-    const f = offeneFrage;
-    if (!f) return;
-    frageSchliessen();
+  // Der Nachtrag: derselbe Text, dazu Frage und Antwort. Das alte Ergebnis
+  // bleibt stehen, bis das neue da ist.
+  async function nachtragen() {
+    const f = einladungFuer;
+    if (!f || einladungLos.disabled || submitBtn.disabled) return;
+    const antwort = einladungAntwort.value.trim();
+    if (!antwort) {
+      einladungFehler.textContent = 'Schreib kurz, was passiert ist. Ein Satz reicht.';
+      einladungFehler.hidden = false;
+      einladungAntwort.focus();
+      return;
+    }
+    einladungFehler.hidden = true;
     errorMsg.hidden = true;
-    resultSection.hidden = true;
-    resultSection.classList.remove('visible');
+    einladungLos.disabled = true;
+    einladungLos.textContent = 'Wird neu übersetzt …';
     submitBtn.disabled = true;
     richtungKnoepfe.forEach(b => { b.disabled = true; });
-    submitBtn.textContent = RICHTUNG_TEXTE.eigen.laeuft;
     // Auch die Antwort läuft durch die Hilfe-Erkennung, zusammen mit dem Text.
-    if (antwort) hilfeKarteZeigen(hilfeKarte, f.text + '\n' + antwort, false, 'Deine Übersetzung kommt gleich.');
+    hilfeKarteZeigen(hilfeKarte, f.text + '\n' + antwort, false, 'Deine Übersetzung kommt gleich.');
     startProgress(progressBar, progressBarFill);
     const nochHier = () => !translatePanel.hidden && !werkzeugeGroup.hidden;
     try {
-      const data = await withRetry(() => translateToGFK(f.text, f.angaben, { ergaenzung: { frage: f.frage, antwort: antwort || null } }));
-      if (data.rueckfrage) {
-        const e = new Error('Zweite Frage'); e.code = 'bad_response'; throw e;
-      }
+      const data = await withRetry(() => translateToGFK(f.text, f.angaben, { ergaenzung: { frage: f.frage, antwort: antwort } }));
       finishProgress(progressBar, progressBarFill);
-      if (nochHier()) renderResult(f.text, data, { antwort: antwort || null, ohneVorfall: !antwort });
+      if (nochHier()) renderResult(f.text, data, { angaben: f.angaben, antwort: antwort });
     } catch (err) {
       stopProgress(progressBar, progressBarFill);
-      errorMsg.textContent = messageForError(err);
-      errorMsg.hidden = false;
+      einladungFehler.textContent = messageForError(err);
+      einladungFehler.hidden = false;
     } finally {
       hilfeKommtWeg(hilfeKarte);
+      einladungLos.disabled = false;
+      einladungLos.textContent = EINLADUNG_KNOPF;
       submitBtn.disabled = false;
       richtungKnoepfe.forEach(b => { b.disabled = false; });
       submitBtn.textContent = RICHTUNG_TEXTE[richtung].knopf;
     }
   }
-
-  rfWeiter.addEventListener('click', () => zweiteRunde(rfAntwort.value.trim() || null));
-  rfOhne.addEventListener('click', () => zweiteRunde(null));
-
-  // Wer den Text ändert, ein Beispiel wählt oder den Bereich wechselt, hat
-  // eine neue Lage: Die alte Frage passt nicht mehr.
-  textarea.addEventListener('input', () => { if (offeneFrage) frageSchliessen(); });
-  document.querySelectorAll('.chip, #mode-practice-btn, #group-uebungen-btn')
-    .forEach(b => b.addEventListener('click', frageSchliessen));
+  einladungLos.addEventListener('click', nachtragen);
 
   let progressInterval = null;
 
@@ -3117,16 +3121,19 @@
   async function translateToGFK(text, angaben, extra) {
     const parsed = await requestGfk("translate", text, angaben, extra);
 
-    // Rückfrage: Der Server stellt eine Frage statt zu übersetzen.
-    if (parsed.rueckfrage && typeof parsed.rueckfrage === 'object' && typeof parsed.rueckfrage.frage === 'string') {
-      const d = Array.isArray(parsed.rueckfrage.deutung) ? parsed.rueckfrage.deutung : [];
-      return { rueckfrage: { frage: parsed.rueckfrage.frage, deutung: d.filter(x => typeof x === 'string' && x.trim()).slice(0, 3) } };
-    }
-
     if (!parsed.gfkSentence || !Array.isArray(parsed.steps)) {
       const shapeErr = new Error('Unexpected response shape');
       shapeErr.code = 'bad_response';
       throw shapeErr;
+    }
+    // Fassung ohne Vorfall (seit Runde 6.4): Frage des Prüfers und
+    // Deutungswörter kommen zusammen mit dem Ergebnis.
+    const ov = parsed.ohneVorfall;
+    if (ov && typeof ov === 'object' && typeof ov.frage === 'string' && ov.frage.trim()) {
+      const d = Array.isArray(ov.deutung) ? ov.deutung : [];
+      parsed.ohneVorfall = { frage: ov.frage.trim(), deutung: d.filter(x => typeof x === 'string' && x.trim()).map(x => x.trim()).slice(0, 3) };
+    } else {
+      delete parsed.ohneVorfall;
     }
     return parsed;
   }
@@ -3166,12 +3173,15 @@
     return html;
   }
 
-  // opts (zweite Runde der Rückfrage): antwort = was die Person ergänzt hat,
-  // ohneVorfall = übersprungen. Die Kennzeichnung steht nur auf der Seite,
-  // nie im kopierbaren Text.
+  // data.ohneVorfall: Der Server hat keinen Vorfall gefunden und ohne einen
+  // übersetzt. opts: angaben = Angaben der Anfrage (für den Nachtrag),
+  // antwort = was die Person nachgetragen hat. Die Kennzeichnung steht nur
+  // auf der Seite, nie im kopierbaren Text.
   function renderResult(originalText, data, opts) {
     const o = opts || {};
-    resultTitel.textContent = o.ohneVorfall ? 'Vorschlag ohne konkreten Vorfall' : 'So könnte es klingen';
+    const ov = data.ohneVorfall || null;
+    resultTitel.textContent = ov ? 'Vorschlag ohne konkreten Vorfall' : 'So könnte es klingen';
+    einladungSetzen(originalText, o.angaben || {}, ov);
     if (data.intro) {
       gfkIntro.textContent = data.intro;
       gfkIntro.hidden = false;
@@ -3188,7 +3198,7 @@
         <span class="breakdown-cat">${escapeHtml(step.category)}</span>
         <span class="breakdown-excerpt">„${escapeHtml(step.text)}“</span>
         <span class="breakdown-explain">${escapeHtml(step.explanation)}</span>
-      ` + (o.ohneVorfall && step.category === 'Beobachtung'
+      ` + (ov && step.category === 'Beobachtung'
         ? '<span class="ohne-vorfall">Dein Text nennt keinen bestimmten Vorfall. Die Beobachtung bleibt deshalb bei dem, was du wahrnimmst.</span>'
         : '');
       breakdownList.appendChild(li);
