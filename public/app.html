@@ -83,17 +83,26 @@
     transform: rotate(0deg);
     transform-origin: 32px 32px;
   }
-  @keyframes compass-settle {
-    0% { transform: rotate(0deg); animation-timing-function: linear; }
-    65% { transform: rotate(405deg); animation-timing-function: linear; }
-    85% { transform: rotate(405deg); animation-timing-function: ease-in-out; }
+  /* Wie auf der Landingpage. 12 Uhr = 360°, 13:40 = 410°.
+      0 → 46 %   eine volle Umdrehung, gleichmäßig
+     46 → 68 %   12 Uhr → 13:40, wird stetig langsamer
+     68 → 76 %   steht still am Umkehrpunkt
+     76 → 86 %   zurück auf 12 Uhr, wird stetig schneller
+     86 → 100 %  schwingt ein Stück über 12 hinaus und kommt zur Ruhe */
+  @keyframes einnorden {
+    0%   { transform: rotate(0deg);   animation-timing-function: linear; }
+    46%  { transform: rotate(360deg); animation-timing-function: cubic-bezier(0.15, 0.52, 0.30, 1); }
+    68%  { transform: rotate(410deg); animation-timing-function: linear; }
+    76%  { transform: rotate(410deg); animation-timing-function: cubic-bezier(0.55, 0, 1, 0.52); }
+    86%  { transform: rotate(360deg); animation-timing-function: cubic-bezier(0, 0.5, 0.35, 1); }
+    94%  { transform: rotate(353deg); animation-timing-function: cubic-bezier(0.45, 0, 0.35, 1); }
     100% { transform: rotate(360deg); }
   }
   .compass.settled .needle {
-    animation: compass-settle 2.6s forwards;
+    animation: einnorden 3.2s forwards;
   }
   @media (prefers-reduced-motion: reduce) {
-    .compass .needle { animation: none; transform: rotate(0deg); }
+    .compass .needle { animation: none !important; transform: rotate(0deg); }
   }
 
   .wordmark {
@@ -745,6 +754,27 @@
      Überschrift 20 bis 30 px über dem Bildschirmrand. */
   #result, #foreign-result, #practice-result, .hilfe-karte { scroll-margin-top: 32px; }
   .hilfe-karte h4 { font-family: var(--serif); font-size: 17px; font-weight: 500; margin: 0 0 8px; color: var(--ink); }
+
+  /* Rückfrage bei fehlender Beobachtung (seit Runde 6.1) */
+  .rueckfrage-karte {
+    margin-top: 18px;
+    padding: 18px 20px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--obs);
+    border-radius: 10px;
+    scroll-margin-top: 32px;
+  }
+  .rueckfrage-karte h3 { font-size: 18px; margin: 0 0 8px; outline: none; }
+  .rueckfrage-karte p { margin: 0 0 10px; font-size: 14.5px; line-height: 1.55; color: var(--ink); }
+  .rueckfrage-karte .rueckfrage-frage { font-size: 16px; font-weight: 500; }
+  .rueckfrage-karte .rueckfrage-woerter { color: var(--ink-soft); }
+  .rueckfrage-woerter mark { background: var(--obs-tint); color: var(--ink); padding: 0 3px; border-radius: 3px; }
+  .rueckfrage-karte textarea { min-height: 84px; }
+  .rueckfrage-knoepfe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
+  .rueckfrage-knoepfe .primary-btn { margin-top: 10px; }
+  .ohne-vorfall { font-size: 13.5px; color: var(--obs); }
+  #compare-original { white-space: pre-line; }
   .hilfe-karte p { margin: 0 0 10px; font-size: 14.5px; line-height: 1.55; color: var(--ink); }
   .hilfe-karte p:last-child { margin-bottom: 0; }
   .hilfe-karte .nummern { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
@@ -932,6 +962,20 @@
     <div role="status"><div class="hilfe-karte" id="hilfe-karte" hidden></div></div>
     <p class="hilfe-zeile">Wenn es gerade zu viel ist: <button type="button" class="hilfe-link" data-hilfe-oeffnen>Hier sind Menschen, die zuhören.</button></p>
     <p class="error-msg" id="error-msg" hidden></p>
+
+    <section class="rueckfrage-karte" id="rueckfrage-karte" aria-labelledby="rueckfrage-titel" hidden>
+      <h3 id="rueckfrage-titel" tabindex="-1">Eine kurze Frage</h3>
+      <p>Damit in deiner Nachricht nur steht, was wirklich passiert ist:</p>
+      <p class="rueckfrage-frage" id="rueckfrage-frage"></p>
+      <p class="rueckfrage-woerter" id="rueckfrage-woerter" hidden></p>
+      <label class="sr-only" for="rueckfrage-antwort">Deine Antwort</label>
+      <textarea id="rueckfrage-antwort" rows="3" maxlength="500" placeholder="Ein, zwei Sätze reichen."></textarea>
+      <span class="char-counter" id="rueckfrage-zaehler">0 / 500</span>
+      <div class="rueckfrage-knoepfe">
+        <button type="button" class="primary-btn" id="rueckfrage-weiter">Weiter mit Antwort</button>
+        <button type="button" class="text-btn" id="rueckfrage-ohne">Ohne Antwort weiter</button>
+      </div>
+    </section>
     </div>
 
     <div id="practice-panel" hidden>
@@ -1043,7 +1087,7 @@
 
   <section class="result" id="result" aria-live="polite" hidden>
     <p class="gfk-intro" id="gfk-intro"></p>
-    <h2>So könnte es klingen</h2>
+    <h2 id="result-titel">So könnte es klingen</h2>
     <blockquote class="gfk-quote" id="gfk-quote"></blockquote>
     <button type="button" class="text-btn" id="copy-btn">Text kopieren</button>
 
@@ -1102,7 +1146,7 @@
   <dialog class="hilfe" id="hilfe-dialog" aria-labelledby="hilfe-titel">
     <div class="hilfe-innen">
       <h2 id="hilfe-titel" tabindex="-1">Du musst das nicht allein tragen</h2>
-      <p class="einleitung">Manchmal hilft keine bessere Formulierung, sondern ein Mensch, der zuhört. Niemand muss vorher wissen, was „das Richtige“ ist. Die Beratungstelefone in Deutschland sind kostenfrei, und du musst deinen Namen nicht nennen.</p>
+      <p class="einleitung">Manchmal hilft keine bessere Formulierung, sondern ein Mensch, der zuhört. Die Beratungstelefone in Deutschland sind kostenfrei, und du musst deinen Namen nicht nennen.</p>
 
       <div class="hilfe-gruppe">
         <span class="wofuer">Zum Reden, Tag und Nacht</span>
@@ -1802,13 +1846,9 @@
     ffGame.setDifficulty('hard');
   });
 
-  window.addEventListener('DOMContentLoaded', () => {
-    if (prefersReduced) {
-      compass.classList.add('settled');
-    } else {
-      setTimeout(() => compass.classList.add('settled'), 200);
-    }
-  });
+  // Wie auf der Landingpage: erst starten, wenn die Seite steht, sonst
+  // ruckelt die Nadel gegen das Laden der Schrift an.
+  window.addEventListener('load', () => compass.classList.add('settled'));
 
   const MAX_CHARS = 600;
 
@@ -1836,7 +1876,7 @@
   // zweiter Versuch nur verschlimmern würde (Ratenbegrenzung) oder die sich nicht
   // von allein beheben (zu langer Text), wird nicht wiederholt.
   // Erscheint beim Laden in der Browser-Konsole.
-  console.log('GFK-Kompass Frontend, Runde 3, 16.09.2026');
+  console.log('GFK-Kompass Frontend, Runde 6.1, 27.09.2026');
 
   const NON_RETRYABLE_CODES = ['rate_limited', 'too_long', 'bad_request', 'auth_error'];
 
@@ -1881,13 +1921,15 @@
 
   // Fragt die API an und wirft bei Fehlern einen Error, der den Code des Servers
   // mitträgt, damit oben die passende Meldung gewählt werden kann.
-  async function requestGfk(mode, text, angaben) {
+  async function requestGfk(mode, text, angaben, extra) {
     let response;
     try {
+      // extra: Angaben zur Rückfrage (rueckfrage, ergaenzung), sonst nichts.
+      const koerper = Object.assign({ mode: mode, text: text }, angaben ? { angaben: angaben } : {}, extra || {});
       response = await fetch("/api/gfk-proxy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(angaben ? { mode: mode, text: text, angaben: angaben } : { mode: mode, text: text })
+        body: JSON.stringify(koerper)
       });
     } catch (err) {
       const netErr = new Error('Verbindung fehlgeschlagen');
@@ -2011,6 +2053,7 @@
     resultSection.classList.remove('visible');
     foreignResultSection.hidden = true;
     foreignResultSection.classList.remove('visible');
+    frageSchliessen();
     gegenueberNotizSetzen();
   }
 
@@ -2859,6 +2902,8 @@
 
   submitBtn.addEventListener('click', async () => {
     const text = textarea.value.trim();
+    // Neu absenden ist immer eine erste Runde; eine offene Frage gilt nicht mehr.
+    frageSchliessen();
     if (!text) {
       fieldHint.hidden = false;
       textarea.focus();
@@ -2890,9 +2935,12 @@
         finishProgress(progressBar, progressBarFill);
         if (nochHier()) renderForeignResult(data);
       } else {
-        const data = await withRetry(() => translateToGFK(text, angaben));
+        const data = await withRetry(() => translateToGFK(text, angaben, RUECKFRAGE ? { rueckfrage: true } : null));
         finishProgress(progressBar, progressBarFill);
-        if (nochHier()) renderResult(text, data);
+        if (nochHier()) {
+          if (data.rueckfrage) await frageBehandeln(text, angaben, data.rueckfrage);
+          else renderResult(text, data);
+        }
       }
     } catch (err) {
       stopProgress(progressBar, progressBarFill);
@@ -2905,6 +2953,119 @@
       submitBtn.textContent = RICHTUNG_TEXTE[richtung].knopf;
     }
   });
+
+  // ---------------------------------------------------------------
+  // Rückfrage bei fehlender Beobachtung (seit Runde 6.1)
+  // ---------------------------------------------------------------
+  // Steht im eigenen Text kein Verhalten, das man sehen oder hören könnte,
+  // fragt der Server einmal nach, statt einen Vorfall zu erfinden. Die Frage
+  // ist freiwillig. Aus: RUECKFRAGE = false, dann übersetzt die Seite wie
+  // vor Runde 6.1 und der Server fragt nie.
+  const RUECKFRAGE = true;
+
+  const rfKarte = document.getElementById('rueckfrage-karte');
+  const rfTitel = document.getElementById('rueckfrage-titel');
+  const rfFrage = document.getElementById('rueckfrage-frage');
+  const rfWoerter = document.getElementById('rueckfrage-woerter');
+  const rfAntwort = document.getElementById('rueckfrage-antwort');
+  const rfZaehler = document.getElementById('rueckfrage-zaehler');
+  const rfWeiter = document.getElementById('rueckfrage-weiter');
+  const rfOhne = document.getElementById('rueckfrage-ohne');
+  const resultTitel = document.getElementById('result-titel');
+
+  // Die Frage gehört zum Text, zu dem sie gestellt wurde. Die zweite Anfrage
+  // nimmt diesen Text, nicht das, was inzwischen im Feld steht.
+  let offeneFrage = null;
+
+  function frageSchliessen() {
+    offeneFrage = null;
+    rfKarte.hidden = true;
+  }
+
+  function rfZaehlerSetzen() {
+    rfZaehler.textContent = rfAntwort.value.length + ' / 500';
+  }
+  rfAntwort.addEventListener('input', rfZaehlerSetzen);
+
+  async function frageBehandeln(text, angaben, rf) {
+    offeneFrage = { text: text, angaben: angaben, frage: rf.frage };
+    // Neben der Karte "Es klingt, als ginge es dir gerade sehr schlecht" wird
+    // nicht nachgefragt (Entscheidung vom 27.09.2026). Die Seite überspringt
+    // selbst; das Ergebnis ist als Fassung ohne Vorfall gekennzeichnet.
+    let s = null;
+    try { s = signale(text); } catch (e) { s = null; }
+    if (s && (s.krise || s.weich)) {
+      await zweiteRunde(null);
+      return;
+    }
+    rfFrage.textContent = rf.frage;
+    rfWoerter.textContent = '';
+    if (rf.deutung.length) {
+      rfWoerter.appendChild(document.createTextNode(rf.deutung.length === 1
+        ? 'Dieses Wort ist deine Deutung, keine Beschreibung: '
+        : 'Diese Wörter sind deine Deutung, keine Beschreibung: '));
+      rf.deutung.forEach((w, i) => {
+        if (i) rfWoerter.appendChild(document.createTextNode(', '));
+        const m = document.createElement('mark');
+        m.textContent = '„' + w + '“';
+        rfWoerter.appendChild(m);
+      });
+      rfWoerter.hidden = false;
+    } else {
+      rfWoerter.hidden = true;
+    }
+    rfAntwort.value = '';
+    rfZaehlerSetzen();
+    rfKarte.hidden = false;
+    requestAnimationFrame(() => {
+      const ziel = hilfeKarte.hidden ? rfKarte : hilfeKarte;
+      ziel.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
+      rfTitel.focus({ preventScroll: true });
+    });
+  }
+
+  // Zweite Anfrage: derselbe Text, dazu Frage und Antwort (oder keine).
+  async function zweiteRunde(antwort) {
+    const f = offeneFrage;
+    if (!f) return;
+    frageSchliessen();
+    errorMsg.hidden = true;
+    resultSection.hidden = true;
+    resultSection.classList.remove('visible');
+    submitBtn.disabled = true;
+    richtungKnoepfe.forEach(b => { b.disabled = true; });
+    submitBtn.textContent = RICHTUNG_TEXTE.eigen.laeuft;
+    // Auch die Antwort läuft durch die Hilfe-Erkennung, zusammen mit dem Text.
+    if (antwort) hilfeKarteZeigen(hilfeKarte, f.text + '\n' + antwort, false, 'Deine Übersetzung kommt gleich.');
+    startProgress(progressBar, progressBarFill);
+    const nochHier = () => !translatePanel.hidden && !werkzeugeGroup.hidden;
+    try {
+      const data = await withRetry(() => translateToGFK(f.text, f.angaben, { ergaenzung: { frage: f.frage, antwort: antwort || null } }));
+      if (data.rueckfrage) {
+        const e = new Error('Zweite Frage'); e.code = 'bad_response'; throw e;
+      }
+      finishProgress(progressBar, progressBarFill);
+      if (nochHier()) renderResult(f.text, data, { antwort: antwort || null, ohneVorfall: !antwort });
+    } catch (err) {
+      stopProgress(progressBar, progressBarFill);
+      errorMsg.textContent = messageForError(err);
+      errorMsg.hidden = false;
+    } finally {
+      hilfeKommtWeg(hilfeKarte);
+      submitBtn.disabled = false;
+      richtungKnoepfe.forEach(b => { b.disabled = false; });
+      submitBtn.textContent = RICHTUNG_TEXTE[richtung].knopf;
+    }
+  }
+
+  rfWeiter.addEventListener('click', () => zweiteRunde(rfAntwort.value.trim() || null));
+  rfOhne.addEventListener('click', () => zweiteRunde(null));
+
+  // Wer den Text ändert, ein Beispiel wählt oder den Bereich wechselt, hat
+  // eine neue Lage: Die alte Frage passt nicht mehr.
+  textarea.addEventListener('input', () => { if (offeneFrage) frageSchliessen(); });
+  document.querySelectorAll('.chip, #mode-practice-btn, #group-uebungen-btn')
+    .forEach(b => b.addEventListener('click', frageSchliessen));
 
   let progressInterval = null;
 
@@ -2936,8 +3097,14 @@
 
   // Der Server prüft die Antwort inzwischen selbst und liefert ein fertiges Objekt.
   // Das Herausschneiden von JSON aus dem Rohtext entfällt deshalb hier.
-  async function translateToGFK(text, angaben) {
-    const parsed = await requestGfk("translate", text, angaben);
+  async function translateToGFK(text, angaben, extra) {
+    const parsed = await requestGfk("translate", text, angaben, extra);
+
+    // Rückfrage: Der Server stellt eine Frage statt zu übersetzen.
+    if (parsed.rueckfrage && typeof parsed.rueckfrage === 'object' && typeof parsed.rueckfrage.frage === 'string') {
+      const d = Array.isArray(parsed.rueckfrage.deutung) ? parsed.rueckfrage.deutung : [];
+      return { rueckfrage: { frage: parsed.rueckfrage.frage, deutung: d.filter(x => typeof x === 'string' && x.trim()).slice(0, 3) } };
+    }
 
     if (!parsed.gfkSentence || !Array.isArray(parsed.steps)) {
       const shapeErr = new Error('Unexpected response shape');
@@ -2982,7 +3149,12 @@
     return html;
   }
 
-  function renderResult(originalText, data) {
+  // opts (zweite Runde der Rückfrage): antwort = was die Person ergänzt hat,
+  // ohneVorfall = übersprungen. Die Kennzeichnung steht nur auf der Seite,
+  // nie im kopierbaren Text.
+  function renderResult(originalText, data, opts) {
+    const o = opts || {};
+    resultTitel.textContent = o.ohneVorfall ? 'Vorschlag ohne konkreten Vorfall' : 'So könnte es klingen';
     if (data.intro) {
       gfkIntro.textContent = data.intro;
       gfkIntro.hidden = false;
@@ -2999,11 +3171,13 @@
         <span class="breakdown-cat">${escapeHtml(step.category)}</span>
         <span class="breakdown-excerpt">„${escapeHtml(step.text)}“</span>
         <span class="breakdown-explain">${escapeHtml(step.explanation)}</span>
-      `;
+      ` + (o.ohneVorfall && step.category === 'Beobachtung'
+        ? '<span class="ohne-vorfall">Dein Text nennt keinen bestimmten Vorfall. Die Beobachtung bleibt deshalb bei dem, was du wahrnimmst.</span>'
+        : '');
       breakdownList.appendChild(li);
     });
 
-    compareOriginal.textContent = originalText;
+    compareOriginal.textContent = originalText + (o.antwort ? '\n\nDeine Ergänzung: ' + o.antwort : '');
     compareGfk.textContent = data.gfkSentence;
 
     if (data.everydaySentence) {
