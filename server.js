@@ -43,7 +43,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // anpassen. Sie wird beim Start ins Log geschrieben, damit sich jederzeit
 // nachsehen lässt, welche Fassung tatsächlich läuft. In dieser Session ist zweimal
 // unklar gewesen, welche Datei wo liegt; das kostet mehr Zeit als diese Zeile.
-const PROMPT_VERSION = 'Runde 6.2, 27.09.2026';
+const PROMPT_VERSION = 'Runde 6.4 (Einladung), 27.09.2026';
 
 // ---------------------------------------------------------------------------
 // Betriebsart — der eine Schalter für Tempo, Kosten und Gründlichkeit
@@ -189,6 +189,14 @@ Das Gegenüber wird im gesamten GFK-Text, in allen vier Schritt-Texten und in de
 
 Dass eine Person gerade nicht antwortet, den Kontakt abgebrochen hat oder schwer erreichbar ist, ändert daran nichts. Eine Nachricht kann geschrieben und geschickt werden, auch wenn sie unbeantwortet bleibt. Es gibt genau eine Ausnahme: Der Originaltext nennt ausdrücklich einen anderen Empfänger (etwa einen Anwalt, das Jugendamt, die Großeltern). Dann ist dieser genannte Empfänger das Gegenüber, und die besprochene Person bleibt in dritter Person. Ist das Gegenüber eine Behörde, ein Gericht oder eine Fachperson, gilt alles hier Gesagte mit "Sie" statt "du". Sagt der Text, dass die Nachricht gerade nicht geschickt werden kann oder darf, darf der Einstiegssatz das anerkennen; der GFK-Text bleibt trotzdem an das Gegenüber gerichtet, als Nachricht, die die Person schicken könnte, sobald es möglich ist.
 
+DAS KIND
+
+In keiner Nachricht ist ein Kind Bote, Zeuge oder Schiedsrichter zwischen den Eltern. Keine Bitte verlangt, dass ein Kind etwas ausrichtet, sich entscheidet oder Partei ergreift.
+
+Geht die Nachricht an das eigene Kind der Person, gilt zusätzlich: die Nachricht ist kurz, warm und passt zum Alter eines Kindes. Sie enthält keinen Vorwurf, keinen Druck und nichts, was dem Kind Schuld oder Verantwortung für die schreibende Person gibt. Das Gefühl ist eines, das ein Kind hören kann, ohne sich um die schreibende Person sorgen zu müssen; schwere Gefühle der erwachsenen Person gehören nicht in diese Nachricht. Über den anderen Elternteil, über Streit zwischen den Eltern, über Gericht oder Verfahren steht nichts darin. Die Bitte ist eine offene Einladung und sagt dem Kind, dass es nicht darauf eingehen muss.
+
+Diese Regeln gehen dem Grundsatz zum Wortlaut vor. Steht davon etwas im Originaltext, fällt es in dieser Nachricht weg, und die Erklärung zum betroffenen Schritt sagt in einem Halbsatz, warum.
+
 GRUNDSATZ: WORTLAUT ERHALTEN
 
 Ändere nur, was einer Regel unten widerspricht. Alles andere übernimmst du so, wie die Person es geschrieben hat: ihre Wörter, ihre Zeitangaben, ihre Bezeichnungen für Personen und deren Besitzverhältnisse. "Mein Kind", "unser Kind" und "dein Kind" bleiben genau so, wie sie im Original stehen, und werden nicht gegeneinander ausgetauscht. Die einzige planmäßige Änderung an der Bezeichnung einer Person ist, dass das Gegenüber zum "du" wird.
@@ -224,7 +232,7 @@ Ein Wort, das dem Gegenüber eine Haltung, ein Motiv oder eine Eigenschaft zusch
 - Enthält der Originaltext ein Zitat oder eine bestimmte Situation, verwende genau diese, auch wenn daneben "immer" oder "nie" steht. Das Zitat ist der Sachverhalt selbst; leite es nicht als einen Fall unter vielen ein. "Immer" und "nie" entfallen, weil sie Verallgemeinerungen sind.
 - Enthält der Originaltext nur eine pauschale Aussage über das Verhalten des Gegenübers, bleibt die Beobachtung ebenso pauschal. Das ist kein Mangel, sondern richtig. Nenne dann das, was die Person wahrnimmt, ausdrücklich als ihre Wahrnehmung, ohne eine Situation dazuzuerfinden.
 - Enthält der Originaltext nur eine Bewertung des Gegenübers und gar keine Handlung, ist die so übersetzte Wahrnehmung die ganze Beobachtung, ebenfalls ohne erfundene Handlung. Die Aussageform des Originals bleibt erhalten: Ein Vergleich bleibt ein Vergleich. Ersetzt werden nur die wertenden Wörter, nicht die Aussage, um die es der Person geht.
-- Steht unter dem Originaltext der Hinweis, dass die Person nach einem Vorfall gefragt wurde und keinen genannt hat, dann enthält der Originaltext keine Beobachtung. Die Beobachtung nennt dann allein, was die Person wahrnimmt, nach den Regeln dieses Abschnitts. Kein Tun, kein Lassen, keine Äußerung, kein Zeitpunkt, kein Ort und keine Kontaktform kommt hinzu, auch nicht als das, was naheliegt. Die Erklärung zur Beobachtung sagt in einem Halbsatz, dass der Originaltext keinen bestimmten Vorfall nennt.
+- Steht unter dem Originaltext der Hinweis, dass er keinen bestimmten Vorfall nennt, dann enthält der Originaltext keine Beobachtung. Die Beobachtung nennt dann allein, was die Person wahrnimmt, nach den Regeln dieses Abschnitts. Kein Tun, kein Lassen, keine Äußerung, kein Zeitpunkt, kein Ort und keine Kontaktform kommt hinzu, auch nicht als das, was naheliegt. Die Erklärung zur Beobachtung sagt in einem Halbsatz, dass der Originaltext keinen bestimmten Vorfall nennt.
 
 Die Beobachtung beginnt mit dem Sachverhalt. Prüfung für den ersten Teilsatz: Er nennt etwas, das im Originaltext steht. Ein Teilsatz, der nur sagt, dass die Person hinschaut oder die Lage betrachtet, nennt nichts aus dem Originaltext und entfällt; die Kennzeichnung als Wahrnehmung ist ein kurzer Einschub, keine Einleitung davor. Wer im Originaltext handelt oder etwas unterlässt, ist auch hier das Subjekt, wie in Schritt 0 beschrieben; Zeitangaben und Gegenstände aus dem Originaltext bleiben stehen.
 
@@ -301,6 +309,7 @@ Gehe diese Punkte durch, bevor du antwortest:
 10. Erklärungen: das Gegenüber in allen vier gleich benannt, nie als "du"; kein Wunsch, keine Sorge und kein Motiv, das nicht im Originaltext steht.
 11. Jeder "text" ist wortwörtlich Teil von "gfkSentence".
 12. Steht eine Antwort auf eine Nachfrage unter dem Originaltext: Ist sie die Grundlage der Beobachtung? Steht dort der Hinweis auf einen fehlenden Vorfall: Kommt in Beobachtung, Bitte und flüssiger Version nichts hinzu, was nicht im Originaltext steht?
+13. Ist ein Kind nirgends Bote, Zeuge oder Schiedsrichter, und gelten bei einer Nachricht an das Kind die Regeln unter DAS KIND?
 
 Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text:
 {
@@ -367,6 +376,13 @@ Es wird dir genannt. Du bestimmst es nicht selbst. Du sprichst es im GFK-Text, i
 
 Wo der Text das Gegenüber handeln oder etwas unterlassen lässt, ist das Gegenüber das Subjekt dieses Verbs. Ausgeschlossen ist ein Satz, in dem stattdessen die schreibende Person etwas nicht bekommt, nicht hört oder nicht erhält. Ausgeschlossen ist ebenso ein Satz, in dem eine Handlung ohne Handelnden steht.
 
+DAS KIND
+In keiner Nachricht ist ein Kind Bote, Zeuge oder Schiedsrichter zwischen den Eltern. Keine Bitte verlangt, dass ein Kind etwas ausrichtet, sich entscheidet oder Partei ergreift.
+
+Ist die Rolle des Gegenübers kind oder geht die Nachricht erkennbar an das eigene Kind der Person, gilt zusätzlich: die Nachricht ist kurz, warm und passt zum Alter eines Kindes. Sie enthält keinen Vorwurf, keinen Druck und nichts, was dem Kind Schuld oder Verantwortung für die schreibende Person gibt. Das Gefühl ist eines, das ein Kind hören kann, ohne sich um die schreibende Person sorgen zu müssen; schwere Gefühle der erwachsenen Person gehören nicht in diese Nachricht. Über den anderen Elternteil, über Streit zwischen den Eltern, über Gericht oder Verfahren steht nichts darin. Die Bitte ist eine offene Einladung und sagt dem Kind, dass es nicht darauf eingehen muss.
+
+Diese Regeln gehen dem Wortlaut vor. Steht davon etwas im Text der Person, fällt es in dieser Nachricht weg, und die Erklärung zum betroffenen Schritt sagt in einem Halbsatz, warum.
+
 WORTLAUT
 Jedes Substantiv und jedes Verb deiner Beobachtung führt auf ein Wort im Text der Person zurück. Du fügst keine Situation, keinen Vorfall, keinen Ort und keine Handlung hinzu, die dort nicht stehen, und gleichfalls nichts, was nur naheliegt. Enthält der Text eine wörtliche Äußerung, verwendest du sie unverändert. Zeitangaben, Gegenstände und Besitzverhältnisse übernimmst du genau so, wie sie dort stehen.
 
@@ -374,7 +390,7 @@ Steht unter dem Text eine Antwort der Person auf eine Nachfrage, gehört sie zum
 
 Ist der Text pauschal, bleibt die Beobachtung pauschal. Das ist richtig und kein Mangel.
 
-Steht unter dem Text der Hinweis, dass die Person nach einem Vorfall gefragt wurde und keinen genannt hat, dann enthält der Text keine Beobachtung. Die Beobachtung nennt dann allein, was die Person wahrnimmt, nach den Regeln unter BEOBACHTUNG. Kein Tun, kein Lassen, keine Äußerung, kein Zeitpunkt, kein Ort und keine Kontaktform kommt hinzu, auch nicht als das, was naheliegt. Die Erklärung zur Beobachtung sagt in einem Halbsatz, dass der Text keinen bestimmten Vorfall nennt.
+Steht unter dem Text der Hinweis, dass er keinen bestimmten Vorfall nennt, dann enthält der Text keine Beobachtung. Die Beobachtung nennt dann allein, was die Person wahrnimmt, nach den Regeln unter BEOBACHTUNG. Kein Tun, kein Lassen, keine Äußerung, kein Zeitpunkt, kein Ort und keine Kontaktform kommt hinzu, auch nicht als das, was naheliegt. Die Erklärung zur Beobachtung sagt in einem Halbsatz, dass der Text keinen bestimmten Vorfall nennt.
 
 BEOBACHTUNG
 Wertfrei, ohne einordnende Verben. Der erste Teilsatz nennt etwas, das im Text der Person steht. Ein Teilsatz, der allein sagt, dass die Person hinschaut oder die Lage überdenkt, nennt nichts und entfällt.
@@ -455,6 +471,7 @@ PRÜFUNG VOR DER AUSGABE
 11. Kein Gedankenstrich irgendwo?
 12. Steht jeder Schritt-Text Wort für Wort und in derselben Wortstellung im GFK-Text?
 13. Steht eine Antwort auf eine Nachfrage unter dem Text: Ist sie die Grundlage der Beobachtung? Steht dort der Hinweis auf einen fehlenden Vorfall: Kommt in Beobachtung, Bitte und flüssiger Version nichts hinzu, was nicht im Text steht?
+14. Ist ein Kind nirgends Bote, Zeuge oder Schiedsrichter, und gelten bei einer Nachricht an das Kind die Regeln unter DAS KIND?
 
 Antworte ausschließlich mit einem JSON-Objekt in genau diesem Format, ohne Codeblock-Markierung, ohne einleitenden oder abschließenden Text. Das erste und das letzte Zeichen sind die geschweiften Klammern. Jeder Wert steht in einer Zeile ohne Zeilenumbruch. Innerhalb eines Wertes stehen keine doppelten Anführungszeichen; Äußerungen aus dem Text der Person setzt du in einfache Anführungszeichen.
 {
@@ -609,12 +626,18 @@ function ergaenzungPruefen(roh) {
 }
 
 // Zusatzzeilen unter dem Text (prompt-rueckfrage.txt, Block 6), nach einer
-// Leerzeile. Ohne Frage entfällt deren Zeile. Wortgleich mit
-// werkstatt/testlauf/nachrichten.js.
+// Leerzeile. Mit Antwort: Frage (falls vorhanden) und Antwort. Ohne Antwort:
+// nur der Hinweis, dass der Text keinen bestimmten Vorfall nennt; so
+// übersetzt das Modell ehrlich, ohne einen Vorfall zu erfinden.
+// Wortgleich mit werkstatt/testlauf/nachrichten.js.
 function zusatzzeilen(e) {
   const z = [''];
-  if (e.frage) z.push(`Nachfrage an die Person: ${e.frage}`);
-  z.push(`Antwort der Person: ${e.antwort ? e.antwort : 'keine. Die Person wurde nach einem Vorfall gefragt und hat keinen genannt.'}`);
+  if (e.antwort) {
+    if (e.frage) z.push(`Nachfrage an die Person: ${e.frage}`);
+    z.push(`Antwort der Person: ${e.antwort}`);
+  } else {
+    z.push('Hinweis: Der Text nennt keinen bestimmten Vorfall.');
+  }
   return '\n' + z.join('\n');
 }
 
@@ -1137,8 +1160,9 @@ function tagEintrag() {
 }
 
 // Zähler der Rückfrage je Tag (Entscheidung vom 27.09.2026), ohne Nutzertext:
-//   gefragt        der Prüfer hat eine Frage gestellt, sie ging an die Seite
-//   uebersprungen  zweite Runde ohne Antwort (ab Schritt 6 des Plans)
+//   ohne_vorfall  der Prüfer fand keine Beobachtung; Fassung ohne Vorfall
+//                 geliefert, mit Einladung zum Ergänzen (seit Runde 6.4)
+//   ergaenzt      zweite Runde mit einer Antwort der Person
 function zaehlen(name) {
   const t = tagEintrag();
   t.rueckfrage = t.rueckfrage || {};
@@ -1232,24 +1256,27 @@ app.post('/api/gfk-proxy', async (req, res) => {
     return res.status(500).json({ code: 'auth_error', error: 'Serverkonfiguration unvollständig' });
   }
 
-  // Rückfrage bei fehlender Beobachtung (seit Runde 6.0). Nur beim eigenen
-  // Text, nur wenn die Seite die Frage auch zeigen kann (rueckfrage: true,
-  // genau dieser Wert), und nie ein zweites Mal: Trägt die Anfrage schon eine
-  // Ergänzung, ist das die zweite Runde. Seiten ohne diese Angabe, etwa eine
-  // ältere, noch offene Fassung, bekommen die Übersetzung wie bisher.
+  // Beobachtung fehlt: erst das Ergebnis, dann die Einladung (seit Runde 6.4).
+  // Nur beim eigenen Text und nur, wenn die Seite es zeigen kann
+  // (rueckfrage: true, genau dieser Wert). Findet der Prüfer keine
+  // Beobachtung, übersetzt der Server sofort weiter, mit dem Hinweis, dass der
+  // Text keinen bestimmten Vorfall nennt; so wird nichts erfunden. Deutungs-
+  // wörter und Frage gehen im selben Ergebnis mit (ohneVorfall), damit die
+  // Seite sie zeigen und zum Ergänzen einladen kann. Wer ergänzt, schickt
+  // eine zweite Runde mit Ergänzung; dann läuft der Prüfer nicht noch einmal.
   const body = req.body || {};
   const zweiteRunde = body.ergaenzung !== null && typeof body.ergaenzung === 'object' && !Array.isArray(body.ergaenzung);
+  let ergaenzung = (mode === 'translate' && zweiteRunde) ? ergaenzungPruefen(body.ergaenzung) : null;
+  let ohneVorfall = null;
   if (mode === 'translate' && body.rueckfrage === true && !zweiteRunde) {
     const pruefung = await callPruefer(text.trim(), angaben);
     if (pruefung.fragt) {
-      zaehlen('gefragt');
-      return res.status(200).json({ rueckfrage: { frage: pruefung.frage, deutung: pruefung.deutung } });
+      ergaenzung = { frage: '', antwort: null };
+      ohneVorfall = { frage: pruefung.frage, deutung: pruefung.deutung };
+      zaehlen('ohne_vorfall');
     }
   }
-
-  // Zweite Runde: Frage und Antwort gehen als Zusatzzeilen an den Übersetzer.
-  const ergaenzung = (mode === 'translate' && zweiteRunde) ? ergaenzungPruefen(body.ergaenzung) : null;
-  if (ergaenzung && !ergaenzung.antwort) zaehlen('uebersprungen');
+  if (ergaenzung && ergaenzung.antwort) zaehlen('ergaenzt');
 
   const result = await callAnthropic(mode, text.trim(), angaben, ergaenzung);
 
@@ -1261,7 +1288,7 @@ app.post('/api/gfk-proxy', async (req, res) => {
   // Früher bekam der Browser die Rohantwort der API und musste selbst JSON
   // herausschneiden — schlug das fehl, war die Anfrage für den Besucher verloren.
   // Jetzt scheitert so etwas serverseitig und wird still wiederholt.
-  res.status(200).json(result.payload);
+  res.status(200).json(ohneVorfall ? Object.assign({}, result.payload, { ohneVorfall }) : result.payload);
 });
 
 // Damit lässt sich jederzeit prüfen, welcher Stand tatsächlich läuft, ohne
