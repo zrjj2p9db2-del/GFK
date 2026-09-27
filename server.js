@@ -43,7 +43,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // anpassen. Sie wird beim Start ins Log geschrieben, damit sich jederzeit
 // nachsehen lässt, welche Fassung tatsächlich läuft. In dieser Session ist zweimal
 // unklar gewesen, welche Datei wo liegt; das kostet mehr Zeit als diese Zeile.
-const PROMPT_VERSION = 'Runde 6.1 (Rückfrage), 27.09.2026';
+const PROMPT_VERSION = 'Runde 6.2, 27.09.2026';
 
 // ---------------------------------------------------------------------------
 // Betriebsart — der eine Schalter für Tempo, Kosten und Gründlichkeit
@@ -681,11 +681,14 @@ function nutzernachricht(mode, e, text, angaben, ergaenzung) {
   if (mode === 'translate') return text + zusatz;
 
   if (mode === 'foreign') {
-    if (!g) return text;
+    // Immer mit Rahmen, auch ohne Absender. Der nackte Text allein sah für
+    // das Modell bei Ich-Sätzen ("Ich glaube, ich bleibe heute nochmal im
+    // Bett") aus, als spräche jemand mit ihm; es antwortete dann nicht im
+    // verlangten Format, und die Seite zeigte eine Fehlermeldung (27.09.2026).
     // Als Doppelpunkt-Zeile statt als Satz: das freie Feld steht im Nominativ
     // ("meine Mutter"), und so bleibt es auch grammatisch richtig.
-    const zeilen = ['Absender der Nachricht: ' + (frei || g.absender) + '.'];
-    if (angaben.wer === 'behoerde') {
+    const zeilen = ['Absender der Nachricht: ' + (g ? (frei || g.absender) : 'nicht angegeben') + '.'];
+    if (g && angaben.wer === 'behoerde') {
       zeilen.push('Die vorgeschlagene Reaktion spricht die Behörde mit Sie an.');
     }
     zeilen.push('', 'Nachricht:', text);
