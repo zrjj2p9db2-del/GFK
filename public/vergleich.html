@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modelle vergleichen — GFK-Kompass</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --paper:#EFF0EA; --flaeche:#FFFFFF; --panel:#E4E6DA;
+    --ink:#202B26; --ink-soft:#4C594F; --ink-leise:#7A857D;
+    --linie:#D7D8C7; --gitter:#E8E9E0;
+    --brand:#3B6E68; --brand-dunkel:#2B534F;
+    --warn:#954B36;
+    --obs:#33566A; --obs-tint:rgba(51,86,106,.14);
+    --feel:#954B36; --feel-tint:rgba(149,75,54,.14);
+    --need:#8A6A1E; --need-tint:rgba(138,106,30,.16);
+    --req:#436B49; --req-tint:rgba(67,107,73,.14);
+    --serif:'Fraunces', Georgia, serif;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; padding:36px 16px 80px; background:var(--paper); color:var(--ink);
+    font:15px/1.55 -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+  .seite { max-width:1180px; margin:0 auto; }
+  .schmal { max-width:760px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .lead { color:var(--ink-soft); margin:0 0 26px; font-size:14.5px; }
+
+  .tor, .formular { background:var(--flaeche); border:1px solid var(--linie); border-radius:8px; padding:22px 24px; margin-bottom:22px; }
+  .tor label, .formular label.titel { display:block; font-weight:600; margin-bottom:6px; }
+  .tor p, .formular p.klein { color:var(--ink-soft); font-size:14px; margin:0 0 14px; }
+  input[type=password], input[type=text], select, textarea {
+    font:inherit; padding:9px 12px; border:1px solid var(--linie); border-radius:6px;
+    background:#fff; color:inherit; width:100%;
+  }
+  input[type=password] { max-width:280px; }
+  textarea { min-height:110px; resize:vertical; }
+  select { max-width:280px; }
+  input:focus, select:focus, textarea:focus { outline:2px solid var(--brand); outline-offset:1px; }
+  button {
+    font:inherit; cursor:pointer; padding:9px 17px; border-radius:6px; margin-top:10px;
+    border:1px solid var(--brand); background:var(--brand); color:#fff;
+  }
+  button:hover:not(:disabled) { background:var(--brand-dunkel); border-color:var(--brand-dunkel); }
+  button:disabled { opacity:.65; cursor:default; }
+  button.leise { background:transparent; color:var(--ink-soft); border-color:var(--linie); }
+  button.leise:hover:not(:disabled) { background:var(--panel); color:var(--ink); }
+
+  .zeile { display:flex; flex-wrap:wrap; gap:14px 22px; margin:14px 0 4px; }
+  .zeile > div { flex:1 1 220px; }
+  .varianten { display:grid; gap:6px; margin:6px 0 0; }
+  .varianten label { display:flex; gap:9px; align-items:flex-start; font-size:14.5px; cursor:pointer; }
+  .varianten input { margin-top:4px; }
+  .zaehler { font-size:12.5px; color:var(--ink-leise); text-align:right; margin-top:4px; }
+  .fehler { color:var(--warn); margin:12px 0 0; }
+
+  .spalten { display:grid; grid-template-columns:repeat(auto-fit, minmax(270px, 1fr)); gap:14px; align-items:start; }
+  .spalte { background:var(--flaeche); border:1px solid var(--linie); border-radius:8px; padding:16px 18px; min-width:0; }
+  .spalte h2 { font-size:15px; margin:0 0 10px; line-height:1.35; }
+  .werte { display:grid; grid-template-columns:auto 1fr; gap:2px 12px; font-size:13.5px; margin:0 0 14px; }
+  .werte dt { color:var(--ink-leise); }
+  .werte dd { margin:0; font-variant-numeric:tabular-nums; }
+  .werte dd.gross { font-family:var(--serif); font-size:22px; line-height:1.2; }
+  .laeuft { color:var(--ink-soft); font-size:14px; }
+  .abschnitt { font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-leise); font-weight:600; margin:14px 0 4px; }
+  .satz { font-family:var(--serif); font-size:17px; line-height:1.55; margin:0; overflow-wrap:anywhere; }
+  .satz mark { padding:0 1px; color:inherit; }
+  mark.cat-obs { background:var(--obs-tint); box-shadow:inset 0 -2px 0 var(--obs); }
+  mark.cat-feel { background:var(--feel-tint); box-shadow:inset 0 -2px 0 var(--feel); }
+  mark.cat-need { background:var(--need-tint); box-shadow:inset 0 -2px 0 var(--need); }
+  mark.cat-req { background:var(--req-tint); box-shadow:inset 0 -2px 0 var(--req); }
+  .intro { color:var(--ink-soft); font-size:14px; margin:0 0 8px; }
+  .schritte { list-style:none; padding:0; margin:0; }
+  .schritte li { border-left:3px solid var(--linie); padding:4px 0 4px 10px; margin-bottom:8px; font-size:13.5px; }
+  .schritte li.cat-obs { border-color:var(--obs); } .schritte li.cat-feel { border-color:var(--feel); }
+  .schritte li.cat-need { border-color:var(--need); } .schritte li.cat-req { border-color:var(--req); }
+  .schritte b { display:block; font-size:12.5px; }
+  .schritte i { display:block; }
+  .schritte span { color:var(--ink-soft); }
+  .fluessig { background:var(--paper); border-radius:6px; padding:10px 12px; margin:0; font-size:14.5px; overflow-wrap:anywhere; }
+  .spalte .fehler { margin:0; }
+  .fussnote { font-size:13px; color:var(--ink-soft); line-height:1.6; margin-top:22px; }
+  .fussnote p { margin:0 0 8px; }
+</style>
+</head>
+<body>
+<div class="seite">
+  <div class="schmal">
+    <h1>Modelle vergleichen</h1>
+    <p class="lead">Derselbe eigene Text, gleichzeitig von mehreren Modellen übersetzt, nebeneinander mit Dauer und Kosten. Jede Spalte ist eine echte, bezahlte Anfrage (etwa 1 bis 6 Cent) und steht im Kostenbuch unter „vergleich“.</p>
+
+    <div id="tor" class="tor">
+      <label for="feld">Kennwort</label>
+      <p>Dasselbe wie für die Kostenseite (<code>KOSTEN_TOKEN</code> bei Clever Cloud). Der Browser merkt es sich.</p>
+      <input type="password" id="feld" autocomplete="current-password">
+      <div><button id="rein">Öffnen</button></div>
+      <p id="torfehler" class="fehler" hidden></p>
+    </div>
+
+    <div id="formular" class="formular" hidden>
+      <label class="titel" for="text">Dein Text</label>
+      <textarea id="text" maxlength="2000" placeholder="Ein eigener Text, so wie ihn jemand auf der Seite eingeben würde."></textarea>
+      <div class="zaehler" id="zaehler">0 / 2000</div>
+      <div class="zeile">
+        <div>
+          <label class="titel" for="wer">An wen?</label>
+          <select id="wer">
+            <option value="">nicht angegeben</option>
+            <option value="elternteil">der andere Elternteil</option>
+            <option value="kind">mein Kind</option>
+            <option value="behoerde">eine Behörde</option>
+          </select>
+        </div>
+        <div>
+          <span class="titel" style="font-weight:600">Welche Modelle?</span>
+          <div class="varianten" id="varianten"></div>
+        </div>
+      </div>
+      <button id="los">Vergleichen</button>
+      <p id="formfehler" class="fehler" hidden></p>
+    </div>
+  </div>
+
+  <div class="spalten" id="spalten"></div>
+
+  <div class="schmal fussnote" id="fuss" hidden>
+    <p><b>Dauer</b> ist die Zeit, die der Server auf das Modell gewartet hat. Im Betrieb kommt beim eigenen Text der Prüfer davor dazu (Haiku, meist 1,5 bis 2,5 Sekunden), bei allen Varianten gleich.</p>
+    <p><b>Einfärbung</b> zählt, wie viele der vier Schritt-Texte Wort für Wort im Satz stehen. Die App sucht etwas nachsichtiger, färbt also mindestens so viel. <b>Markiert</b> zählt beim kurzen Prompt, wie viele Schritte das Modell selbst im Satz markiert hat (seit Runde 6.5).</p>
+    <p>Die Fassung ohne Vorfall mit Einladung (Runde 6.4) und die Hilfe-Karte laufen hier nicht mit; es geht nur um die Übersetzung selbst.</p>
+    <p><button class="leise" id="kopieren">Alles als Text kopieren</button> <button class="leise" id="raus">Kennwort vergessen</button></p>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var SCHLUESSEL = 'gfk-kosten-token';   // dasselbe wie auf der Kostenseite
+  var VORGABE = ['haiku-kurz', 'sonnet-kurz-low', 'sonnet-kurz-medium'];
+  var token = null;
+  var letzte = [];
+
+  function hole(id) { return document.getElementById(id); }
+  function merke(n, w) { try { localStorage.setItem(n, w); } catch (e) {} }
+  function gemerkt(n) { try { return localStorage.getItem(n); } catch (e) { return null; } }
+  function vergiss(n) { try { localStorage.removeItem(n); } catch (e) {} }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+  }
+  function woerter(t) { return String(t || '').split(/\s+/).filter(Boolean).length; }
+  var KLASSE = { 'Beobachtung': 'cat-obs', 'Gefühl': 'cat-feel', 'Bedürfnis': 'cat-need', 'Bitte': 'cat-req' };
+
+  // Färbt jeden Schritt-Text an der Stelle, an der er Wort für Wort im Satz
+  // steht, ohne Überschneidung. Die App sucht nachsichtiger (einfaerben.js).
+  function faerben(satz, schritte) {
+    var stellen = [];
+    (schritte || []).forEach(function (s) {
+      var t = s && typeof s.text === 'string' ? s.text.trim() : '';
+      if (!t) return;
+      var von = 0, i;
+      while ((i = satz.indexOf(t, von)) !== -1) {
+        var frei = stellen.every(function (x) { return i + t.length <= x.a || i >= x.b; });
+        if (frei) { stellen.push({ a: i, b: i + t.length, k: KLASSE[s.category] || '' }); break; }
+        von = i + 1;
+      }
+    });
+    stellen.sort(function (x, y) { return x.a - y.a; });
+    var html = '', pos = 0;
+    stellen.forEach(function (x) {
+      html += esc(satz.slice(pos, x.a)) + '<mark class="' + x.k + '">' + esc(satz.slice(x.a, x.b)) + '</mark>';
+      pos = x.b;
+    });
+    return { html: html + esc(satz.slice(pos)), zahl: stellen.length };
+  }
+
+  function anfrage(methode, pfad, koerper) {
+    return fetch(pfad, {
+      method: methode, cache: 'no-store',
+      headers: Object.assign({ 'x-kosten-token': token }, koerper ? { 'Content-Type': 'application/json' } : {}),
+      body: koerper ? JSON.stringify(koerper) : undefined
+    });
+  }
+
+  function oeffnen(t) {
+    token = t;
+    return anfrage('GET', '/api/vergleich').then(function (r) {
+      if (r.status === 404) throw new Error('kennwort');
+      if (!r.ok) throw new Error('server');
+      return r.json();
+    }).then(function (d) {
+      merke(SCHLUESSEL, t);
+      hole('tor').hidden = true;
+      hole('formular').hidden = false;
+      hole('varianten').innerHTML = d.varianten.map(function (v) {
+        return '<label><input type="checkbox" value="' + esc(v.variante) + '"' + (VORGABE.indexOf(v.variante) !== -1 ? ' checked' : '') + '> <span>' + esc(v.name) + '</span></label>';
+      }).join('');
+    });
+  }
+
+  function torFehler(e) {
+    hole('torfehler').textContent = e.message === 'kennwort'
+      ? 'Das Kennwort stimmt nicht, oder KOSTEN_TOKEN ist bei Clever Cloud nicht gesetzt.'
+      : 'Der Server antwortet nicht wie erwartet. Läuft die neue Fassung (Runde 6.6)?';
+    hole('torfehler').hidden = false;
+  }
+
+  hole('rein').addEventListener('click', function () {
+    var t = hole('feld').value.trim();
+    if (t) oeffnen(t).catch(torFehler);
+  });
+  hole('feld').addEventListener('keydown', function (e) { if (e.key === 'Enter') hole('rein').click(); });
+  hole('raus').addEventListener('click', function () { vergiss(SCHLUESSEL); location.reload(); });
+  hole('text').addEventListener('input', function () { hole('zaehler').textContent = hole('text').value.length + ' / 2000'; });
+
+  function spalteFertig(el, d) {
+    var zeilen = [];
+    if (!d.ok) {
+      el.innerHTML = '<h2>' + esc(d.name) + '</h2><p class="fehler">Keine Antwort (' + esc(d.code || 'Fehler') + ') nach ' + (d.ms / 1000).toFixed(1) + ' s.</p>';
+      return;
+    }
+    var e = d.ergebnis || {};
+    var f = faerben(String(e.gfkSentence || ''), e.steps);
+    el.innerHTML =
+      '<h2>' + esc(d.name) + '</h2>' +
+      '<dl class="werte">' +
+        '<dt>Dauer</dt><dd class="gross">' + (d.ms / 1000).toFixed(1).replace('.', ',') + ' s</dd>' +
+        '<dt>Kosten</dt><dd>' + (d.usd * 100).toFixed(2).replace('.', ',') + ' Cent</dd>' +
+        '<dt>Token aus</dt><dd>' + d.tokens.aus + (d.versuche > 1 ? ' (' + d.versuche + ' Versuche)' : '') + '</dd>' +
+        '<dt>Einfärbung</dt><dd>' + f.zahl + ' von 4' + (d.markiert !== null && d.markiert !== undefined ? ', markiert ' + d.markiert + ' von 4' : '') + '</dd>' +
+        '<dt>Wörter</dt><dd>GFK ' + woerter(e.gfkSentence) + ', flüssig ' + woerter(e.everydaySentence) + '</dd>' +
+      '</dl>' +
+      (e.intro ? '<p class="intro">' + esc(e.intro) + '</p>' : '') +
+      '<div class="abschnitt">GFK-Text</div><p class="satz">' + f.html + '</p>' +
+      '<div class="abschnitt">Aufbau</div><ul class="schritte">' +
+        (e.steps || []).map(function (s) {
+          return '<li class="' + (KLASSE[s.category] || '') + '"><b>' + esc(s.category) + '</b><i>„' + esc(s.text) + '“</i><span>' + esc(s.explanation || '') + '</span></li>';
+        }).join('') +
+      '</ul>' +
+      '<div class="abschnitt">Flüssig formuliert</div><p class="fluessig">' + esc(e.everydaySentence || '') + '</p>';
+  }
+
+  hole('los').addEventListener('click', function () {
+    var text = hole('text').value.trim();
+    var gewaehlt = Array.prototype.slice.call(document.querySelectorAll('#varianten input:checked')).map(function (x) { return x.value; });
+    hole('formfehler').hidden = true;
+    if (!text || !gewaehlt.length) {
+      hole('formfehler').textContent = !text ? 'Bitte einen Text eingeben.' : 'Bitte mindestens ein Modell wählen.';
+      hole('formfehler').hidden = false;
+      return;
+    }
+    var wer = hole('wer').value;
+    var knopf = hole('los');
+    knopf.disabled = true;
+    knopf.textContent = 'Läuft …';
+    var spalten = hole('spalten');
+    spalten.innerHTML = '';
+    letzte = [];
+    var start = Date.now();
+    var uhr = setInterval(function () {
+      Array.prototype.forEach.call(spalten.querySelectorAll('.laeuft'), function (p) {
+        p.textContent = 'Wartet auf Antwort … ' + Math.round((Date.now() - start) / 1000) + ' s';
+      });
+    }, 500);
+    var auftraege = gewaehlt.map(function (v) {
+      var el = document.createElement('section');
+      el.className = 'spalte';
+      el.innerHTML = '<h2>' + esc((document.querySelector('#varianten input[value="' + v + '"]').parentNode.textContent || v).trim()) + '</h2><p class="laeuft">Wartet auf Antwort …</p>';
+      spalten.appendChild(el);
+      return anfrage('POST', '/api/vergleich', { variante: v, text: text, angaben: wer ? { wer: wer } : undefined })
+        .then(function (r) {
+          if (r.status === 429) return { ok: false, name: v, code: 'zu viele Anfragen, eine Minute warten', ms: Date.now() - start };
+          return r.json();
+        })
+        .catch(function () { return { ok: false, name: v, code: 'keine Verbindung', ms: Date.now() - start }; })
+        .then(function (d) { letzte.push(d); spalteFertig(el, d); });
+    });
+    Promise.all(auftraege).then(function () {
+      clearInterval(uhr);
+      knopf.disabled = false;
+      knopf.textContent = 'Vergleichen';
+      hole('fuss').hidden = false;
+      hole('fuss').dataset.text = text;
+    });
+  });
+
+  // Zum Weitergeben, etwa an Claude: alles als schlichter Text.
+  hole('kopieren').addEventListener('click', function () {
+    var z = ['Text: ' + (hole('fuss').dataset.text || ''), ''];
+    letzte.forEach(function (d) {
+      z.push('== ' + d.name + ' ==');
+      if (!d.ok) { z.push('Fehler: ' + d.code, ''); return; }
+      var e = d.ergebnis || {};
+      z.push('Dauer ' + (d.ms / 1000).toFixed(1) + ' s, ' + (d.usd * 100).toFixed(2) + ' Cent, Token aus ' + d.tokens.aus + (d.markiert !== null && d.markiert !== undefined ? ', markiert ' + d.markiert + '/4' : ''));
+      z.push('GFK: ' + (e.gfkSentence || ''));
+      (e.steps || []).forEach(function (s) { z.push(s.category + ': ' + s.text + ' | ' + (s.explanation || '')); });
+      z.push('Flüssig: ' + (e.everydaySentence || ''), '');
+    });
+    var b = hole('kopieren');
+    navigator.clipboard.writeText(z.join('\n')).then(function () { b.textContent = 'Kopiert'; }, function () { b.textContent = 'Kopieren nicht möglich'; });
+    setTimeout(function () { b.textContent = 'Alles als Text kopieren'; }, 1600);
+  });
+
+  var alt = gemerkt(SCHLUESSEL);
+  if (alt) oeffnen(alt).catch(function (e) { vergiss(SCHLUESSEL); torFehler(e); });
+})();
+</script>
+</body>
+</html>
