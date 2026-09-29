@@ -1884,7 +1884,7 @@
   // zweiter Versuch nur verschlimmern würde (Ratenbegrenzung) oder die sich nicht
   // von allein beheben (zu langer Text), wird nicht wiederholt.
   // Erscheint beim Laden in der Browser-Konsole.
-  console.log('GFK-Kompass Frontend, Runde 6.4, 27.09.2026');
+  console.log('GFK-Kompass Frontend, Runde 6.6, 28.09.2026');
 
   const NON_RETRYABLE_CODES = ['rate_limited', 'too_long', 'bad_request', 'auth_error'];
 
@@ -2867,34 +2867,100 @@
     if (k) k.remove();
   }
 
-  function hilfeKarteZeigen(karte, text, fremd, ergebnis) {
-    const k = text ? hilfeKarteInhalt(signale(text), fremd, ergebnis) : null;
+  // Zeigt die Karte zum Ergebnis der Erkennung, oder blendet sie aus.
+  function hilfeKarteSetzen(karte, t, fremd, ergebnis) {
+    const k = t ? hilfeKarteInhalt(t, fremd, ergebnis) : null;
     if (!k) { karte.hidden = true; karte.innerHTML = ''; return; }
     karte.className = 'hilfe-karte ' + k.art;
     karte.innerHTML = k.html;
     karte.hidden = false;
   }
 
+  // ---------------------------------------------------------------
+  // Keine Übersetzung bei Krise, Gefahr für jemanden oder Gewalt
+  // (Entscheidung des Betreibers vom 28.09.2026, seit Runde 6.6)
+  // ---------------------------------------------------------------
+  // Dann geht keine Anfrage hinaus. Statt des Ergebnisses steht nur diese
+  // Karte: Anteilnahme, warum es hier keine Übersetzung gibt, und die
+  // Nummern. Der leise Hinweis ("Ich halte das nicht mehr aus") hält nichts
+  // auf; dort kommt die Übersetzung wie bisher, mit der Karte daneben.
+  // bereich: 'eigen' (eigener Text), 'fremd' (Fremdnachricht), 'ueben'.
+  function sperreInhalt(t, bereich) {
+    if (!t || !(t.krise || t.andere || t.gefahr)) return null;
+    const fremd = bereich === 'fremd';
+    const wo = fremd ? 'In dieser Nachricht' : 'In deinem Text';
+    const keine = 'Deshalb gibt es hier ' + (fremd ? 'keine Einschätzung' : bereich === 'ueben' ? 'keine Rückmeldung' : 'keine Übersetzung') + '.';
+    const KOPF = '<h4>Hier geht es um mehr als Formulierungen</h4>';
+    const selbst = !fremd && t.krise;
+    const andere = t.andere || (fremd && t.krise);
+    const SEELSORGE_SATZ = 'Bei der Telefonseelsorge hört dir ein Mensch zu, Tag und Nacht, kostenfrei und anonym.';
+    const NOTRUF_SEELSORGE = '<div class="nummern">' + HILFE_TEL('112', '112', 'Notruf') + HILFE_TEL('08001110111', '0800 111 0 111') + HILFE_TEL('116123', '116 123') + '</div>';
+
+    if (t.gefahr) {
+      let dazu = '';
+      if (fremd && t.krise) {
+        dazu = '<p>Die Nachricht klingt auch, als ginge es der anderen Person sehr schlecht. Wenn du fürchtest, dass sie sich etwas antut, ruf den Notruf 112. Für dich selbst ist die Telefonseelsorge Tag und Nacht da.</p>' + HILFE_SEELSORGE;
+      } else if (andere) {
+        dazu = '<p>' + wo + ' geht es auch darum, dass sich jemand etwas antun könnte. Wenn du das fürchtest, ruf den Notruf 112. Für dich selbst ist die Telefonseelsorge Tag und Nacht da.</p>' + HILFE_SEELSORGE;
+      } else if (selbst) {
+        dazu = '<p>Und es klingt, als ginge es dir selbst gerade sehr schlecht. ' + SEELSORGE_SATZ + '</p>' + HILFE_SEELSORGE;
+      }
+      return {
+        art: 'gefahr',
+        html: KOPF +
+          '<p>' + wo + ' geht es um Gewalt oder eine Drohung damit. Das ist ernst, und niemand sollte so etwas allein aushalten müssen. Jetzt zählt Sicherheit, nicht die richtige Formulierung. ' + keine + '</p>' +
+          '<p>Wenn du oder ein Kind gerade in Gefahr seid, ruf den Notruf.</p>' +
+          '<div class="nummern">' + HILFE_TEL('110', '110', 'Polizei') + HILFE_TEL('112', '112', 'Notruf') + '</div>' +
+          '<p>Beraten lassen kannst du dich beim Hilfetelefon Gewalt gegen Frauen, rund um die Uhr, oder montags bis freitags beim Hilfetelefon Gewalt an Männern.</p>' +
+          '<div class="nummern">' + HILFE_TEL('116016', '116 016') + HILFE_TEL('08001239900', '0800 123 99 00') + '</div>' +
+          dazu +
+          HILFE_ALLE
+      };
+    }
+    if (fremd && t.krise) {
+      return {
+        art: 'krise',
+        html: KOPF +
+          '<p>Diese Nachricht klingt, als ginge es der anderen Person sehr schlecht. Das ist beunruhigend, und es ist nicht deine Aufgabe, das allein aufzufangen. ' + keine + '</p>' +
+          '<p>Wenn du fürchtest, dass sie sich etwas antut, ruf den Notruf 112. Und für dich selbst: ' + SEELSORGE_SATZ + '</p>' +
+          NOTRUF_SEELSORGE +
+          HILFE_ALLE
+      };
+    }
+    if (selbst) {
+      return {
+        art: 'krise',
+        html: KOPF +
+          '<p>Es klingt, als ginge es dir gerade sehr schlecht. Das ist ernst, und du verdienst jetzt mehr als eine gut formulierte Nachricht. ' + keine + '</p>' +
+          '<p>Du musst damit nicht allein bleiben. ' + SEELSORGE_SATZ + '</p>' +
+          HILFE_SEELSORGE +
+          (andere ? '<p>Wenn du fürchtest, dass sich jemand anderes gerade etwas antut, ruf den Notruf 112.</p>' : '') +
+          HILFE_ALLE
+      };
+    }
+    return {
+      art: 'krise',
+      html: KOPF +
+        '<p>' + wo + ' geht es darum, dass sich jemand etwas antun könnte. Diese Sorge wiegt schwer, und sie braucht jetzt mehr als eine gut formulierte Nachricht. ' + keine + '</p>' +
+        '<p>Wenn du fürchtest, dass sich jemand gerade etwas antut, ruf den Notruf 112. Und für dich selbst: ' + SEELSORGE_SATZ + '</p>' +
+        NOTRUF_SEELSORGE +
+        HILFE_ALLE
+    };
+  }
+
+  function sperreZeigen(karte, k) {
+    karte.className = 'hilfe-karte ' + k.art;
+    karte.innerHTML = k.html;
+    karte.hidden = false;
+    requestAnimationFrame(() => karte.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' }));
+  }
+
   const hilfeKarte = document.getElementById('hilfe-karte');
   const hilfeKarteUeben = document.getElementById('hilfe-karte-ueben');
 
-  // Läuft neben dem eigentlichen Absenden her und hält es nicht auf: Der Text
-  // wird beim Klick festgehalten, geprüft wird erst, wenn die Anfrage schon
-  // unterwegs ist.
-  submitBtn.addEventListener('click', () => {
-    if (submitBtn.disabled) return;
-    const fremd = richtung === 'fremd';
-    const text = textarea.value.trim();
-    setTimeout(() => hilfeKarteZeigen(hilfeKarte, text, fremd,
-      fremd ? 'Die Einschätzung kommt gleich.' : 'Deine Übersetzung kommt gleich.'), 0);
-  });
-  practiceSubmitBtn.addEventListener('click', () => {
-    if (practiceSubmitBtn.disabled) return;
-    // Jedes Feld als eigene Zeile: Ein Feld ohne Schlusspunkt soll nicht mit
-    // dem nächsten zu einem Satz verschmelzen.
-    const text = [practiceObs, practiceFeel, practiceNeed, practiceReq].map(f => f.value).join('\n').trim();
-    setTimeout(() => hilfeKarteZeigen(hilfeKarteUeben, text, false, 'Deine Rückmeldung kommt gleich.'), 0);
-  });
+  // Die Erkennung läuft vor dem Absenden (seit Runde 6.6): Bei Krise,
+  // Gefahr für jemanden oder Gewalt geht keine Anfrage hinaus. Sie ist im
+  // Leerlauf vorbereitet und braucht beim Klick nur Millisekunden.
 
   // Die Erkennung schon im Leerlauf vorbereiten, nicht erst beim ersten Klick.
   setTimeout(signaleVorwaermen, 1200);
@@ -2918,6 +2984,8 @@
     const fremd = richtung === 'fremd';
     const t = RICHTUNG_TEXTE[richtung];
     const angaben = gegenueberAngaben();
+    const signal = signale(text);
+    const sperre = sperreInhalt(signal, fremd ? 'fremd' : 'eigen');
 
     fieldHint.hidden = true;
     errorMsg.hidden = true;
@@ -2925,6 +2993,11 @@
     resultSection.classList.remove('visible');
     foreignResultSection.hidden = true;
     foreignResultSection.classList.remove('visible');
+    if (sperre) {
+      sperreZeigen(hilfeKarte, sperre);
+      return;
+    }
+    hilfeKarteSetzen(hilfeKarte, signal, fremd, fremd ? 'Die Einschätzung kommt gleich.' : 'Deine Übersetzung kommt gleich.');
     submitBtn.disabled = true;
     richtungKnoepfe.forEach(b => { b.disabled = true; });
     submitBtn.textContent = t.laeuft;
@@ -3044,12 +3117,21 @@
     }
     einladungFehler.hidden = true;
     errorMsg.hidden = true;
+    // Auch die Antwort läuft durch die Hilfe-Erkennung, zusammen mit dem Text.
+    const signal = signale(f.text + '\n' + antwort);
+    const sperre = sperreInhalt(signal, 'eigen');
+    if (sperre) {
+      einladungFuer = null;
+      resultSection.hidden = true;
+      resultSection.classList.remove('visible');
+      sperreZeigen(hilfeKarte, sperre);
+      return;
+    }
     einladungLos.disabled = true;
     einladungLos.textContent = 'Wird neu übersetzt …';
     submitBtn.disabled = true;
     richtungKnoepfe.forEach(b => { b.disabled = true; });
-    // Auch die Antwort läuft durch die Hilfe-Erkennung, zusammen mit dem Text.
-    hilfeKarteZeigen(hilfeKarte, f.text + '\n' + antwort, false, 'Deine Übersetzung kommt gleich.');
+    hilfeKarteSetzen(hilfeKarte, signal, false, 'Deine Übersetzung kommt gleich.');
     startProgress(progressBar, progressBarFill);
     const nochHier = () => !translatePanel.hidden && !werkzeugeGroup.hidden;
     try {
@@ -3242,10 +3324,20 @@
       return;
     }
 
+    // Jedes Feld als eigene Zeile: Ein Feld ohne Schlusspunkt soll nicht mit
+    // dem nächsten zu einem Satz verschmelzen.
+    const signal = signale([obs, feel, need, req].join('\n'));
+    const sperre = sperreInhalt(signal, 'ueben');
+
     practiceFieldHint.hidden = true;
     practiceErrorMsg.hidden = true;
     practiceResultSection.hidden = true;
     practiceResultSection.classList.remove('visible');
+    if (sperre) {
+      sperreZeigen(hilfeKarteUeben, sperre);
+      return;
+    }
+    hilfeKarteSetzen(hilfeKarteUeben, signal, false, 'Deine Rückmeldung kommt gleich.');
     practiceSubmitBtn.disabled = true;
     practiceSubmitBtn.textContent = 'Wird geprüft …';
     startProgress(practiceProgressBar, practiceProgressBarFill);
