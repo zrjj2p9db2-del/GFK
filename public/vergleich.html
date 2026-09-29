@@ -83,13 +83,22 @@
   .spalte .fehler { margin:0; }
   .fussnote { font-size:13px; color:var(--ink-soft); line-height:1.6; margin-top:22px; }
   .fussnote p { margin:0 0 8px; }
+  .platzhalter { outline:1.5px dashed var(--ink-leise); outline-offset:1px; border-radius:3px; padding:0 2px; }
+  .status { font-size:13px; color:var(--warn); margin:0 0 8px; }
+  .aend { list-style:none; padding:0; margin:0; }
+  .aend li { border-left:3px solid var(--linie); padding:4px 0 4px 10px; margin-bottom:8px; font-size:13.5px; }
+  .aend li.cat-obs { border-color:var(--obs); } .aend li.cat-feel { border-color:var(--feel); }
+  .aend li.cat-need { border-color:var(--need); } .aend li.cat-req { border-color:var(--req); }
+  .aend b { display:block; font-size:12.5px; }
+  .aend s { color:var(--ink-leise); }
+  .aend span { color:var(--ink-soft); display:block; }
 </style>
 </head>
 <body>
 <div class="seite">
   <div class="schmal">
     <h1>Modelle vergleichen</h1>
-    <p class="lead">Derselbe eigene Text, gleichzeitig von mehreren Modellen übersetzt, nebeneinander mit Dauer und Kosten. Jede Spalte ist eine echte, bezahlte Anfrage (etwa 1 bis 6 Cent) und steht im Kostenbuch unter „vergleich“.</p>
+    <p class="lead">Derselbe eigene Text, gleichzeitig von mehreren Modellen übersetzt, nebeneinander mit Dauer und Kosten. Jede Spalte ist eine echte, bezahlte Anfrage (etwa 1 bis 6 Cent) und steht im Kostenbuch unter „vergleich“. Seit Runde 7.0 gibt es auch Varianten mit dem Prompt der GFK-Brücke; mit ihm übersetzt die Testseite.</p>
 
     <div id="tor" class="tor">
       <label for="feld">Kennwort</label>
@@ -111,6 +120,8 @@
             <option value="elternteil">der andere Elternteil</option>
             <option value="kind">mein Kind</option>
             <option value="behoerde">eine Behörde</option>
+            <option value="familie">Großeltern, Familie (nur Brücke)</option>
+            <option value="oeffentlich">Öffentlichkeit (nur Brücke)</option>
           </select>
         </div>
         <div>
@@ -129,6 +140,7 @@
     <p><b>Dauer</b> ist die Zeit, die der Server auf das Modell gewartet hat. Im Betrieb kommt beim eigenen Text der Prüfer davor dazu (Haiku, meist 1,5 bis 2,5 Sekunden), bei allen Varianten gleich.</p>
     <p><b>Einfärbung</b> zählt, wie viele der vier Schritt-Texte Wort für Wort im Satz stehen. Die App sucht etwas nachsichtiger, färbt also mindestens so viel. <b>Markiert</b> zählt beim kurzen Prompt, wie viele Schritte das Modell selbst im Satz markiert hat (seit Runde 6.5).</p>
     <p>Die Fassung ohne Vorfall mit Einladung (Runde 6.4) und die Hilfe-Karte laufen hier nicht mit; es geht nur um die Übersetzung selbst.</p>
+    <p><b>Brücke-Prompt</b> (seit Runde 7.0): Die Antwort kommt schon in Abschnitten je Schritt, deshalb zählt <b>Einfärbung</b> dort, wie viele der vier Schritte im GFK-Text einen eigenen Abschnitt haben. <b>JSON-Format</b> zeigt, ob die API das Antwortformat erzwungen hat. <b>Im Alltag gesagt</b> (seit Runde 7.2) ist dieselbe Nachricht ohne Formelsätze; bei den Wörtern steht ihre Länge neben der des GFK-Texts. Eckige Klammern mit gestricheltem Rand sind Platzhalter für Details, die im Text fehlten. „Großeltern, Familie“ und „Öffentlichkeit“ wirken nur beim Brücke-Prompt.</p>
     <p><button class="leise" id="kopieren">Alles als Text kopieren</button> <button class="leise" id="raus">Kennwort vergessen</button></p>
   </div>
 </div>
@@ -137,7 +149,8 @@
 (function () {
   'use strict';
   var SCHLUESSEL = 'gfk-kosten-token';   // dasselbe wie auf der Kostenseite
-  var VORGABE = ['haiku-kurz', 'sonnet-kurz-low', 'sonnet-kurz-medium'];
+  // Seit Runde 7.0 vorgewählt: der Brücke-Prompt in den drei Betriebsarten.
+  var VORGABE = ['bruecke-haiku', 'bruecke-sonnet-low', 'bruecke-sonnet-high'];
   var token = null;
   var letzte = [];
 
@@ -201,7 +214,7 @@
   function torFehler(e) {
     hole('torfehler').textContent = e.message === 'kennwort'
       ? 'Das Kennwort stimmt nicht, oder KOSTEN_TOKEN ist bei Clever Cloud nicht gesetzt.'
-      : 'Der Server antwortet nicht wie erwartet. Läuft die neue Fassung (Runde 6.6)?';
+      : 'Der Server antwortet nicht wie erwartet. Läuft die neue Fassung (Runde 7.0)?';
     hole('torfehler').hidden = false;
   }
 
@@ -213,12 +226,66 @@
   hole('raus').addEventListener('click', function () { vergiss(SCHLUESSEL); location.reload(); });
   hole('text').addEventListener('input', function () { hole('zaehler').textContent = hole('text').value.length + ' / 2000'; });
 
+  // ---------- Brücke-Format (seit Runde 7.0) ----------
+  var BR_KLASSE = { beobachtung: 'cat-obs', gefuehl: 'cat-feel', beduerfnis: 'cat-need', bitte: 'cat-req' };
+  var BR_NAME = { beobachtung: 'Beobachtung', gefuehl: 'Gefühl', beduerfnis: 'Bedürfnis', bitte: 'Bitte', entfaellt: 'entfällt' };
+  var BR_REIHE = ['beobachtung', 'gefuehl', 'beduerfnis', 'bitte'];
+  function istBruecke(e) { return e && (Array.isArray(e.gfk_text) || typeof e.status === 'string'); }
+  function platzhalter(t) { return esc(t).replace(/\[[^\]]+\]/g, function (m) { return '<span class="platzhalter">' + m + '</span>'; }); }
+  function brText(e) { return (e.gfk_text || []).map(function (t) { return t && t.text ? t.text : ''; }).join(' '); }
+  function brSchritte(e) {
+    var da = {};
+    (e.gfk_text || []).forEach(function (t) { if (t && BR_KLASSE[t.schritt] && t.text) da[t.schritt] = true; });
+    return Object.keys(da).length;
+  }
+  function brKern(x) { return x ? (x.kern || (Array.isArray(x.woerter) ? x.woerter.join(', ') : '')) : ''; }
+
+  function spalteBruecke(el, d) {
+    var e = d.ergebnis || {};
+    var kopf = '<h2>' + esc(d.name) + '</h2><dl class="werte">' +
+      '<dt>Dauer</dt><dd class="gross">' + (d.ms / 1000).toFixed(1).replace('.', ',') + ' s</dd>' +
+      '<dt>Kosten</dt><dd>' + (d.usd * 100).toFixed(2).replace('.', ',') + ' Cent</dd>' +
+      '<dt>Token aus</dt><dd>' + d.tokens.aus + (d.versuche > 1 ? ' (' + d.versuche + ' Versuche)' : '') + '</dd>';
+    if (e.status && e.status !== 'ok') {
+      el.innerHTML = kopf + '</dl><p class="status">Status: ' + esc(e.status) + '</p><p class="fluessig">' + esc(e.nachricht || '') + '</p>';
+      return;
+    }
+    var satz = (e.gfk_text || []).map(function (t) {
+      var k = t && BR_KLASSE[t.schritt];
+      return k ? '<mark class="' + k + '">' + platzhalter(t.text || '') + '</mark>' : platzhalter((t && t.text) || '');
+    }).join(' ');
+    var sch = e.schritte || {};
+    var aend = Array.isArray(e.aenderungen) ? e.aenderungen : [];
+    el.innerHTML = kopf +
+        '<dt>Einfärbung</dt><dd>' + brSchritte(e) + ' von 4 Schritten</dd>' +
+        '<dt>Wörter</dt><dd>GFK ' + woerter(brText(e)) + (e.alltag ? ', Alltag ' + woerter(e.alltag) : '') + '</dd>' +
+        '<dt>Änderungen</dt><dd>' + aend.length + '</dd>' +
+        '<dt>JSON-Format</dt><dd>' + (d.schema === false ? 'ohne Schema (abgelehnt)' : 'erzwungen') + '</dd>' +
+      '</dl>' +
+      (e.anerkennung ? '<p class="intro">' + esc(e.anerkennung) + '</p>' : '') +
+      '<div class="abschnitt">GFK-Text</div><p class="satz">' + satz + '</p>' +
+      (e.alltag ? '<div class="abschnitt">Im Alltag gesagt</div><p class="fluessig">' + platzhalter(e.alltag) + '</p>' : '') +
+      '<div class="abschnitt">Aufbau</div><ul class="schritte">' +
+        BR_REIHE.map(function (k) {
+          var x = sch[k] || {};
+          return '<li class="' + BR_KLASSE[k] + '"><b>' + BR_NAME[k] + '</b><i>„' + esc(brKern(x)) + '“</i><span>' + esc(x.warum || '') + '</span></li>';
+        }).join('') +
+      '</ul>' +
+      (aend.length ? '<div class="abschnitt">Was sich verändert hat</div><ul class="aend">' + aend.map(function (c) {
+        return '<li class="' + (BR_KLASSE[c.ziel] || '') + '"><b>' + esc(c.art || '') + ' → ' + esc(BR_NAME[c.ziel] || c.ziel || '') + '</b>' +
+          '<s>' + esc(c.original || '') + '</s> → ' + (c.neu ? platzhalter(c.neu) : 'fällt weg') +
+          (c.erklaerung ? '<span>' + esc(c.erklaerung) + '</span>' : '') + '</li>';
+      }).join('') + '</ul>' : '') +
+      (e.lerntipp ? '<div class="abschnitt">Lerntipp</div><p class="fluessig">' + esc(e.lerntipp) + '</p>' : '');
+  }
+
   function spalteFertig(el, d) {
     var zeilen = [];
     if (!d.ok) {
       el.innerHTML = '<h2>' + esc(d.name) + '</h2><p class="fehler">Keine Antwort (' + esc(d.code || 'Fehler') + ') nach ' + (d.ms / 1000).toFixed(1) + ' s.</p>';
       return;
     }
+    if (d.prompt === 'bruecke' || istBruecke(d.ergebnis)) { spalteBruecke(el, d); return; }
     var e = d.ergebnis || {};
     var f = faerben(String(e.gfkSentence || ''), e.steps);
     el.innerHTML =
@@ -292,6 +359,17 @@
       if (!d.ok) { z.push('Fehler: ' + d.code, ''); return; }
       var e = d.ergebnis || {};
       z.push('Dauer ' + (d.ms / 1000).toFixed(1) + ' s, ' + (d.usd * 100).toFixed(2) + ' Cent, Token aus ' + d.tokens.aus + (d.markiert !== null && d.markiert !== undefined ? ', markiert ' + d.markiert + '/4' : ''));
+      if (d.prompt === 'bruecke' || istBruecke(e)) {
+        if (e.status && e.status !== 'ok') { z.push('Status ' + e.status + ': ' + (e.nachricht || ''), ''); return; }
+        z.push('GFK: ' + brText(e));
+        if (e.alltag) z.push('Alltag: ' + e.alltag);
+        var sch = e.schritte || {};
+        BR_REIHE.forEach(function (k) { var x = sch[k] || {}; z.push(BR_NAME[k] + ': ' + brKern(x) + ' | ' + (x.warum || '')); });
+        (e.aenderungen || []).forEach(function (c, i) { z.push('Änderung ' + (i + 1) + ' (' + c.art + ' → ' + (BR_NAME[c.ziel] || c.ziel) + '): ' + c.original + ' → ' + (c.neu || 'fällt weg')); });
+        if (e.lerntipp) z.push('Lerntipp: ' + e.lerntipp);
+        z.push('');
+        return;
+      }
       z.push('GFK: ' + (e.gfkSentence || ''));
       (e.steps || []).forEach(function (s) { z.push(s.category + ': ' + s.text + ' | ' + (s.explanation || '')); });
       z.push('Flüssig: ' + (e.everydaySentence || ''), '');
