@@ -7,11 +7,12 @@
 //
 // Benötigte Umgebungsvariable auf Clever Cloud setzen: ANTHROPIC_API_KEY
 //
-// Runde 7.0 (Test, 29.09.2026): Die Seite index.html übersetzt eigene Texte
-// mit dem Prompt der GFK-Brücke ("bruecke"). Sie fragt ihn ausdrücklich an
-// (stil: "bruecke"); ohne diese Angabe läuft alles wie in Runde 6.6, etwa für
-// app.html. Modell und Aufwand kommen weiter aus BETRIEB. Fremdnachricht,
-// Üben und Prüfer sind unverändert.
+// Runde 7.0 (Test, 29.09.2026): Die Seite test/index.html übersetzt eigene
+// Texte mit dem Prompt der GFK-Brücke ("bruecke"). Sie fragt ihn ausdrücklich
+// an (stil: "bruecke"); ohne diese Angabe läuft alles wie in Runde 6.6, etwa
+// für test/app.html. Seit Runde 7.3 läuft der Brücke-Prompt fest mit Haiku 4.5,
+// unabhängig von BETRIEB (siehe BRUECKE weiter unten). Üben und Prüfer sind
+// unverändert.
 
 const express = require('express');
 const path = require('path');
@@ -51,7 +52,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // unklar gewesen, welche Datei wo liegt; das kostet mehr Zeit als diese Zeile.
 const PROMPT_VERSION = 'Runde 7.2 (Brücke-Prompt mit Alltagsfassung, Vorwurf ist keine Krise), 29.09.2026';
 // Stand des Servers ohne Prompt-Änderung (Vergleichsseite, Betriebsart sonnet).
-const SERVER_STAND = 'Runde 7.2 (Brücke mit Alltagsfassung), 29.09.2026';
+const SERVER_STAND = 'Runde 7.3 (Brücke fest mit Haiku 4.5), 30.09.2026';
 
 // ---------------------------------------------------------------------------
 // Betriebsart — der eine Schalter für Tempo, Kosten und Gründlichkeit
@@ -129,11 +130,6 @@ if (!BETRIEBSARTEN[BETRIEB]) {
 const AKTIV = BETRIEBSARTEN[BETRIEB] || BETRIEBSARTEN.schnell;
 const BETRIEB_NAME = BETRIEBSARTEN[BETRIEB] ? BETRIEB : 'schnell';
 
-// Übersetzen mit dem Brücke-Prompt (seit Runde 7.0, Test): gleiches Modell und
-// gleicher Aufwand wie das Übersetzen der aktiven Betriebsart, nur der Prompt
-// ist ein anderer. schnell = Haiku, sonnet = Sonnet niedrig, gruendlich =
-// Sonnet hoch. Der Prüfer der Rückfrage läuft dabei nicht.
-const BRUECKE = { model: AKTIV.translate.model, effort: AKTIV.translate.effort, prompt: 'bruecke' };
 
 // Nur noch für Anzeige und Protokoll. Welches Modell eine Anfrage wirklich
 // bekommt, entscheidet AKTIV je Modus.
@@ -161,6 +157,25 @@ const VERGLEICH = {
   'bruecke-sonnet-medium':  { model: 'claude-sonnet-5',           effort: 'medium', prompt: 'bruecke', name: 'Sonnet 5, Brücke-Prompt, Aufwand mittel' },
   'bruecke-sonnet-high':    { model: 'claude-sonnet-5',           effort: 'high',   prompt: 'bruecke', name: 'Sonnet 5, Brücke-Prompt, Aufwand hoch (Betriebsart gruendlich)' }
 };
+
+// ---------------------------------------------------------------------------
+// Übersetzen mit dem Brücke-Prompt (test/index.html)
+// ---------------------------------------------------------------------------
+// Seit Runde 7.3 (Entscheidung des Betreibers vom 30.09.2026) fest mit
+// Haiku 4.5, unabhängig von BETRIEB. BETRIEB wirkt weiter auf alles andere
+// (test/app.html, Fremdnachricht, Üben, Prüfer).
+// Umschalten ohne Code: bei Clever Cloud BRUECKE_VARIANTE auf einen der
+// Brücke-Schlüssel aus VERGLEICH setzen (bruecke-haiku, bruecke-sonnet-low,
+// bruecke-sonnet-medium, bruecke-sonnet-high) und neu starten. Ohne Variable
+// oder mit unbekanntem Wert: bruecke-haiku.
+const BRUECKE_STANDARD = 'bruecke-haiku';
+const BRUECKE_WAHL = (process.env.BRUECKE_VARIANTE || '').trim().toLowerCase();
+const BRUECKE_NAME = (Object.prototype.hasOwnProperty.call(VERGLEICH, BRUECKE_WAHL) && VERGLEICH[BRUECKE_WAHL].prompt === 'bruecke')
+  ? BRUECKE_WAHL : BRUECKE_STANDARD;
+if (BRUECKE_WAHL && BRUECKE_NAME !== BRUECKE_WAHL) {
+  console.error(`[gfk] Unbekannte BRUECKE_VARIANTE "${BRUECKE_WAHL}", nehme "${BRUECKE_STANDARD}"`);
+}
+const BRUECKE = { model: VERGLEICH[BRUECKE_NAME].model, effort: VERGLEICH[BRUECKE_NAME].effort, prompt: 'bruecke' };
 
 // Obergrenze für den zweiten Versuch, falls eine Antwort trotzdem abgeschnitten wurde.
 const MAX_TOKENS_CEILING = 16000;
@@ -1775,7 +1790,7 @@ app.get('/api/version', (req, res) => {
     model: MODEL,
     effort: EFFORT,
     uebersetzen: AKTIV.translate,
-    uebersetzen_bruecke: BRUECKE,
+    uebersetzen_bruecke: Object.assign({ variante: BRUECKE_NAME }, BRUECKE),
     fremdnachricht: AKTIV.foreign,
     ueben: AKTIV.practice,
     pruefer: Object.assign({}, AKTIV.pruefer, { frist_ms: PRUEFER_FRIST_MS }),
@@ -1812,6 +1827,7 @@ app.get('/api/kosten', (req, res) => {
     preise: PREISE[MODEL] || PREIS_UNBEKANNT,
     modelle: {
       uebersetzen: { modell: AKTIV.translate.model, preise: PREISE[AKTIV.translate.model] || PREIS_UNBEKANNT },
+      uebersetzen_bruecke: { modell: BRUECKE.model, preise: PREISE[BRUECKE.model] || PREIS_UNBEKANNT },
       ueben:       { modell: AKTIV.practice.model,  preise: PREISE[AKTIV.practice.model]  || PREIS_UNBEKANNT },
       pruefer:     { modell: AKTIV.pruefer.model,   preise: PREISE[AKTIV.pruefer.model]   || PREIS_UNBEKANNT }
     },
@@ -1823,5 +1839,5 @@ app.get('/api/kosten', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`GFK-Kompass Server läuft auf Port ${PORT} — Betrieb "${BETRIEB_NAME}": übersetzen mit ${AKTIV.translate.model} (${AKTIV.translate.prompt}, index.html: bruecke), Fremdnachricht mit ${AKTIV.foreign.model}, üben mit ${AKTIV.practice.model}, max. ${MAX_ATTEMPTS} Versuche`);
+  console.log(`GFK-Kompass Server läuft auf Port ${PORT} — Betrieb "${BETRIEB_NAME}": übersetzen mit ${AKTIV.translate.model} (${AKTIV.translate.prompt}), test/index.html mit ${BRUECKE.model} (${BRUECKE_NAME}), Fremdnachricht mit ${AKTIV.foreign.model}, üben mit ${AKTIV.practice.model}, max. ${MAX_ATTEMPTS} Versuche`);
 });
