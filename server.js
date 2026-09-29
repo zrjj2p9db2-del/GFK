@@ -43,7 +43,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // anpassen. Sie wird beim Start ins Log geschrieben, damit sich jederzeit
 // nachsehen lässt, welche Fassung tatsächlich läuft. In dieser Session ist zweimal
 // unklar gewesen, welche Datei wo liegt; das kostet mehr Zeit als diese Zeile.
-const PROMPT_VERSION = 'Runde 6.4 (Einladung), 27.09.2026';
+const PROMPT_VERSION = 'Runde 6.5 (Markierung), 28.09.2026';
+// Stand des Servers ohne Prompt-Änderung (Vergleichsseite, Betriebsart sonnet).
+const SERVER_STAND = 'Runde 6.6, 28.09.2026';
 
 // ---------------------------------------------------------------------------
 // Betriebsart — der eine Schalter für Tempo, Kosten und Gründlichkeit
@@ -87,6 +89,16 @@ const BETRIEBSARTEN = {
     practice:  { model: 'claude-sonnet-5',           effort: 'high', prompt: 'practice' },
     pruefer:   { model: 'claude-haiku-4-5-20251001', effort: null,   prompt: 'pruefer' }
   },
+  // Zum Ausprobieren (seit Runde 6.6): Sonnet mit dem kurzen Prompt, wie
+  // "schnell", nur mit Sonnet statt Haiku. Aufwand "low", weil Sonnet 5 dort
+  // für Chat und zeitkritische Anfragen gedacht ist. Nicht gemessen; die
+  // Vergleichsseite (/vergleich.html) zeigt Qualität und Dauer nebeneinander.
+  sonnet: {
+    translate: { model: 'claude-sonnet-5',           effort: 'low',  prompt: 'kurz' },
+    foreign:   { model: 'claude-sonnet-5',           effort: 'low',  prompt: 'foreign' },
+    practice:  { model: 'claude-sonnet-5',           effort: 'high', prompt: 'practice' },
+    pruefer:   { model: 'claude-haiku-4-5-20251001', effort: null,   prompt: 'pruefer' }
+  },
   gruendlich: {
     translate: { model: 'claude-sonnet-5',           effort: 'high', prompt: 'translate' },
     foreign:   { model: 'claude-sonnet-5',           effort: 'high', prompt: 'foreign' },
@@ -120,6 +132,17 @@ const MODE_CONFIG = {
   translate: { maxTokens: 8000, maxInputChars: 2000 },
   foreign: { maxTokens: 8000, maxInputChars: 2000 },
   practice: { maxTokens: 4000, maxInputChars: 2000 }
+};
+
+// Varianten für die Vergleichsseite (seit Runde 6.6). Nur für den Betreiber,
+// geschützt mit KOSTEN_TOKEN. Jede Variante ist eine Übersetzung eines
+// eigenen Textes, ohne Prüfer; der Prüfer käme im Betrieb bei allen gleich
+// dazu (Haiku, meist 1,5 bis 2,5 Sekunden).
+const VERGLEICH = {
+  'haiku-kurz':       { model: 'claude-haiku-4-5-20251001', effort: null,     prompt: 'kurz',      name: 'Haiku 4.5, kurzer Prompt (so läuft es jetzt)' },
+  'sonnet-kurz-low':  { model: 'claude-sonnet-5',           effort: 'low',    prompt: 'kurz',      name: 'Sonnet 5, kurzer Prompt, Aufwand niedrig' },
+  'sonnet-kurz-medium': { model: 'claude-sonnet-5',         effort: 'medium', prompt: 'kurz',      name: 'Sonnet 5, kurzer Prompt, Aufwand mittel' },
+  'sonnet-lang-high': { model: 'claude-sonnet-5',           effort: 'high',   prompt: 'translate', name: 'Sonnet 5, langer Prompt, Aufwand hoch (Betriebsart gruendlich)' }
 };
 
 // Obergrenze für den zweiten Versuch, falls eine Antwort trotzdem abgeschnitten wurde.
@@ -454,8 +477,10 @@ Kein Gedankenstrich, ausnahmslos. Punkt und neuer Satz stattdessen, ohne Füllw�
 BEREITS GUTER TEXT
 Enthält der Text der Person die vier Schritte schon weitgehend selbst, sagst du das im Einstiegssatz selbstbewusst und übernimmst den Text möglichst wortgleich, ohne ihn kosmetisch umzuformulieren.
 
-SCHRITT-TEXTE
-Jeder Schritt-Text ist ein zusammenhängender Ausschnitt aus dem GFK-Text, Wort für Wort und in derselben Wortstellung. Du formst ihn nicht zu einem eigenen Satz um, stellst keine Wörter um und setzt weder Anführungszeichen noch einen Schlusspunkt, der im GFK-Text an dieser Stelle nicht steht. Beginnt die Beobachtung im GFK-Text mit einer Konjunktion, lässt du nur diese weg. Die Seite färbt die vier Schritte im GFK-Text ein und findet sie nur, wenn sie dort genau so stehen.
+SCHRITT-TEXTE UND MARKIERUNG
+Im GFK-Text umschließt du jeden der vier Schritte mit seiner Markierung: <beobachtung>...</beobachtung>, <gefuehl>...</gefuehl>, <beduerfnis>...</beduerfnis>, <bitte>...</bitte>. Jede Markierung steht genau einmal im GFK-Text, keine steht in einer anderen, und in keinem anderen Feld steht eine. Beginnt die Beobachtung mit einer Konjunktion, steht nur diese vor der Markierung. Beim Bedürfnis umschließt die Markierung nur das Substantiv, bei zweien beide mit dem "und" dazwischen. Die Markierung ändert keinen Wortlaut: Zwischen den Markierungen stehen die Wörter deines GFK-Textes, wie sie ohne Markierung dort stünden.
+
+Jeder Schritt-Text ist genau der Ausschnitt zwischen seinen beiden Markierungen, Wort für Wort, ohne die Markierungen, ohne Anführungszeichen und ohne einen Schlusspunkt, der dort nicht steht. Die Seite entfernt die Markierungen und färbt die markierten Stellen ein.
 
 PRÜFUNG VOR DER AUSGABE
 1. Führt jedes Substantiv und Verb der Beobachtung auf ein Wort im Text zurück?
@@ -469,7 +494,7 @@ PRÜFUNG VOR DER AUSGABE
 9. Ist das Gegenüber durchgehend "du", und heißt es in allen Erklärungen gleich?
 10. Deutet keine Erklärung ein Motiv hinzu?
 11. Kein Gedankenstrich irgendwo?
-12. Steht jeder Schritt-Text Wort für Wort und in derselben Wortstellung im GFK-Text?
+12. Ist jeder der vier Schritte im GFK-Text genau einmal markiert, und ist jeder Schritt-Text genau der markierte Ausschnitt?
 13. Steht eine Antwort auf eine Nachfrage unter dem Text: Ist sie die Grundlage der Beobachtung? Steht dort der Hinweis auf einen fehlenden Vorfall: Kommt in Beobachtung, Bitte und flüssiger Version nichts hinzu, was nicht im Text steht?
 14. Ist ein Kind nirgends Bote, Zeuge oder Schiedsrichter, und gelten bei einer Nachricht an das Kind die Regeln unter DAS KIND?
 
@@ -775,6 +800,103 @@ function extractJsonObject(raw) {
   return null;
 }
 
+// ---------------------------------------------------------------------------
+// Einfärbung: Markierungen im GFK-Text (seit Runde 6.5)
+// ---------------------------------------------------------------------------
+// Die Seite färbt die vier Schritte im GFK-Text ein, indem sie jeden
+// Schritt-Text dort sucht. Satz und Schritt-Texte schreibt das Modell getrennt;
+// Haiku formte die Schritt-Texte oft zu eigenen Sätzen um ("Du rufst mich
+// nicht an." zu "wenn du mich nicht anrufst"), dann blieb der Schritt ungefärbt.
+// MARKEN-ANFANG: wortgleich in werkstatt/testlauf/marken.js, verglichen von
+// werkstatt/marken-test.js. Nur zusammen ändern.
+//
+// Der kurze Prompt lässt das Modell die vier Schritte im GFK-Text selbst
+// markieren, mit <beobachtung>, <gefuehl>, <beduerfnis> und <bitte>. Hier
+// werden die Markierungen entfernt, und jeder markierte Ausschnitt wird zum
+// Schritt-Text. So steht jeder Schritt-Text Wort für Wort im Satz, und die
+// Seite findet ihn beim Einfärben. Fehlt eine Markierung, bleibt der
+// Schritt-Text des Modells, wie vor Runde 6.5. Ohne jede Markierung bleibt
+// die Antwort unverändert.
+const MARKEN_NAMEN = { beobachtung: 'Beobachtung', gefuehl: 'Gefühl', 'gefühl': 'Gefühl', beduerfnis: 'Bedürfnis', 'bedürfnis': 'Bedürfnis', bitte: 'Bitte' };
+const MARKE_MUSTER = '<\\s*(\\/?)\\s*(beobachtung|gef(?:ue|ü)hl|bed(?:ue|ü)rfnis|bitte)\\s*>';
+const hatMarke = t => typeof t === 'string' && new RegExp(MARKE_MUSTER, 'i').test(t);
+
+// Leerraum, den das Entfernen hinterlässt: doppelte Leerzeichen und
+// Leerzeichen vor einem Satzzeichen.
+function markenLeerraum(t) {
+  return t.replace(/[ \t]{2,}/g, ' ').replace(/ +([,.;:!?])/g, '$1').trim();
+}
+
+function ohneMarken(t) {
+  return hatMarke(t) ? markenLeerraum(t.replace(new RegExp(MARKE_MUSTER, 'gi'), '')) : t;
+}
+
+// Verirrte Markierungen in den anderen Feldern verschwinden.
+function markenAusFeldern(payload) {
+  const saeubern = (o, f) => { if (hatMarke(o[f])) o[f] = ohneMarken(o[f]); };
+  saeubern(payload, 'intro');
+  saeubern(payload, 'everydaySentence');
+  payload.steps.forEach(s => {
+    if (!s || typeof s !== 'object') return;
+    saeubern(s, 'text');
+    saeubern(s, 'explanation');
+  });
+}
+
+// Gibt zurück, wie viele der vier Schritte ihren Text aus einer Markierung
+// bekommen haben (0 bis 4).
+function markenAuswerten(payload) {
+  if (!payload || typeof payload !== 'object' || typeof payload.gfkSentence !== 'string' || !Array.isArray(payload.steps)) return 0;
+  const roh = payload.gfkSentence;
+  if (!hatMarke(roh)) {
+    markenAusFeldern(payload);
+    return 0;
+  }
+  // Satz ohne Markierungen aufbauen und dabei die Stellen merken. Eine
+  // Markierung ohne Gegenstück verschwindet, ohne etwas zu markieren.
+  const re = new RegExp(MARKE_MUSTER, 'gi');
+  const offen = {};
+  const stellen = {};
+  let satz = '';
+  let letzte = 0;
+  let m;
+  while ((m = re.exec(roh)) !== null) {
+    satz += roh.slice(letzte, m.index);
+    letzte = m.index + m[0].length;
+    const k = MARKEN_NAMEN[m[2].toLowerCase()];
+    if (!m[1]) {
+      if (offen[k] === undefined) offen[k] = satz.length;
+    } else if (offen[k] !== undefined) {
+      (stellen[k] = stellen[k] || []).push({ start: offen[k], end: satz.length });
+      delete offen[k];
+    }
+  }
+  satz += roh.slice(letzte);
+  const fertig = markenLeerraum(satz);
+
+  let gesetzt = 0;
+  Object.keys(stellen).forEach(k => {
+    const s = stellen[k];
+    // Dieselbe Markierung zweimal dicht hintereinander (zwei Gefühle mit
+    // "und" dazwischen) gilt als ein Schritt; eine weiter entfernte zählt nicht.
+    let end = s[0].end;
+    for (let i = 1; i < s.length; i++) {
+      const zwischen = satz.slice(end, s[i].start);
+      if (zwischen.length > 12 || /[.!?]/.test(zwischen)) break;
+      end = s[i].end;
+    }
+    const text = markenLeerraum(satz.slice(s[0].start, end)).replace(/^[\s,;:]+/, '').replace(/[\s,;:]+$/, '');
+    const schritt = payload.steps.find(x => x && typeof x === 'object' && x.category === k);
+    if (!text || !schritt || fertig.indexOf(text) === -1) return;
+    schritt.text = text;
+    gesetzt++;
+  });
+  payload.gfkSentence = fertig;
+  markenAusFeldern(payload);
+  return gesetzt;
+}
+// MARKEN-ENDE
+
 // Prüft, ob die Antwort die Form hat, die das Frontend erwartet. Passt sie nicht,
 // wird serverseitig ein weiterer Versuch unternommen — das merkt der Besucher nicht,
 // während ein Fehlschlag im Browser direkt als Fehlermeldung sichtbar wäre.
@@ -816,8 +938,12 @@ function isValidPayload(mode, payload) {
 // ---------------------------------------------------------------------------
 // Gibt immer ein Objekt zurück, wirft nie. Entweder {ok: true, payload} oder
 // {ok: false, status, code} mit einem für das Frontend verständlichen Fehlercode.
-async function callAnthropic(mode, text, angaben, ergaenzung) {
+// variante (nur Vergleichsseite): { e: {model, effort, prompt}, buchung }
+// statt der aktiven Betriebsart; gebucht und protokolliert unter "buchung".
+async function callAnthropic(mode, text, angaben, ergaenzung, variante) {
   const config = MODE_CONFIG[mode];
+  const e = variante ? variante.e : AKTIV[mode];
+  const buchung = variante ? variante.buchung : mode;
   let maxTokens = config.maxTokens;
   let lastFailure = { status: 502, code: 'upstream_error' };
 
@@ -827,7 +953,6 @@ async function callAnthropic(mode, text, angaben, ergaenzung) {
     const startedAt = Date.now();
 
     try {
-      const e = AKTIV[mode];
       const anfrage = {
         model: e.model,
         max_tokens: maxTokens,
@@ -871,7 +996,7 @@ async function callAnthropic(mode, text, angaben, ergaenzung) {
       if (!response.ok) {
         const shouldRetry = RETRYABLE_STATUS_CODES.includes(response.status) && attempt < MAX_ATTEMPTS;
         logAttempt({
-          mode, attempt, status: response.status, ms: Date.now() - startedAt,
+          mode: buchung, modell: e.model, attempt, status: response.status, ms: Date.now() - startedAt,
           note: (data && data.error && data.error.type) || 'http_error',
           retry: shouldRetry
         });
@@ -891,7 +1016,7 @@ async function callAnthropic(mode, text, angaben, ergaenzung) {
       if (stopReason === 'max_tokens') {
         const shouldRetry = attempt < MAX_ATTEMPTS && maxTokens < MAX_TOKENS_CEILING;
         logAttempt({
-          mode, attempt, status: 200, ms: Date.now() - startedAt,
+          mode: buchung, modell: e.model, attempt, status: 200, ms: Date.now() - startedAt,
           note: `abgeschnitten bei max_tokens=${maxTokens}`,
           usage, retry: shouldRetry
         });
@@ -904,11 +1029,14 @@ async function callAnthropic(mode, text, angaben, ergaenzung) {
       }
 
       const payload = extractJsonObject(extractText(data));
+      // Vor der Formprüfung: Ein leerer Schritt-Text, dessen Stelle im Satz
+      // markiert ist, wird so noch gefüllt, statt einen Versuch zu kosten.
+      const markiert = mode === 'translate' ? markenAuswerten(payload) : null;
 
       if (!isValidPayload(mode, payload)) {
         const shouldRetry = attempt < MAX_ATTEMPTS;
         logAttempt({
-          mode, attempt, status: 200, ms: Date.now() - startedAt,
+          mode: buchung, modell: e.model, attempt, status: 200, ms: Date.now() - startedAt,
           note: payload ? 'JSON unvollständig' : 'kein gültiges JSON',
           usage, retry: shouldRetry
         });
@@ -920,8 +1048,13 @@ async function callAnthropic(mode, text, angaben, ergaenzung) {
         return { ok: false, ...lastFailure };
       }
 
-      logAttempt({ mode, attempt, status: 200, ms: Date.now() - startedAt, note: 'ok', usage });
-      return { ok: true, payload: bereinigen(mode, payload) };
+      logAttempt({ mode: buchung, modell: e.model, attempt, status: 200, ms: Date.now() - startedAt, note: 'ok', usage });
+      // Nur der kurze Prompt verlangt Markierungen; der lange nicht. Die
+      // Vergleichsseite zählt nicht mit.
+      if (markiert !== null && e.prompt === 'kurz' && !variante) {
+        zaehlen(markiert === 4 ? 'alle_vier' : markiert > 0 ? 'teilweise' : 'keine', 'markierung');
+      }
+      return { ok: true, payload: bereinigen(mode, payload), usage, versuche: attempt, markiert };
     } catch (err) {
       // Hierher kommen abgebrochene Verbindungen, DNS-Aussetzer und Timeouts.
       // In der alten Fassung sprang ein solcher Fehler an allen Wiederholungs-
@@ -929,7 +1062,7 @@ async function callAnthropic(mode, text, angaben, ergaenzung) {
       const timedOut = err.name === 'AbortError';
       const shouldRetry = attempt < MAX_ATTEMPTS;
       logAttempt({
-        mode, attempt, status: 0, ms: Date.now() - startedAt,
+        mode: buchung, modell: e.model, attempt, status: 0, ms: Date.now() - startedAt,
         note: timedOut ? 'Zeitüberschreitung' : `Netzwerkfehler: ${err.message}`,
         retry: shouldRetry
       });
@@ -1022,14 +1155,15 @@ function codeForStatus(status) {
 // Eine Zeile pro Versuch. Damit lässt sich in den Clever-Cloud-Logs direkt ablesen,
 // WARUM eine Anfrage gescheitert ist, statt es aus der Fehlermeldung im Browser
 // erraten zu müssen. Es wird bewusst kein Nutzertext protokolliert.
-function logAttempt({ mode, attempt, von, status, ms, note, usage, retry }) {
+function logAttempt({ mode, modell, attempt, von, status, ms, note, usage, retry }) {
   const parts = [
     `[gfk] mode=${mode}`,
     `versuch=${attempt}/${von || MAX_ATTEMPTS}`,
     `status=${status}`,
     `dauer=${ms}ms`
   ];
-  parts.push(`modell=${(AKTIV[mode] || {}).model || '?'}`);
+  const m = modell || (AKTIV[mode] || {}).model;
+  parts.push(`modell=${m || '?'}`);
   if (usage) {
     parts.push(`tokens_ein=${usage.input_tokens ?? '?'}`);
     parts.push(`tokens_aus=${usage.output_tokens ?? '?'}`);
@@ -1042,7 +1176,7 @@ function logAttempt({ mode, attempt, von, status, ms, note, usage, retry }) {
 
   // Jeder Versuch kostet, auch ein gescheiterter — deshalb wird hier gezählt
   // und nicht erst beim Erfolg.
-  if (usage) buchen(mode, usage);
+  if (usage) buchen(mode, usage, m);
 }
 
 // ---------------------------------------------------------------------------
@@ -1115,8 +1249,17 @@ function heute() {
   return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' });
 }
 
-function buchen(mode, usage) {
-  const modell = (AKTIV[mode] || {}).model || MODEL;
+// Preis einer Antwort in US-Dollar.
+function preisUsd(modell, usage) {
+  const preis = PREISE[modell] || PREIS_UNBEKANNT;
+  return ((usage.input_tokens || 0) * preis.ein +
+    (usage.output_tokens || 0) * preis.aus +
+    (usage.cache_creation_input_tokens || 0) * preis.ein * 1.25 +
+    (usage.cache_read_input_tokens || 0) * preis.ein * 0.1) / 1e6;
+}
+
+function buchen(mode, usage, modellAngabe) {
+  const modell = modellAngabe || (AKTIV[mode] || {}).model || MODEL;
   const preis = PREISE[modell] || PREIS_UNBEKANNT;
 
   const ein = usage.input_tokens || 0;
@@ -1159,14 +1302,19 @@ function tagEintrag() {
   return kassenbuch.tage[tag];
 }
 
-// Zähler der Rückfrage je Tag (Entscheidung vom 27.09.2026), ohne Nutzertext:
+// Zähler je Tag, ohne Nutzertext. Gruppe "rueckfrage" (Vorgabe, Entscheidung
+// vom 27.09.2026):
 //   ohne_vorfall  der Prüfer fand keine Beobachtung; Fassung ohne Vorfall
 //                 geliefert, mit Einladung zum Ergänzen (seit Runde 6.4)
 //   ergaenzt      zweite Runde mit einer Antwort der Person
-function zaehlen(name) {
+// Gruppe "markierung" (seit Runde 6.5, nur mit dem kurzen Prompt): wie viele
+// Übersetzungen alle vier Schritte markiert hatten (alle_vier), nur einige
+// (teilweise) oder keinen (keine).
+function zaehlen(name, gruppe) {
+  const g = gruppe || 'rueckfrage';
   const t = tagEintrag();
-  t.rueckfrage = t.rueckfrage || {};
-  t.rueckfrage[name] = (t.rueckfrage[name] || 0) + 1;
+  t[g] = t[g] || {};
+  t[g][name] = (t[g][name] || 0) + 1;
   speichernBald();
 }
 
@@ -1293,10 +1441,65 @@ app.post('/api/gfk-proxy', async (req, res) => {
 
 // Damit lässt sich jederzeit prüfen, welcher Stand tatsächlich läuft, ohne
 // Dateien auf GitHub vergleichen zu müssen: einfach /api/version aufrufen.
+// ---------------------------------------------------------------------------
+// Vergleich der Modelle (seit Runde 6.6), nur für den Betreiber
+// ---------------------------------------------------------------------------
+// Dieselbe Übersetzung mit einer Variante aus VERGLEICH. Geschützt durch
+// KOSTEN_TOKEN wie /api/kosten: ohne oder mit falschem Kennwort dieselbe
+// Antwort wie ein Pfad, den es nicht gibt. Jeder Aufruf kostet echtes Geld
+// und wird im Kostenbuch unter "vergleich" gebucht. Protokolliert wird wie
+// sonst nur Status, Modell, Token und Dauer, kein Text.
+app.post('/api/vergleich', async (req, res) => {
+  const erwartet = process.env.KOSTEN_TOKEN;
+  const body = req.body || {};
+  const gegeben = req.get('x-kosten-token') || '';
+  if (!erwartet || gegeben !== erwartet) {
+    return res.status(404).send('Cannot POST /api/vergleich');
+  }
+  if (isRateLimited(req.ip)) {
+    res.set('Retry-After', '60');
+    return res.status(429).json({ code: 'rate_limited', error: 'Zu viele Anfragen, bitte kurz warten.' });
+  }
+  const name = typeof body.variante === 'string' && Object.prototype.hasOwnProperty.call(VERGLEICH, body.variante) ? body.variante : null;
+  const text = body.text;
+  if (!name || typeof text !== 'string' || !text.trim()) {
+    return res.status(400).json({ code: 'bad_request', error: 'variante und text werden benötigt', varianten: Object.keys(VERGLEICH) });
+  }
+  if (text.length > MODE_CONFIG.translate.maxInputChars) {
+    return res.status(413).json({ code: 'too_long', error: 'Der Text ist zu lang.' });
+  }
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.status(500).json({ code: 'auth_error', error: 'Serverkonfiguration unvollständig' });
+  }
+  const v = VERGLEICH[name];
+  const start = Date.now();
+  const result = await callAnthropic('translate', text.trim(), angabenPruefen(body.angaben), null,
+    { e: { model: v.model, effort: v.effort, prompt: v.prompt }, buchung: 'vergleich' });
+  const kopf = { variante: name, name: v.name, model: v.model, effort: v.effort, prompt: v.prompt === 'kurz' ? 'kurz' : 'lang', ms: Date.now() - start };
+  if (!result.ok) return res.status(200).json(Object.assign(kopf, { ok: false, code: result.code }));
+  res.status(200).json(Object.assign(kopf, {
+    ok: true,
+    versuche: result.versuche,
+    tokens: { ein: result.usage.input_tokens || 0, aus: result.usage.output_tokens || 0, cache_lesen: result.usage.cache_read_input_tokens || 0 },
+    usd: preisUsd(v.model, result.usage),
+    markiert: v.prompt === 'kurz' ? result.markiert : null,
+    ergebnis: result.payload
+  }));
+});
+
+app.get('/api/vergleich', (req, res) => {
+  const erwartet = process.env.KOSTEN_TOKEN;
+  if (!erwartet || (req.get('x-kosten-token') || '') !== erwartet) return res.status(404).send('Cannot GET /api/vergleich');
+  res.set('Cache-Control', 'no-store');
+  res.json({ varianten: Object.keys(VERGLEICH).map(k => ({ variante: k, name: VERGLEICH[k].name, model: VERGLEICH[k].model, effort: VERGLEICH[k].effort })) });
+});
+
 app.get('/api/version', (req, res) => {
   res.json({
     prompts: PROMPT_VERSION,
+    server: SERVER_STAND,
     betrieb: BETRIEB_NAME,
+    betriebsarten: Object.keys(BETRIEBSARTEN),
     model: MODEL,
     effort: EFFORT,
     uebersetzen: AKTIV.translate,
