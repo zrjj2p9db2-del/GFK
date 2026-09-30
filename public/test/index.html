@@ -174,14 +174,23 @@
   .st-schatten { fill: var(--stein); fill-opacity: 0.25; }
   .st-oben { fill: var(--stein); }
   .st-licht { fill: var(--paper); fill-opacity: 0.28; }
-  /* Die Steine tauchen beim Laden nacheinander auf. */
-  .stein { animation: auftauchen 0.7s ease-out both; }
-  .stein-obs { animation-delay: 0.15s; }
-  .stein-feel { animation-delay: 0.35s; }
-  .stein-need { animation-delay: 0.55s; }
-  .stein-req { animation-delay: 0.75s; }
-  @keyframes auftauchen { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  @media (prefers-reduced-motion: reduce) { .stein { animation: none; } }
+  /* Die Steine tauchen beim Laden nacheinander auf, in Ruhe (Runde 7.4: langsamer). */
+  .stein { animation: auftauchen 1.2s ease-out both; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .stein-obs { animation-delay: 0.5s; }
+  .stein-feel { animation-delay: 1.3s; }
+  .stein-need { animation-delay: 2.1s; }
+  .stein-req { animation-delay: 2.9s; }
+  @keyframes auftauchen { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  /* Antippen: der Stein wippt, Wellen laufen aus, dazu ein Klangschalen-Ton. */
+  .st-treffer { fill: transparent; }
+  .st-welle { fill: none; stroke: var(--stein); stroke-width: 1.4; opacity: 0; transform-box: fill-box; transform-origin: center; }
+  .st-oben, .st-licht { transform-box: fill-box; transform-origin: center; }
+  .klingt .st-welle { animation: steinwelle 2.4s ease-out; }
+  .klingt .st-welle2 { animation-delay: 0.45s; }
+  .klingt .st-oben, .klingt .st-licht { animation: wippen 0.7s ease-out; }
+  @keyframes steinwelle { 0% { opacity: 0.55; transform: scale(1); } 100% { opacity: 0; transform: scale(2.3); } }
+  @keyframes wippen { 30% { transform: translateY(2.5px); } 100% { transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .stein, .klingt .st-welle, .klingt .st-oben, .klingt .st-licht { animation: none; } }
   .ufer {
     display: flex; justify-content: space-between; margin-top: 4px;
     font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft);
@@ -258,7 +267,10 @@
     margin-top: 8px;
   }
 
-  .examples { margin-top: 18px; }
+  /* Unter dem Textfeld: links die Beispiele, rechts der Zähler (Runde 7.4) */
+  .unter-feld { display: flex; align-items: flex-start; gap: 6px 16px; margin-top: 6px; }
+  .unter-feld .char-counter { margin: 4px 0 0 auto; flex: none; }
+  .examples { flex: 1 1 auto; min-width: 0; }
   .examples[hidden] { display: none; }
 
   /* Seit Runde 7.4 ein Aufklapper: leise Zeile mit Pfeil statt immer sichtbarer Knöpfe */
@@ -289,6 +301,11 @@
   .examples .chips { margin-top: 10px; }
 
   .lang-hinweis { font-size: 13px; color: var(--ink-soft); margin: 2px 0 0; text-align: right; }
+
+  /* Absende-Knopf mit "Leeren" daneben (Runde 7.4) */
+  .absende-zeile { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 22px; margin-top: 26px; }
+  .absende-zeile .primary-btn { margin-top: 0; }
+  #leeren-btn[hidden] { display: none; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 
@@ -717,15 +734,33 @@
   .richtung button.aktiv:focus-visible { box-shadow: inset 0 0 0 2px var(--paper), 0 0 0 2px var(--brand), 0 0 0 5px rgba(43, 83, 79, 0.3); }
 
   /* ===== Gegenüber ===== */
-  .gegenueber { margin: 0 0 18px; }
+  .gegenueber { margin: 0 0 16px; }
   .gegenueber-frage {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px 6px;
     font-size: 14.5px;
     font-weight: 500;
     color: var(--ink);
-    margin-bottom: 10px;
+    cursor: pointer;
+    list-style: none;
+    padding: 4px 0;
   }
-  .gegenueber-frage span { font-weight: 400; color: var(--ink-soft); }
+  .gegenueber-frage::-webkit-details-marker { display: none; }
+  .gegenueber-frage::after {
+    content: '';
+    width: 6px; height: 6px;
+    border-right: 1.5px solid var(--brand-dark); border-bottom: 1.5px solid var(--brand-dark);
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform 0.15s ease;
+    margin-left: 2px;
+  }
+  .gegenueber[open] > .gegenueber-frage::after { transform: translateY(1px) rotate(-135deg); }
+  .gegenueber-frage:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 3px; }
+  .gegenueber-stand { font-weight: 400; color: var(--ink-soft); }
+  .gegenueber-stand.gewaehlt { font-weight: 500; color: var(--brand-dark); }
+  .gegenueber-inhalt { margin-top: 8px; }
   .wahl { display: flex; flex-wrap: wrap; gap: 8px; }
   /* Ein kleiner Kreis vorn unterscheidet diese Auswahlknöpfe von den
      Beispiel-Knöpfen: die einen wählen aus, die anderen füllen Text ein. */
@@ -830,7 +865,6 @@
   .aenderung-pfeil { color: var(--ink-soft); margin: 0 6px; }
   .aenderung-neu { font-style: italic; }
   .aenderung-warum { font-size: 14px; color: var(--ink-soft); }
-  .hinweis-liste li { font-size: 14.5px; }
   details.pseudo-tabelle { margin: 32px 0 0; }
   .pseudo-tabelle .tabelle { overflow-x: auto; margin-top: 10px; }
   .pseudo-tabelle table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.45; }
@@ -889,6 +923,8 @@
     background: var(--paper); border: 1px solid var(--line); border-radius: 8px;
     padding: 10px 16px; margin-bottom: 8px; font-size: 15px; color: var(--ink); line-height: 1.5;
   }
+  /* "Gut zu wissen" sieht aus wie "Lerntipp für dich" (Runde 7.4) */
+  .possible-list.hinweis-liste li { padding: 18px 20px; border-radius: 10px; font-size: 16px; line-height: 1.6; margin-bottom: 12px; }
 
   /* ===== Hilfe: leise Zeile unter dem Absende-Knopf ===== */
   .hilfe-zeile { margin: 18px 0 0; font-size: 13.5px; color: var(--ink-soft); }
@@ -1015,10 +1051,10 @@
       <path class="st-uferlinie" d="M700 62 C 666 52, 626 52, 594 64 C 578 70, 574 98, 582 150"/>
       <path class="st-gras" d="M28 62 l -3 -9 M34 61 l 1 -11 M40 62 l 4 -8 M650 55 l -3 -9 M656 54 l 1 -11 M662 55 l 4 -8"/>
       <path class="st-weg" d="M96 62 Q 142 26 185 80 Q 235 36 285 72 Q 335 30 385 76 Q 435 34 485 68 Q 545 22 600 56"/>
-      <g class="stein stein-obs"><ellipse class="st-ring" cx="185" cy="97" rx="48" ry="15"/><ellipse class="st-schatten" cx="185" cy="99" rx="36" ry="11"/><ellipse class="st-oben" cx="185" cy="94" rx="36" ry="12"/><ellipse class="st-licht" cx="176" cy="90" rx="15" ry="4"/></g>
-      <g class="stein stein-feel"><ellipse class="st-ring" cx="285" cy="89" rx="48" ry="15"/><ellipse class="st-schatten" cx="285" cy="91" rx="36" ry="11"/><ellipse class="st-oben" cx="285" cy="86" rx="36" ry="12"/><ellipse class="st-licht" cx="276" cy="82" rx="15" ry="4"/></g>
-      <g class="stein stein-need"><ellipse class="st-ring" cx="385" cy="93" rx="48" ry="15"/><ellipse class="st-schatten" cx="385" cy="95" rx="36" ry="11"/><ellipse class="st-oben" cx="385" cy="90" rx="36" ry="12"/><ellipse class="st-licht" cx="376" cy="86" rx="15" ry="4"/></g>
-      <g class="stein stein-req"><ellipse class="st-ring" cx="485" cy="85" rx="48" ry="15"/><ellipse class="st-schatten" cx="485" cy="87" rx="36" ry="11"/><ellipse class="st-oben" cx="485" cy="82" rx="36" ry="12"/><ellipse class="st-licht" cx="476" cy="78" rx="15" ry="4"/></g>
+      <g class="stein stein-obs"><ellipse class="st-welle" cx="185" cy="94" rx="36" ry="12"/><ellipse class="st-welle st-welle2" cx="185" cy="94" rx="36" ry="12"/><ellipse class="st-ring" cx="185" cy="97" rx="48" ry="15"/><ellipse class="st-schatten" cx="185" cy="99" rx="36" ry="11"/><ellipse class="st-oben" cx="185" cy="94" rx="36" ry="12"/><ellipse class="st-licht" cx="176" cy="90" rx="15" ry="4"/><ellipse class="st-treffer" cx="185" cy="90" rx="50" ry="34"/></g>
+      <g class="stein stein-feel"><ellipse class="st-welle" cx="285" cy="86" rx="36" ry="12"/><ellipse class="st-welle st-welle2" cx="285" cy="86" rx="36" ry="12"/><ellipse class="st-ring" cx="285" cy="89" rx="48" ry="15"/><ellipse class="st-schatten" cx="285" cy="91" rx="36" ry="11"/><ellipse class="st-oben" cx="285" cy="86" rx="36" ry="12"/><ellipse class="st-licht" cx="276" cy="82" rx="15" ry="4"/><ellipse class="st-treffer" cx="285" cy="82" rx="50" ry="34"/></g>
+      <g class="stein stein-need"><ellipse class="st-welle" cx="385" cy="90" rx="36" ry="12"/><ellipse class="st-welle st-welle2" cx="385" cy="90" rx="36" ry="12"/><ellipse class="st-ring" cx="385" cy="93" rx="48" ry="15"/><ellipse class="st-schatten" cx="385" cy="95" rx="36" ry="11"/><ellipse class="st-oben" cx="385" cy="90" rx="36" ry="12"/><ellipse class="st-licht" cx="376" cy="86" rx="15" ry="4"/><ellipse class="st-treffer" cx="385" cy="86" rx="50" ry="34"/></g>
+      <g class="stein stein-req"><ellipse class="st-welle" cx="485" cy="82" rx="36" ry="12"/><ellipse class="st-welle st-welle2" cx="485" cy="82" rx="36" ry="12"/><ellipse class="st-ring" cx="485" cy="85" rx="48" ry="15"/><ellipse class="st-schatten" cx="485" cy="87" rx="36" ry="11"/><ellipse class="st-oben" cx="485" cy="82" rx="36" ry="12"/><ellipse class="st-licht" cx="476" cy="78" rx="15" ry="4"/><ellipse class="st-treffer" cx="485" cy="78" rx="50" ry="34"/></g>
       </svg>
       <div class="ufer"><span>Vorwurf</span><span>Verständigung</span></div>
     </div>
@@ -1083,7 +1119,8 @@
       </div>
 
     <div id="translate-panel">
-    <h2 id="input-heading">Eigener Text</h2>
+    <!-- Seit Runde 7.4 nur noch für Screenreader: die Knöpfe darunter sagen dasselbe -->
+    <h2 id="input-heading" class="sr-only">Eigener Text</h2>
 
     <div class="richtung" role="group" aria-label="Welche Art von Text?">
       <button type="button" class="aktiv" data-richtung="eigen" aria-pressed="true">Eigener Text</button>
@@ -1092,8 +1129,10 @@
 
     <p class="hint" id="richtung-hinweis">Füge eine Nachricht ein, die du schreiben möchtest – wir formulieren sie gemeinsam in gewaltfreie Kommunikation um.</p>
 
-    <div class="gegenueber" id="gegenueber-block">
-      <span class="gegenueber-frage" id="gegenueber-frage">An wen geht deine Nachricht? <span>(freiwillig)</span></span>
+    <!-- Seit Runde 7.4 zum Aufklappen; die Wahl steht zugeklappt in der Zeile -->
+    <details class="gegenueber" id="gegenueber-block">
+      <summary class="gegenueber-frage"><span id="gegenueber-frage">An wen geht deine Nachricht?</span> <span class="gegenueber-stand" id="gegenueber-stand">(freiwillig)</span></summary>
+      <div class="gegenueber-inhalt">
       <div class="wahl" role="group" aria-labelledby="gegenueber-frage">
         <button type="button" data-wer="elternteil" aria-pressed="false">Anderer Elternteil</button>
         <button type="button" data-wer="kind" aria-pressed="false">Mein Kind</button>
@@ -1105,7 +1144,8 @@
       <label class="sr-only" for="gegenueber-frei">Wer genau?</label>
       <input type="text" class="gegenueber-frei" id="gegenueber-frei" maxlength="60" autocomplete="off" placeholder="Wer? z. B. meine Mutter, die Lehrerin" hidden>
       <p class="gegenueber-notiz" id="gegenueber-notiz">Hilft, Anrede und Blickwinkel zu treffen.</p>
-    </div>
+      </div>
+    </details>
 
     <div class="bezug" id="bezug" hidden>
       <span class="bezug-label">Du antwortest auf diese Nachricht</span>
@@ -1118,22 +1158,26 @@
 
     <label class="sr-only" for="input-text">Dein Text</label>
     <textarea id="input-text" rows="5" maxlength="2000" placeholder="z. B. „Du lässt mich einfach nicht mit meinem Kind sprechen, das machst du doch mit Absicht.“"></textarea>
-    <span class="char-counter" id="char-counter">0 / 2000</span>
+    <!-- Seit Runde 7.4: Beispiele zum Aufklappen, in einer Zeile mit dem Zeichenzähler -->
+    <div class="unter-feld">
+      <details class="examples">
+        <summary class="examples-label">Oder starte mit einem Beispiel</summary>
+        <div class="chips">
+          <button type="button" class="chip" data-example="0">An den anderen Elternteil</button>
+          <button type="button" class="chip" data-example="1">An mein Kind</button>
+          <button type="button" class="chip" data-example="2">Ans Jugendamt</button>
+          <button type="button" class="chip" data-example="3">Forum-Kommentar</button>
+        </div>
+      </details>
+      <span class="char-counter" id="char-counter">0 / 2000</span>
+    </div>
     <p class="lang-hinweis" id="lang-hinweis" hidden>Bei langen Nachrichten hilft es, den Teil einzufügen, der dich am meisten trifft.</p>
     <p class="field-hint" id="field-hint" hidden>Bitte gib zuerst einen Text ein.</p>
 
-    <!-- Seit Runde 7.4 zum Aufklappen, damit der Eingabebereich ruhiger wirkt -->
-    <details class="examples">
-      <summary class="examples-label">Oder starte mit einem Beispiel</summary>
-      <div class="chips">
-        <button type="button" class="chip" data-example="0">An den anderen Elternteil</button>
-        <button type="button" class="chip" data-example="1">An mein Kind</button>
-        <button type="button" class="chip" data-example="2">Ans Jugendamt</button>
-        <button type="button" class="chip" data-example="3">Forum-Kommentar</button>
-      </div>
-    </details>
-
-    <button type="button" id="submit-btn" class="primary-btn knopf-fortschritt"><span class="knopf-fuellung" aria-hidden="true"></span><span class="knopf-text">In GFK übersetzen</span></button>
+    <div class="absende-zeile">
+      <button type="button" id="submit-btn" class="primary-btn knopf-fortschritt"><span class="knopf-fuellung" aria-hidden="true"></span><span class="knopf-text">In GFK übersetzen</span></button>
+      <button type="button" class="text-btn" id="leeren-btn" hidden>Leeren</button>
+    </div>
     <p class="lade-text" id="lade-text" aria-hidden="true" hidden></p>
     <div role="status"><div class="hilfe-karte" id="hilfe-karte" hidden></div></div>
     <p class="hilfe-zeile">Wenn es gerade zu viel ist: <button type="button" class="hilfe-link" data-hilfe-oeffnen>Hier sind Menschen, die zuhören.</button></p>
@@ -1141,7 +1185,8 @@
     </div>
 
     <div id="practice-panel" hidden>
-      <h2>Selbst üben</h2>
+      <!-- Seit Runde 7.4 nur noch für Screenreader: die Karte darüber sagt dasselbe -->
+      <h2 class="sr-only">Selbst üben</h2>
       <p class="hint">Denk an eine reale Situation und versuch, sie selbst in die vier GFK-Schritte zu fassen. Du bekommst anschließend Rückmeldung zu jedem Teil.</p>
 
       <details class="word-lists">
@@ -2323,6 +2368,56 @@
   // ruckelt die Nadel gegen das Laden der Schrift an.
   window.addEventListener('load', () => compass.classList.add('settled'));
 
+  // ---------------------------------------------------------------
+  // Klangsteine (seit Runde 7.4)
+  // ---------------------------------------------------------------
+  // Wer auf einen der vier Steine tippt, hört einen Ton wie von einer
+  // Klangschale, von links nach rechts immer höher (G, A, C, D: passen in jeder
+  // Reihenfolge zueinander). Der Ton entsteht hier im Browser, ohne Tondatei
+  // und ohne Anfrage an einen Server. Er klingt nur nach einem Tippen, nie von
+  // allein. Auf dem iPhone bleibt er stumm, solange der Stummschalter an ist.
+  const KLANG_HZ = [196.0, 220.0, 261.63, 293.66];
+  let klangKontext = null;
+
+  function klangschale(grundton) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!klangKontext) klangKontext = new AC();
+    if (klangKontext.state === 'suspended') klangKontext.resume();
+    const ctx = klangKontext;
+    const t = ctx.currentTime + 0.01;
+    const gesamt = ctx.createGain();
+    gesamt.gain.value = 0.2;
+    gesamt.connect(ctx.destination);
+    // Teiltöne einer Klangschale liegen nicht im ganzzahligen Verhältnis; die
+    // hohen verklingen schneller. Je zwei leicht verstimmte Töne erzeugen das
+    // typische langsame Schweben.
+    [[1, 1, 7], [2.76, 0.42, 4], [5.4, 0.2, 2.4], [8.93, 0.08, 1.5]].forEach(([faktor, staerke, dauer]) => {
+      [-0.7, 0.7].forEach(versatz => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = grundton * faktor + versatz * faktor;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(staerke * 0.5, t + 0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dauer);
+        o.connect(g);
+        g.connect(gesamt);
+        o.start(t);
+        o.stop(t + dauer + 0.05);
+      });
+    });
+  }
+
+  document.querySelectorAll('.steine .stein').forEach((stein, i) => {
+    stein.addEventListener('click', () => {
+      try { klangschale(KLANG_HZ[i]); } catch (e) { /* ohne Ton geht es auch */ }
+      stein.classList.remove('klingt');
+      void stein.getBoundingClientRect();   // Animation neu starten, auch bei schnellem Tippen
+      stein.classList.add('klingt');
+    });
+  });
+
   // Beide Richtungen bis 2000 Zeichen (Fremdnachricht seit Runde 7.4, vorher
   // 600): Schreiben vom Anwalt oder längere Nachrichten passen sonst nicht.
   // Der Server erlaubt 2000 für beide. Ab 1200 Zeichen bei einer
@@ -2338,6 +2433,7 @@
     charCounter.textContent = `${len} / ${MAX_CHARS}`;
     charCounter.classList.toggle('warn', len >= MAX_CHARS * 0.9);
     langHinweis.hidden = !(richtung === 'fremd' && len >= FREMD_HINWEIS_AB);
+    leerenPruefen();
   }
 
   textarea.addEventListener('input', updateCharCounter);
@@ -2475,6 +2571,9 @@
   const gegenueberFrei = document.getElementById('gegenueber-frei');
   const gegenueberNotiz = document.getElementById('gegenueber-notiz');
   const gegenueberFrage = document.getElementById('gegenueber-frage');
+  const gegenueberBlock = document.getElementById('gegenueber-block');
+  const gegenueberStand = document.getElementById('gegenueber-stand');
+  const leerenBtn = document.getElementById('leeren-btn');
   const richtungHinweis = document.getElementById('richtung-hinweis');
   const inputHeading = document.getElementById('input-heading');
   const beispielBlock = document.querySelector('#translate-panel .examples');
@@ -2529,7 +2628,7 @@
     richtungHinweis.textContent = t.hinweis;
     textarea.placeholder = t.platzhalter;
     knopfText(submitBtn, t.knopf);
-    gegenueberFrage.firstChild.nodeValue = t.frage + ' ';
+    gegenueberFrage.textContent = t.frage;
     // Die Beispiele sind eigene Sätze; zu einer Fremdnachricht passen sie nicht.
     if (beispielBlock) beispielBlock.hidden = (r === 'fremd');
     fieldHint.hidden = true;
@@ -2551,7 +2650,54 @@
     wahlKnoepfe.forEach(x => x.setAttribute('aria-pressed', String(x.dataset.wer === gegenueberWahl)));
     gegenueberFrei.hidden = (gegenueberWahl !== 'andere');
     gegenueberNotizSetzen();
+    gegenueberStandSetzen();
+    leerenPruefen();
   }
+
+  // Zugeklappt steht die Wahl in der Zeile selbst: "An wen geht deine
+  // Nachricht? · Mein Kind". Ohne Wahl: "(freiwillig)".
+  function gegenueberStandSetzen() {
+    let stand = '';
+    if (gegenueberWahl) {
+      const knopf = Array.from(wahlKnoepfe).find(x => x.dataset.wer === gegenueberWahl);
+      const frei = gegenueberFrei.value.trim();
+      stand = (gegenueberWahl === 'andere' && frei) ? frei : (knopf ? knopf.textContent : '');
+    }
+    gegenueberStand.textContent = stand ? '· ' + stand : '(freiwillig)';
+    gegenueberStand.classList.toggle('gewaehlt', Boolean(stand));
+  }
+  gegenueberFrei.addEventListener('input', () => { gegenueberStandSetzen(); leerenPruefen(); });
+
+  // "Leeren" (seit Runde 7.4) zeigt sich nur, wenn es etwas zu leeren gibt,
+  // und setzt dann alles zurück: Text, Gegenüber, Bezug, Hinweise, Ergebnis.
+  function leerenPruefen() {
+    leerenBtn.hidden = !(textarea.value || gegenueberWahl || gegenueberFrei.value || bezug ||
+      !resultSection.hidden || !foreignResultSection.hidden || !errorMsg.hidden);
+  }
+
+  leerenBtn.addEventListener('click', () => {
+    if (submitBtn.disabled) return;
+    bezugSetzen(null);
+    const t = RICHTUNG_TEXTE[richtung];
+    inputHeading.textContent = t.titel;
+    richtungHinweis.textContent = t.hinweis;
+    textarea.placeholder = t.platzhalter;
+    textarea.value = '';
+    gegenueberFrei.value = '';
+    gegenueberWaehlen(null);
+    gegenueberBlock.open = false;
+    if (beispielBlock) beispielBlock.open = false;
+    fieldHint.hidden = true;
+    errorMsg.hidden = true;
+    hilfeKarte.hidden = true;
+    resultSection.hidden = true;
+    resultSection.classList.remove('visible');
+    foreignResultSection.hidden = true;
+    foreignResultSection.classList.remove('visible');
+    ergebnisBehalten = false;
+    updateCharCounter();
+    textarea.focus();
+  });
 
   wahlKnoepfe.forEach(b => {
     b.addEventListener('click', () => {
@@ -2801,6 +2947,11 @@
       R(String.raw`\<(?:würgt|würgte|würgen|würgst)\s(?:\L+\s)?(?:mich|dich|ihn|sie|das kind|die kinder)\>`),
       R(String.raw`\<(?:mich|dich|ihn|das kind|die kinder)\s(?:zu\s)?würgen\>`),
       R(String.raw`\<${PERSON}\s(?:\L+\s)?getreten\>`),
+      // Umgangssprachlich für eine Ohrfeige (seit Runde 7.4): "hat mir eine gescheuert",
+      // "ich scheuer dir gleich eine". Beim Präsens nur, wenn "eine" den Teilsatz
+      // beendet; "Ich klebe dir eine Notiz an die Tür" bleibt frei.
+      R(String.raw`\<${DATIV}\s(?:\L+\s){0,2}(?:eine|eins|ne)\s(?:gescheuert|geklebt|geknallt|gelangt|geschmiert|gewischt|runtergehauen|reingehauen|verpasst|gegeben)\>`),
+      R(String.raw`\<(?:scheuer|scheuere|scheuert|scheuerst|kleb|klebe|klebt|klebst|knall|knalle|knallt|knallst|hau|haue|haut|haust|lang|lange|langt|langst)\s(?:(?:er|sie|du|ich|ihr|wir|man)\s)?${DATIV}\s(?:\L+\s){0,2}(?:eine|eins|ne)(?:\s(?:rein|runter))?$`),
       R(String.raw`\<missbraucht?\s${PERSON}$`),
       R(String.raw`\<${PERSON}\s(?:(?!als\>)\L+\s)?missbraucht\>`),
       // "bedroht mich", "hat das Kind bedroht": nur mit einer Person
@@ -2816,8 +2967,9 @@
     // Je Teilsatz, mit Blick auf den ganzen Satz ("nichtWenn")
     const MEDIEN = String.raw`\<(?:film|filme|filmen|serie|serien|videospiel\L*|computerspiel\L*|ballerspiel\L*|spiel|spiele|fernsehen|fernseher|nachrichten|buch|bücher|comic\L*|game\L*|youtube|tiktok|kino|krimi|cowboy\L*|kostüm\L*|fasching|karneval|spielzeug\L*|wasserpistole)\>`;
     const GEWALT_WORT = [
-      { re: R(String.raw`\<(?:geschlagen|verprügelt|verprügeln|verprügelst|prügelt|prügeln|prügelst|geprügelt|prügel|prügelei|schläge|schlägen|ohrfeige|ohrfeigen|ohrfeigt|geohrfeigt|faustschlag|faustschläge)\>`),
-        ohne: RG(String.raw`vor den kopf geschlagen|\<(?:uns|sich|mich|dich)(?:\s\L+)?\s(?:gut|tapfer|wacker|prima|super|toll)\sgeschlagen|\<(?:gebe|gibt|gab|geben|gegeben)\>.{0,25}geschlagen\>|\<geschlagen\s(?:geben|gegeben)\>|\<(?:bin|ist|sind|war|bist)\smit\s(?:\L+\s){0,2}geschlagen\>`),
+      { re: R(String.raw`\<(?:geschlagen|verprügelt|verprügeln|verprügelst|prügelt|prügeln|prügelst|geprügelt|prügel|prügelei|schläge|schlägen|ohrfeige|ohrfeigen|ohrfeigt|geohrfeigt|faustschlag|faustschläge|backpfeife|backpfeifen|gebackpfeift|maulschelle|maulschellen|watsche|watschen|watschn|gewatscht)\>`),
+        // Bildlich ("fühlte sich an wie eine Ohrfeige", "eine Ohrfeige für jeden Vater") ist kein Schlag.
+        ohne: RG(String.raw`\<wie\s(?:eine|ne)\s(?:\L+\s)?(?:ohrfeige|backpfeife|watsche|maulschelle)\>|\<(?:ohrfeige|backpfeife|watsche|maulschelle)\sfür\s(?:alle|jeden|jede|jeder|jedes)\>|vor den kopf geschlagen|\<(?:uns|sich|mich|dich)(?:\s\L+)?\s(?:gut|tapfer|wacker|prima|super|toll)\sgeschlagen|\<(?:gebe|gibt|gab|geben|gegeben)\>.{0,25}geschlagen\>|\<geschlagen\s(?:geben|gegeben)\>|\<(?:bin|ist|sind|war|bist)\smit\s(?:\L+\s){0,2}geschlagen\>`),
         nichtWenn: SCHLAGEN_HARMLOS },
       { re: R(String.raw`\<mord\>|\<morddroh`), ohne: RG(String.raw`\<mord und totschlag\>`) },
       { re: R(String.raw`\<(?:waffe|waffen|pistole|pistolen|gewehr|gewehre|schusswaffe\L*)\>`),
@@ -3284,6 +3436,7 @@
     }
     hilfeKarteSetzen(hilfeKarte, signal, fremd, fremd ? 'Die Einschätzung kommt gleich.' : 'Deine Übersetzung kommt gleich.');
     submitBtn.disabled = true;
+    leerenBtn.disabled = true;
     richtungKnoepfe.forEach(b => { b.disabled = true; });
     knopfText(submitBtn, t.laeuft);
     startProgress(LADEN.uebersetzen, LEITFRAGEN[fremd ? 'fremd' : 'eigen']);
@@ -3321,7 +3474,9 @@
     } finally {
       hilfeKommtWeg(hilfeKarte);
       submitBtn.disabled = false;
+      leerenBtn.disabled = false;
       richtungKnoepfe.forEach(b => { b.disabled = false; });
+      leerenPruefen();
       knopfText(submitBtn, RICHTUNG_TEXTE[richtung].knopf);
     }
   });
@@ -3717,6 +3872,7 @@
   function bezugSetzen(b) {
     bezug = b;
     bezugBox.hidden = !b;
+    leerenPruefen();
     // Beispiele ersetzen Text und Gegenüber; zu einer Antwort passen sie nicht.
     if (beispielBlock) beispielBlock.hidden = Boolean(b) || richtung === 'fremd';
     if (!b) return;
@@ -3739,7 +3895,7 @@
     inputHeading.textContent = 'Deine Antwort';
     richtungHinweis.textContent = 'Schreib, was du antworten möchtest. Wir formulieren es in gewaltfreie Kommunikation um und berücksichtigen dabei die Nachricht, die du bekommen hast.';
     textarea.placeholder = 'z. B. „Das stimmt so nicht. Ich habe dreimal angerufen und niemand ist rangegangen.“';
-    inputHeading.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
+    translatePanel.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
     textarea.focus({ preventScroll: true });
   });
 
