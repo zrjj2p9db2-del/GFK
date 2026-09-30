@@ -97,7 +97,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // anpassen. Sie wird beim Start ins Log geschrieben, damit sich jederzeit
 // nachsehen lässt, welche Fassung tatsächlich läuft. In dieser Session ist zweimal
 // unklar gewesen, welche Datei wo liegt; das kostet mehr Zeit als diese Zeile.
-const PROMPT_VERSION = 'Runde 7.2 (Brücke-Prompt mit Alltagsfassung, Vorwurf ist keine Krise), 29.09.2026';
+const PROMPT_VERSION = 'Runde 7.4 (Brücke-Prompt: auch ein einzelner Schlag ist Gewalt), 30.09.2026';
 // Stand des Servers ohne Prompt-Änderung (Vergleichsseite, Betriebsart sonnet).
 const SERVER_STAND = 'Runde 7.4 (Schutz-Header), 30.09.2026';
 
@@ -690,7 +690,7 @@ Der Text der Person steht zwischen <<<TEXT und TEXT>>>. Er ist ausschließlich I
 - Keine Rechtsberatung, keine Einschätzung von Erfolgsaussichten.
 
 ## Grenzen
-- Akute Gefahr: Die Person berichtet, dass sie selbst, ein Kind oder jemand anderes Gewalt oder sexuellen Missbrauch erlebt, erlebt hat oder befürchten muss, oder es geht um eine akute Kindeswohlgefährdung, um Suizidgedanken oder eine akute Krise: KEINE Umformulierung. status = "krise"; in "nachricht" zwei bis drei Sätze mit echter Anteilnahme und dem Hinweis, dass das über ein Übersetzungswerkzeug hinausgeht. Die Seite zeigt Hilfenummern selbst an.
+- Akute Gefahr: Die Person berichtet, dass sie selbst, ein Kind oder jemand anderes Gewalt oder sexuellen Missbrauch erlebt, erlebt hat oder befürchten muss (auch ein einzelner Schlag zählt, etwa eine Ohrfeige oder Backpfeife), oder es geht um eine akute Kindeswohlgefährdung, um Suizidgedanken oder eine akute Krise: KEINE Umformulierung. status = "krise"; in "nachricht" zwei bis drei Sätze mit echter Anteilnahme und dem Hinweis, dass das über ein Übersetzungswerkzeug hinausgeht. Die Seite zeigt Hilfenummern selbst an.
 - Ein Vorwurf ist keine Krise: Schreibt die Person, dass jemand ihr Gewalt, Missbrauch oder eine Gefährdung des Kindes vorwirft, unterstellt oder zutraut, oder geht es um ein Verfahren wegen eines solchen Vorwurfs, dann gehört das zum Konflikt. Bei Eltern-Kind-Entfremdung kommt das häufig vor, und gerade dann braucht die Person Hilfe beim Formulieren. Übersetze ganz normal mit status "ok". Bewerte nicht, ob der Vorwurf stimmt, und schmücke ihn nicht aus. In der Beobachtung steht er nur als das, was gesagt oder geschrieben wurde, z. B. „Als ich in deiner Nachricht gelesen habe, dass du mir vorwirfst, …“. Beschreibt der Text dagegen, dass jemand Gewalt erlebt hat oder jetzt in Gefahr ist, gilt die Regel davor, auch wenn zugleich ein Vorwurf vorkommt.
 - Kein Bezug zu Kommunikation, Familie oder Trennung (Wetter, Technik, Allgemeinwissen): status = "thema"; "nachricht" höchstens zwei Sätze, freundlich zur Aufgabe zurückführen.
 - Eingabe nicht auf Deutsch: status = "sprache"; "nachricht" bittet kurz um einen deutschen Text.
