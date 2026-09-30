@@ -13,6 +13,10 @@
 // für test/app.html. Seit Runde 7.3 läuft der Brücke-Prompt fest mit Haiku 4.5,
 // unabhängig von BETRIEB (siehe BRUECKE weiter unten). Üben und Prüfer sind
 // unverändert.
+//
+// Runde 7.4 (30.09.2026): Schutz-Header für alle Seiten, strenge
+// Content-Security-Policy für test/index.html und vergleich.html. Die
+// Schriften liegen jetzt in public/fonts statt bei Google.
 
 const express = require('express');
 const path = require('path');
@@ -26,6 +30,49 @@ const PORT = 8080;
 // Besucher einen X-Forwarded-For-Header selbst mitschicken und sich damit eine
 // beliebige IP geben, um die Ratenbegrenzung unten zu umgehen.
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
+
+// ---------------------------------------------------------------------------
+// Schutz-Header (seit Runde 7.4)
+// ---------------------------------------------------------------------------
+// Für alle Seiten: keine Herkunftsangabe an andere Seiten (Referrer), keine
+// Einbettung in fremde Seiten, keine Kamera/Mikrofon/Standort, kein
+// Umdeuten von Dateitypen.
+//
+// Zusätzlich für die Seiten, deren Inhalt hier bekannt ist (test/index.html
+// und vergleich.html), eine strenge Content-Security-Policy: Der Browser darf
+// dort NICHTS von anderen Servern laden oder an andere Server senden, weder
+// Schriften noch Skripte, Bilder oder Anfragen. Damit kann auch ein Fehler
+// im eigenen Code keine Daten nach außen geben. Die Landingpage und
+// test/app.html bekommen sie (noch) nicht, weil sie Schriften von Google laden;
+// sobald die Schriften dort auch aus /fonts kommen, einfach die Pfade unten
+// ergänzen.
+const CSP_STRENG = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'self'",
+  "frame-ancestors 'none'"
+].join('; ');
+const STRENGE_PFADE = new Set(['/test/', '/test/index.html', '/vergleich.html']);
+
+app.use((req, res, next) => {
+  res.set({
+    'Referrer-Policy': 'no-referrer',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()',
+    'Cross-Origin-Opener-Policy': 'same-origin'
+  });
+  if (req.secure) res.set('Strict-Transport-Security', 'max-age=31536000');
+  if (STRENGE_PFADE.has(req.path)) res.set('Content-Security-Policy', CSP_STRENG);
+  next();
+});
 
 app.use(express.json({ limit: '32kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -52,7 +99,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // unklar gewesen, welche Datei wo liegt; das kostet mehr Zeit als diese Zeile.
 const PROMPT_VERSION = 'Runde 7.2 (Brücke-Prompt mit Alltagsfassung, Vorwurf ist keine Krise), 29.09.2026';
 // Stand des Servers ohne Prompt-Änderung (Vergleichsseite, Betriebsart sonnet).
-const SERVER_STAND = 'Runde 7.3 (Brücke fest mit Haiku 4.5), 30.09.2026';
+const SERVER_STAND = 'Runde 7.4 (Schutz-Header), 30.09.2026';
 
 // ---------------------------------------------------------------------------
 // Betriebsart — der eine Schalter für Tempo, Kosten und Gründlichkeit
