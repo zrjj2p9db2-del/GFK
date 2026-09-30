@@ -140,7 +140,7 @@
     <p><b>Dauer</b> ist die Zeit, die der Server auf das Modell gewartet hat. Im Betrieb kommt beim eigenen Text der Prüfer davor dazu (Haiku, meist 1,5 bis 2,5 Sekunden), bei allen Varianten gleich.</p>
     <p><b>Einfärbung</b> zählt, wie viele der vier Schritt-Texte Wort für Wort im Satz stehen. Die App sucht etwas nachsichtiger, färbt also mindestens so viel. <b>Markiert</b> zählt beim kurzen Prompt, wie viele Schritte das Modell selbst im Satz markiert hat (seit Runde 6.5).</p>
     <p>Die Fassung ohne Vorfall mit Einladung (Runde 6.4) und die Hilfe-Karte laufen hier nicht mit; es geht nur um die Übersetzung selbst.</p>
-    <p><b>Brücke-Prompt</b> (seit Runde 7.0): Die Antwort kommt schon in Abschnitten je Schritt, deshalb zählt <b>Einfärbung</b> dort, wie viele der vier Schritte im GFK-Text einen eigenen Abschnitt haben. <b>JSON-Format</b> zeigt, ob die API das Antwortformat erzwungen hat. <b>Im Alltag gesagt</b> (seit Runde 7.2) ist dieselbe Nachricht ohne Formelsätze; bei den Wörtern steht ihre Länge neben der des GFK-Texts. Eckige Klammern mit gestricheltem Rand sind Platzhalter für Details, die im Text fehlten. „Großeltern, Familie“ und „Öffentlichkeit“ wirken nur beim Brücke-Prompt.</p>
+    <p><b>Brücke-Prompt</b> (seit Runde 7.0): Die Antwort kommt schon in Abschnitten je Schritt, deshalb zählt <b>Einfärbung</b> dort, wie viele der vier Schritte im GFK-Text einen eigenen Abschnitt haben. <b>JSON-Format</b> zeigt, ob die API das Antwortformat erzwungen hat. <b>Flüssig formuliert</b> (seit Runde 7.2) ist dieselbe Nachricht ohne Formelsätze; bei den Wörtern steht ihre Länge neben der des GFK-Texts. Eckige Klammern mit gestricheltem Rand sind Platzhalter für Details, die im Text fehlten. „Großeltern, Familie“ und „Öffentlichkeit“ wirken nur beim Brücke-Prompt.</p>
     <p><button class="leise" id="kopieren">Alles als Text kopieren</button> <button class="leise" id="raus">Kennwort vergessen</button></p>
   </div>
 </div>
@@ -258,13 +258,13 @@
     var aend = Array.isArray(e.aenderungen) ? e.aenderungen : [];
     el.innerHTML = kopf +
         '<dt>Einfärbung</dt><dd>' + brSchritte(e) + ' von 4 Schritten</dd>' +
-        '<dt>Wörter</dt><dd>GFK ' + woerter(brText(e)) + (e.alltag ? ', Alltag ' + woerter(e.alltag) : '') + '</dd>' +
+        '<dt>Wörter</dt><dd>GFK ' + woerter(brText(e)) + (e.alltag ? ', flüssig ' + woerter(e.alltag) : '') + '</dd>' +
         '<dt>Änderungen</dt><dd>' + aend.length + '</dd>' +
         '<dt>JSON-Format</dt><dd>' + (d.schema === false ? 'ohne Schema (abgelehnt)' : 'erzwungen') + '</dd>' +
       '</dl>' +
       (e.anerkennung ? '<p class="intro">' + esc(e.anerkennung) + '</p>' : '') +
       '<div class="abschnitt">GFK-Text</div><p class="satz">' + satz + '</p>' +
-      (e.alltag ? '<div class="abschnitt">Im Alltag gesagt</div><p class="fluessig">' + platzhalter(e.alltag) + '</p>' : '') +
+      (e.alltag ? '<div class="abschnitt">Flüssig formuliert</div><p class="fluessig">' + platzhalter(e.alltag) + '</p>' : '') +
       '<div class="abschnitt">Aufbau</div><ul class="schritte">' +
         BR_REIHE.map(function (k) {
           var x = sch[k] || {};
@@ -362,7 +362,7 @@
       if (d.prompt === 'bruecke' || istBruecke(e)) {
         if (e.status && e.status !== 'ok') { z.push('Status ' + e.status + ': ' + (e.nachricht || ''), ''); return; }
         z.push('GFK: ' + brText(e));
-        if (e.alltag) z.push('Alltag: ' + e.alltag);
+        if (e.alltag) z.push('Flüssig formuliert: ' + e.alltag);
         var sch = e.schritte || {};
         BR_REIHE.forEach(function (k) { var x = sch[k] || {}; z.push(BR_NAME[k] + ': ' + brKern(x) + ' | ' + (x.warum || '')); });
         (e.aenderungen || []).forEach(function (c, i) { z.push('Änderung ' + (i + 1) + ' (' + c.art + ' → ' + (BR_NAME[c.ziel] || c.ziel) + '): ' + c.original + ' → ' + (c.neu || 'fällt weg')); });
