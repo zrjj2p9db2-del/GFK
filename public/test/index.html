@@ -1,4 +1,4 @@
-<!-- VERSION: Runde 7.3 (Brücke-Prompt zum Testen), 30.09.2026 (Frontend) -->
+<!-- VERSION: Runde 7.4 (Brücke-Prompt zum Testen), 30.09.2026 (Frontend) -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -6,11 +6,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TEST — GFK-Kompass</title>
 <meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Seit Runde 7.4 liegen die Schriften auf dem eigenen Server (public/fonts).
+     Vorher kamen sie von Google, und jeder Aufruf gab die IP-Adresse an Google. -->
+<link rel="preload" href="/fonts/fraunces-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/work-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+  @font-face {
+    font-family: 'Fraunces'; font-style: normal; font-weight: 100 900; font-display: swap;
+    src: url('/fonts/fraunces-latin-opsz-normal.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Fraunces'; font-style: normal; font-weight: 100 900; font-display: swap;
+    src: url('/fonts/fraunces-latin-ext-opsz-normal.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: 'Fraunces'; font-style: italic; font-weight: 100 900; font-display: swap;
+    src: url('/fonts/fraunces-latin-opsz-italic.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Fraunces'; font-style: italic; font-weight: 100 900; font-display: swap;
+    src: url('/fonts/fraunces-latin-ext-opsz-italic.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: 'Work Sans'; font-style: normal; font-weight: 100 900; font-display: swap;
+    src: url('/fonts/work-sans-latin-wght-normal.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Work Sans'; font-style: normal; font-weight: 100 900; font-display: swap;
+    src: url('/fonts/work-sans-latin-ext-wght-normal.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+
   :root {
     --paper: #EFF0EA;
     --panel: #E4E6DA;
@@ -121,8 +154,39 @@
     line-height: 1.12;
     letter-spacing: -0.01em;
     max-width: 26ch;
-    margin-bottom: 22px;
+    margin-bottom: 18px;
   }
+
+  /* Trittsteine unter der Überschrift (Runde 7.4, Variante B) */
+  .steine { margin: 2px 0 30px; }
+  .steine svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .st-wasser { fill: var(--obs); fill-opacity: 0.08; }
+  .st-wellen { fill: none; stroke: var(--obs); stroke-opacity: 0.28; stroke-width: 1.4; stroke-linecap: round; }
+  .st-ufer { fill: var(--panel); }
+  .st-uferlinie { fill: none; stroke: var(--line); stroke-width: 1.5; }
+  .st-gras { fill: none; stroke: var(--req); stroke-opacity: 0.45; stroke-width: 1.6; stroke-linecap: round; }
+  .st-weg { fill: none; stroke: var(--brand); stroke-opacity: 0.5; stroke-width: 1.7; stroke-dasharray: 1.5 6; stroke-linecap: round; }
+  .stein-obs { --stein: var(--obs); }
+  .stein-feel { --stein: var(--feel); }
+  .stein-need { --stein: var(--need); }
+  .stein-req { --stein: var(--req); }
+  .st-ring { fill: none; stroke: var(--stein); stroke-opacity: 0.22; stroke-width: 1.2; }
+  .st-schatten { fill: var(--stein); fill-opacity: 0.25; }
+  .st-oben { fill: var(--stein); }
+  .st-licht { fill: var(--paper); fill-opacity: 0.28; }
+  /* Die Steine tauchen beim Laden nacheinander auf. */
+  .stein { animation: auftauchen 0.7s ease-out both; }
+  .stein-obs { animation-delay: 0.15s; }
+  .stein-feel { animation-delay: 0.35s; }
+  .stein-need { animation-delay: 0.55s; }
+  .stein-req { animation-delay: 0.75s; }
+  @keyframes auftauchen { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .stein { animation: none; } }
+  .ufer {
+    display: flex; justify-content: space-between; margin-top: 4px;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  @media (max-width: 620px) { .steine { margin: -2px 0 24px; } }
 
   .hero .lead {
     color: var(--ink-soft);
@@ -153,10 +217,6 @@
   .stripe.cat-feel { background: var(--feel); }
   .stripe.cat-need { background: var(--need); }
   .stripe.cat-req { background: var(--req); }
-  .dot.cat-mixed {
-    width: 16px; height: 16px;
-    background: conic-gradient(var(--obs) 0deg 90deg, var(--feel) 90deg 180deg, var(--need) 180deg 270deg, var(--req) 270deg 360deg);
-  }
 
   .legend-desc { color: var(--ink-soft); font-size: 14px; padding-left: 17px; }
 
@@ -198,14 +258,37 @@
     margin-top: 8px;
   }
 
-  .examples { margin-top: 24px; }
+  .examples { margin-top: 18px; }
+  .examples[hidden] { display: none; }
 
+  /* Seit Runde 7.4 ein Aufklapper: leise Zeile mit Pfeil statt immer sichtbarer Knöpfe */
   .examples-label {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 13.5px;
-    color: var(--ink-soft);
-    margin-bottom: 10px;
+    color: var(--brand-dark);
+    cursor: pointer;
+    list-style: none;
+    padding: 4px 0;
+    text-decoration: underline;
+    text-decoration-color: rgba(59, 110, 104, 0.35);
+    text-underline-offset: 3px;
   }
+  .examples-label::-webkit-details-marker { display: none; }
+  .examples-label::after {
+    content: '';
+    width: 6px; height: 6px;
+    border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform 0.15s ease;
+  }
+  .examples[open] .examples-label::after { transform: translateY(1px) rotate(-135deg); }
+  .examples-label:hover { color: var(--brand); }
+  .examples-label:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 3px; }
+  .examples .chips { margin-top: 10px; }
+
+  .lang-hinweis { font-size: 13px; color: var(--ink-soft); margin: 2px 0 0; text-align: right; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 
@@ -258,27 +341,25 @@
     color: var(--ink);
   }
 
-  /* Progress bar */
-  .progress-bar {
-    height: 4px;
-    background: var(--line);
-    border-radius: 999px;
-    overflow: hidden;
-    margin-top: 16px;
-    max-width: 220px;
-    display: none;
+  /* Ladeanzeige (Runde 7.4): Der Fortschritt läuft im Knopf selbst, darunter
+     wechseln die vier Leitfragen. Nach 15 Sekunden pulsiert die Füllung leise. */
+  .knopf-fortschritt { position: relative; overflow: hidden; }
+  .knopf-fuellung {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+    background: var(--brand-dark); pointer-events: none;
+    transition: width 0.25s linear;
   }
-  .progress-bar.active { display: block; }
-  .progress-bar-fill {
-    height: 100%;
-    width: 0%;
-    background: var(--brand);
-    border-radius: 999px;
-    transition: width 0.4s ease;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .progress-bar-fill { transition: none; }
-  }
+  .knopf-text { position: relative; }
+  .primary-btn.laedt, .primary-btn.laedt:disabled { opacity: 1; background: #4E7D77; }
+  .knopf-fuellung.puls { animation: knopfpuls 1.8s ease-in-out infinite; }
+  @keyframes knopfpuls { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+  @media (prefers-reduced-motion: reduce) { .knopf-fuellung.puls { animation: none; } }
+  .lade-text { font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); margin: 10px 0 0; }
+  .lade-text b { font-weight: 600; }
+  .lade-text b.cat-obs { color: var(--obs); }
+  .lade-text b.cat-feel { color: var(--feel); }
+  .lade-text b.cat-need { color: var(--need); }
+  .lade-text b.cat-req { color: var(--req); }
 
   /* Character counter */
   .char-counter {
@@ -314,51 +395,10 @@
     transition: background 0.15s ease, color 0.15s ease;
   }
   .group-btn.active { background: var(--brand); color: var(--paper); }
-  .group-btn:focus-visible, .mode-btn:focus-visible {
+  .group-btn:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px rgba(43, 83, 79, 0.35);
   }
-
-  /* Mode toggle (Ebene 2: die Reiter innerhalb einer Gruppe) — feste einzeilige Leiste,
-     scrollt horizontal statt umzubrechen. Bleibt damit robust, egal wie viele Reiter
-     eine Gruppe später hat. */
-  .scroll-tabs-wrap { position: relative; margin-bottom: 24px; }
-  .scroll-tabs-wrap::after {
-    content: '';
-    position: absolute; top: 0; right: 0; bottom: 0; width: 28px;
-    background: linear-gradient(to right, transparent, var(--panel));
-    pointer-events: none;
-    border-radius: 0 10px 10px 0;
-  }
-  .mode-toggle {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 4px;
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 4px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .mode-toggle::-webkit-scrollbar { display: none; }
-  .mode-btn {
-    background: none;
-    border: none;
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--ink-soft);
-    border-radius: 7px;
-    transition: background 0.15s ease, color 0.15s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .mode-btn.active { background: var(--brand); color: var(--paper); }
-  .mode-btn.active .dot { box-shadow: 0 0 0 1.5px rgba(239, 240, 234, 0.65); }
 
   /* Übungen-Übersicht: Kartenraster statt scrollender Reiter — alles immer sichtbar */
   .exercise-grid {
@@ -389,19 +429,6 @@
   .difficulty-btn.active { background: var(--brand); color: var(--paper); }
   .ff-sentence { font-family: var(--serif); font-size: 17px; line-height: 1.6; margin-bottom: 18px; }
 
-  /* Difficulty row (Hörübung) */
-  .diff-row { display: flex; gap: 10px; margin-bottom: 20px; }
-  .diff-btn {
-    flex: 1; font-family: var(--sans); cursor: pointer; padding: 13px 10px; border-radius: 8px;
-    font-size: 14px; font-weight: 500; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink);
-  }
-  .diff-btn.active { border-color: var(--brand); background: rgba(59,110,104,0.1); color: var(--brand-dark); }
-
-  .gone-box {
-    text-align: center; padding: 28px 20px; color: var(--ink-soft); font-style: italic;
-    font-size: 14px; border: 1px dashed var(--line); border-radius: 10px; margin-bottom: 18px;
-  }
-
   /* Shared quiz engine (Bitte/Forderung, Perspektivwechsel, Hörübung-Fragen) */
   .quiz-progress { font-size: 13px; color: var(--ink-soft); margin-bottom: 6px; }
   .quiz-progress-bar {
@@ -418,6 +445,7 @@
     transition: width 0.25s ease;
   }
   .quiz-prompt { font-family: var(--serif); font-size: 18px; line-height: 1.5; margin-bottom: 18px; }
+  .quiz-prompt:focus, .quiz-progress:focus { outline: none; }
   .quiz-options { display: flex; flex-direction: column; gap: 8px; }
   .quiz-option {
     text-align: left; background: var(--paper); border: 1px solid var(--line); border-radius: 8px;
@@ -455,10 +483,40 @@
   .ff-segment.correct { border-left-color: var(--req); background: var(--req-tint); }
   .ff-segment.incorrect { border-left-color: var(--feel); background: var(--feel-tint); }
   .score-box {
-    text-align: center; padding: 26px; background: var(--panel); border-radius: 12px;
+    text-align: center; padding: 26px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px;
     font-family: var(--serif); font-size: 20px;
   }
   .score-box span { display: block; font-family: var(--sans); font-size: 13.5px; color: var(--ink-soft); margin-top: 6px; }
+  .score-box:focus { outline: none; }
+
+  /* Spiele (Runde 7.4). "hidden" fehlte bisher als Regel: "Nächste Frage"
+     stand schon vor der Antwort da und tat beim Klicken nichts. */
+  .hidden { display: none !important; }
+  .quiz-feedback b { font-weight: 600; }
+  .ghost-btn {
+    background: transparent; color: var(--brand-dark);
+    border: 1.5px solid var(--brand); border-radius: 8px;
+    padding: 12.5px 22px; font-size: 15px; font-weight: 500;
+    transition: background 0.15s ease;
+  }
+  .ghost-btn:hover { background: rgba(59, 110, 104, 0.08); }
+  .ghost-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(43, 83, 79, 0.35); }
+  .spiel-ende-knoepfe { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .spiel-ende-knoepfe .primary-btn { margin-top: 0; }
+  .bestwert { font-size: 13px; color: var(--ink-soft); text-align: center; margin: 10px 0 0; }
+  .bestwert b { color: var(--brand-dark); font-weight: 600; }
+  .rueckblick { margin-top: 28px; }
+  .rueckblick h3 { font-size: 18px; margin: 0 0 4px; }
+  .rueckblick > p { font-size: 14px; color: var(--ink-soft); margin: 0 0 14px; }
+  .rueckblick ol { display: flex; flex-direction: column; gap: 10px; }
+  .rueckblick li {
+    background: var(--paper); border: 1px solid var(--line); border-left: 3px solid var(--feel);
+    border-radius: 8px; padding: 12px 16px;
+  }
+  .rb-frage { font-family: var(--serif); font-size: 16px; line-height: 1.5; margin: 0 0 6px; }
+  .rb-antwort { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 4px; }
+  .rb-antwort b { color: var(--ink); font-weight: 600; }
+  .rb-erklaerung { font-size: 14px; line-height: 1.5; color: var(--ink); margin: 0; }
 
   /* Collapsible hint boxes */
   details.stance-hint, details.word-lists {
@@ -599,7 +657,11 @@
 
   @media (max-width: 620px) {
     .page { padding: 32px 18px 48px; }
-    .legend { grid-template-columns: 1fr; }
+    /* Seit Runde 7.4 auch auf dem Handy zwei Spalten, nur dichter: spart gut 100 px */
+    .legend { gap: 14px 16px; padding-top: 20px; }
+    .legend li { gap: 3px; }
+    .legend-name { font-size: 14.5px; }
+    .legend-desc { font-size: 13.5px; line-height: 1.45; }
     .comparison { grid-template-columns: 1fr; }
     .compare-col + .compare-col {
       border-left: none;
@@ -849,40 +911,12 @@
     border-radius: 10px;
   }
   .hilfe-karte.gefahr { border-left-color: var(--feel); }
-  /* Nach der Antwort verschwindet der Ladebalken (20 px) und alles darunter
-     rückt nach oben, während die Seite noch rollt. Ohne Abstand landete die
-     Überschrift 20 bis 30 px über dem Bildschirmrand. */
+  /* Nach der Antwort verschwindet die Leitfrage unter dem Knopf, und alles
+     darunter rückt nach oben, während die Seite noch rollt. Ohne Abstand
+     landete die Überschrift über dem Bildschirmrand. */
   #result, #foreign-result, #practice-result, .hilfe-karte { scroll-margin-top: 32px; }
   .hilfe-karte h4 { font-family: var(--serif); font-size: 17px; font-weight: 500; margin: 0 0 8px; color: var(--ink); }
 
-  /* Fassung ohne Vorfall: Hinweis und Einladung (seit Runde 6.4) */
-  .deutung-hinweis { margin: 0 0 4px; font-size: 14.5px; line-height: 1.55; color: var(--ink-soft); }
-  .deutung-hinweis mark { background: var(--obs-tint); color: var(--ink); padding: 0 3px; border-radius: 3px; }
-  details.einladung {
-    margin: 18px 0 0;
-    padding: 12px 16px;
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-left: 4px solid var(--obs);
-    border-radius: 10px;
-  }
-  details.einladung summary {
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 14.5px;
-    line-height: 1.5;
-    color: var(--obs);
-    list-style: none;
-  }
-  details.einladung summary::-webkit-details-marker { display: none; }
-  details.einladung summary::before { content: '+ '; }
-  details.einladung[open] summary::before { content: '– '; }
-  .einladung-inhalt { margin-top: 12px; }
-  .einladung-frage { margin: 0 0 10px; font-size: 15.5px; font-weight: 500; line-height: 1.5; color: var(--ink); }
-  .einladung textarea { min-height: 84px; }
-  .einladung .primary-btn { margin-top: 10px; }
-  .einladung-fehler { margin: 8px 0 0; font-size: 14px; color: var(--feel); }
-  .ohne-vorfall { font-size: 13.5px; color: var(--obs); }
   #compare-original { white-space: pre-line; }
   .hilfe-karte p { margin: 0 0 10px; font-size: 14.5px; line-height: 1.55; color: var(--ink); }
   .hilfe-karte p:last-child { margin-bottom: 0; }
@@ -948,7 +982,7 @@
 </style>
 </head>
 <body>
-<style>html{scroll-padding-top:72px}</style><div style="background:#954B36;color:#fff;font:500 14px/1.4 system-ui,sans-serif;padding:9px 16px;text-align:center;position:sticky;top:0;z-index:999">Testfassung mit dem Übersetzer der GFK-Brücke — nicht die öffentliche Seite. Änderungen hier ändern nichts an <a href="/" style="color:#fff">gfk-kompass</a>.</div>
+<style>html{scroll-padding-top:72px}</style><div style="background:#954B36;color:#fff;font:500 14px/1.4 system-ui,sans-serif;padding:9px 16px;text-align:center;position:sticky;top:0;z-index:999">Testfassung – nicht die öffentliche Seite. Änderungen hier ändern nichts an <a href="/" style="color:#fff">gfk-kompass</a>.</div>
 
 <div class="page">
 
@@ -969,6 +1003,25 @@
 
   <section class="hero">
     <h1>Vom Vorwurf zur&nbsp;Verständigung</h1>
+    <!-- Seit Runde 7.4: vier Trittsteine in den Farben der Schritte, vom Ufer
+         "Vorwurf" zum Ufer "Verständigung". Nur Schmuck, deshalb aria-hidden. -->
+    <div class="steine" aria-hidden="true">
+      <svg viewBox="0 0 700 150" focusable="false">
+      <path class="st-wasser" d="M92 68 C 210 56, 490 56, 608 68 L 608 132 C 490 144, 210 144, 92 132 Z"/>
+      <path class="st-wellen" d="M128 118 q 3.5 -3.5 7 0 t 7 0 M170 118 q 3.5 -3.5 7 0 t 7 0 M212 118 q 3.5 -3.5 7 0 t 7 0 M254 118 q 3.5 -3.5 7 0 t 7 0 M296 118 q 3.5 -3.5 7 0 t 7 0 M338 118 q 3.5 -3.5 7 0 t 7 0 M380 118 q 3.5 -3.5 7 0 t 7 0 M422 118 q 3.5 -3.5 7 0 t 7 0 M464 118 q 3.5 -3.5 7 0 t 7 0 M506 118 q 3.5 -3.5 7 0 t 7 0 M548 118 q 3.5 -3.5 7 0 t 7 0 M150 132 q 3 -3.5 6 0 t 6 0 M202 132 q 3 -3.5 6 0 t 6 0 M254 132 q 3 -3.5 6 0 t 6 0 M306 132 q 3 -3.5 6 0 t 6 0 M358 132 q 3 -3.5 6 0 t 6 0 M410 132 q 3 -3.5 6 0 t 6 0 M462 132 q 3 -3.5 6 0 t 6 0 M514 132 q 3 -3.5 6 0 t 6 0 M140 76 q 2.5 -3.5 5 0 t 5 0 M198 76 q 2.5 -3.5 5 0 t 5 0 M256 76 q 2.5 -3.5 5 0 t 5 0 M314 76 q 2.5 -3.5 5 0 t 5 0 M372 76 q 2.5 -3.5 5 0 t 5 0 M430 76 q 2.5 -3.5 5 0 t 5 0 M488 76 q 2.5 -3.5 5 0 t 5 0 M546 76 q 2.5 -3.5 5 0 t 5 0"/>
+      <path class="st-ufer" d="M0 150 L0 70 C 34 60, 76 58, 106 68 C 122 74, 126 100, 118 150 Z"/>
+      <path class="st-uferlinie" d="M0 70 C 34 60, 76 58, 106 68 C 122 74, 126 100, 118 150"/>
+      <path class="st-ufer" d="M700 150 L700 62 C 666 52, 626 52, 594 64 C 578 70, 574 98, 582 150 Z"/>
+      <path class="st-uferlinie" d="M700 62 C 666 52, 626 52, 594 64 C 578 70, 574 98, 582 150"/>
+      <path class="st-gras" d="M28 62 l -3 -9 M34 61 l 1 -11 M40 62 l 4 -8 M650 55 l -3 -9 M656 54 l 1 -11 M662 55 l 4 -8"/>
+      <path class="st-weg" d="M96 62 Q 142 26 185 80 Q 235 36 285 72 Q 335 30 385 76 Q 435 34 485 68 Q 545 22 600 56"/>
+      <g class="stein stein-obs"><ellipse class="st-ring" cx="185" cy="97" rx="48" ry="15"/><ellipse class="st-schatten" cx="185" cy="99" rx="36" ry="11"/><ellipse class="st-oben" cx="185" cy="94" rx="36" ry="12"/><ellipse class="st-licht" cx="176" cy="90" rx="15" ry="4"/></g>
+      <g class="stein stein-feel"><ellipse class="st-ring" cx="285" cy="89" rx="48" ry="15"/><ellipse class="st-schatten" cx="285" cy="91" rx="36" ry="11"/><ellipse class="st-oben" cx="285" cy="86" rx="36" ry="12"/><ellipse class="st-licht" cx="276" cy="82" rx="15" ry="4"/></g>
+      <g class="stein stein-need"><ellipse class="st-ring" cx="385" cy="93" rx="48" ry="15"/><ellipse class="st-schatten" cx="385" cy="95" rx="36" ry="11"/><ellipse class="st-oben" cx="385" cy="90" rx="36" ry="12"/><ellipse class="st-licht" cx="376" cy="86" rx="15" ry="4"/></g>
+      <g class="stein stein-req"><ellipse class="st-ring" cx="485" cy="85" rx="48" ry="15"/><ellipse class="st-schatten" cx="485" cy="87" rx="36" ry="11"/><ellipse class="st-oben" cx="485" cy="82" rx="36" ry="12"/><ellipse class="st-licht" cx="476" cy="78" rx="15" ry="4"/></g>
+      </svg>
+      <div class="ufer"><span>Vorwurf</span><span>Verständigung</span></div>
+    </div>
     <p class="lead">Ob im Austausch mit dem anderen Elternteil oder im Kontakt zu deinem Kind – wenn die Verständigung ins Stocken gerät, wiegt jedes Wort schwerer. Dieses Werkzeug übersetzt einen Satz in gewaltfreie Kommunikation nach Marshall Rosenberg – und zeigt dir, wie sie aufgebaut ist, damit du sie dir nach und nach spielerisch aneignen kannst.</p>
 
     <ul class="legend">
@@ -1066,20 +1119,22 @@
     <label class="sr-only" for="input-text">Dein Text</label>
     <textarea id="input-text" rows="5" maxlength="2000" placeholder="z. B. „Du lässt mich einfach nicht mit meinem Kind sprechen, das machst du doch mit Absicht.“"></textarea>
     <span class="char-counter" id="char-counter">0 / 2000</span>
+    <p class="lang-hinweis" id="lang-hinweis" hidden>Bei langen Nachrichten hilft es, den Teil einzufügen, der dich am meisten trifft.</p>
     <p class="field-hint" id="field-hint" hidden>Bitte gib zuerst einen Text ein.</p>
 
-    <div class="examples">
-      <span class="examples-label">Oder starte mit einem Beispiel:</span>
+    <!-- Seit Runde 7.4 zum Aufklappen, damit der Eingabebereich ruhiger wirkt -->
+    <details class="examples">
+      <summary class="examples-label">Oder starte mit einem Beispiel</summary>
       <div class="chips">
         <button type="button" class="chip" data-example="0">An den anderen Elternteil</button>
         <button type="button" class="chip" data-example="1">An mein Kind</button>
         <button type="button" class="chip" data-example="2">Ans Jugendamt</button>
         <button type="button" class="chip" data-example="3">Forum-Kommentar</button>
       </div>
-    </div>
+    </details>
 
-    <button type="button" id="submit-btn" class="primary-btn">In GFK übersetzen</button>
-    <div class="progress-bar" id="progress-bar"><div class="progress-bar-fill" id="progress-bar-fill"></div></div>
+    <button type="button" id="submit-btn" class="primary-btn knopf-fortschritt"><span class="knopf-fuellung" aria-hidden="true"></span><span class="knopf-text">In GFK übersetzen</span></button>
+    <p class="lade-text" id="lade-text" aria-hidden="true" hidden></p>
     <div role="status"><div class="hilfe-karte" id="hilfe-karte" hidden></div></div>
     <p class="hilfe-zeile">Wenn es gerade zu viel ist: <button type="button" class="hilfe-link" data-hilfe-oeffnen>Hier sind Menschen, die zuhören.</button></p>
     <p class="error-msg" id="error-msg" hidden></p>
@@ -1117,8 +1172,8 @@
       <textarea id="practice-req" rows="2" maxlength="200" placeholder="Wärst du bereit …"></textarea>
 
       <p class="field-hint" id="practice-field-hint" hidden>Bitte fülle mindestens ein Feld aus.</p>
-      <button type="button" id="practice-submit-btn" class="primary-btn">Rückmeldung holen</button>
-      <div class="progress-bar" id="practice-progress-bar"><div class="progress-bar-fill" id="practice-progress-bar-fill"></div></div>
+      <button type="button" id="practice-submit-btn" class="primary-btn knopf-fortschritt"><span class="knopf-fuellung" aria-hidden="true"></span><span class="knopf-text">Rückmeldung holen</span></button>
+      <p class="lade-text" id="practice-lade-text" aria-hidden="true" hidden></p>
       <div role="status"><div class="hilfe-karte" id="hilfe-karte-ueben" hidden></div></div>
       <p class="hilfe-zeile">Wenn es gerade zu viel ist: <button type="button" class="hilfe-link" data-hilfe-oeffnen>Hier sind Menschen, die zuhören.</button></p>
       <p class="error-msg" id="practice-error-msg" hidden></p>
@@ -1239,7 +1294,7 @@
     </div>
 
     <div id="alltag-block" hidden>
-      <h3>Im Alltag gesagt</h3>
+      <h3>Flüssig formuliert</h3>
       <p class="hint">Dieselbe Nachricht ohne Formelsätze, so wie du sie abschicken könntest. Die vier Schritte stecken noch drin, nur weniger sichtbar.</p>
       <div class="everyday-box"><p id="alltag-text"></p></div>
       <button type="button" class="text-btn" id="copy-alltag-btn">Text kopieren</button>
@@ -1383,8 +1438,6 @@
   const textarea = document.getElementById('input-text');
   const charCounter = document.getElementById('char-counter');
   const submitBtn = document.getElementById('submit-btn');
-  const progressBar = document.getElementById('progress-bar');
-  const progressBarFill = document.getElementById('progress-bar-fill');
   const fieldHint = document.getElementById('field-hint');
   const errorMsg = document.getElementById('error-msg');
   const resultSection = document.getElementById('result');
@@ -1428,8 +1481,6 @@
   const practiceNeed = document.getElementById('practice-need');
   const practiceReq = document.getElementById('practice-req');
   const practiceSubmitBtn = document.getElementById('practice-submit-btn');
-  const practiceProgressBar = document.getElementById('practice-progress-bar');
-  const practiceProgressBarFill = document.getElementById('practice-progress-bar-fill');
   const practiceFieldHint = document.getElementById('practice-field-hint');
   const practiceErrorMsg = document.getElementById('practice-error-msg');
   const practiceResultSection = document.getElementById('practice-result');
@@ -1507,16 +1558,122 @@
   showExercise('fi');
 
   // ---------------------------------------------------------------
-  // Gemeinsame Quiz-Engine — genutzt von Bitte/Forderung, Perspektiv-
-  // wechsel-Rätsel und den Fragen nach der Hörübung. Neue Items lassen
-  // sich einfach als weiteres Objekt in den jeweiligen Pool einfügen.
+  // Rundenende aller Spiele (seit Runde 7.4)
   // ---------------------------------------------------------------
-  function createQuizGame({ containerId, pool, questionCount }) {
+  // Punktzahl mit einem Satz dazu, der Bestwert (nur in diesem Browser),
+  // zwei Knöpfe und ein Rückblick auf alles, was danebenging, mit Erklärung.
+  const BESTWERT_SCHLUESSEL = 'gfk-kompass-bestwert-';
+
+  function bestwertLesen(id) {
+    try {
+      const w = JSON.parse(localStorage.getItem(BESTWERT_SCHLUESSEL + id) || 'null');
+      return w && typeof w.r === 'number' && typeof w.n === 'number' && w.n > 0 ? w : null;
+    } catch (e) { return null; }
+  }
+
+  function bestwertMerken(id, r, n) {
+    try { localStorage.setItem(BESTWERT_SCHLUESSEL + id, JSON.stringify({ r: r, n: n })); return true; }
+    catch (e) { return false; }
+  }
+
+  function rundenSatz(r, n) {
+    if (r === n) return 'Perfekt – alles richtig!';
+    const q = n ? r / n : 0;
+    if (q >= 0.8) return 'Stark – das sitzt schon richtig gut.';
+    if (q >= 0.5) return 'Gut gemacht – ein paar Stellen lohnen einen zweiten Blick.';
+    return 'Dranbleiben lohnt sich – unten ist alles noch einmal in Ruhe erklärt.';
+  }
+
+  // o: { id, richtig, von, fehler: [{ frage, gewaehlt, loesung, erklaerung }], neustart,
+  //      etiketten: ['Deine Antwort: ', ' · Richtig: '] (freiwillig) }
+  function spielEnde(container, o) {
+    const etiketten = o.etiketten || ['Deine Antwort: ', ' · Richtig: '];
+    const alt = bestwertLesen(o.id);
+    const besser = !alt || o.richtig / o.von > alt.r / alt.n;
+    const gemerkt = besser ? bestwertMerken(o.id, o.richtig, o.von) : true;
+    container.textContent = '';
+
+    const box = neu('div', 'score-box', o.richtig + ' von ' + o.von + ' richtig');
+    box.tabIndex = -1;
+    box.appendChild(neu('span', '', rundenSatz(o.richtig, o.von)));
+    container.appendChild(box);
+
+    if (gemerkt) {
+      const bw = neu('p', 'bestwert');
+      if (!alt) {
+        bw.textContent = 'Dein erster Durchgang. Ab jetzt merkt sich dieser Browser deinen Bestwert.';
+      } else if (besser) {
+        bw.appendChild(neu('b', '', 'Neuer Bestwert!'));
+        bw.appendChild(document.createTextNode(' Vorher: ' + alt.r + ' von ' + alt.n + '.'));
+      } else {
+        bw.textContent = 'Dein bester Durchgang bisher: ' + alt.r + ' von ' + alt.n + '.';
+      }
+      container.appendChild(bw);
+    }
+
+    const knoepfe = neu('div', 'spiel-ende-knoepfe');
+    const nochmal = neu('button', 'primary-btn', 'Nochmal spielen');
+    nochmal.type = 'button';
+    nochmal.addEventListener('click', o.neustart);
+    const weiter = weiterNachSpiel();
+    const weiterBtn = neu('button', 'ghost-btn', weiter.text);
+    weiterBtn.type = 'button';
+    weiterBtn.addEventListener('click', weiter.aktion);
+    knoepfe.appendChild(nochmal);
+    knoepfe.appendChild(weiterBtn);
+    container.appendChild(knoepfe);
+
+    if (o.fehler.length) {
+      const rb = neu('div', 'rueckblick');
+      rb.appendChild(neu('h3', '', o.fehler.length === 1 ? 'Einmal danebengelegen' : 'Das lohnt einen zweiten Blick'));
+      rb.appendChild(neu('p', '', o.fehler.length === 1 ? 'Die Frage, bei der es diesmal nicht gepasst hat:' : 'Die ' + o.fehler.length + ' Fragen, bei denen es diesmal nicht gepasst hat:'));
+      const liste = neu('ol');
+      o.fehler.forEach(f => {
+        const li = neu('li');
+        li.appendChild(neu('p', 'rb-frage', f.frage));
+        const a = neu('p', 'rb-antwort');
+        a.appendChild(document.createTextNode(etiketten[0]));
+        a.appendChild(neu('b', '', f.gewaehlt));
+        a.appendChild(document.createTextNode(etiketten[1]));
+        a.appendChild(neu('b', '', f.loesung));
+        li.appendChild(a);
+        if (f.erklaerung) li.appendChild(neu('p', 'rb-erklaerung', f.erklaerung));
+        liste.appendChild(li);
+      });
+      rb.appendChild(liste);
+      container.appendChild(rb);
+    }
+
+    box.focus({ preventScroll: true });
+    if (box.getBoundingClientRect().top < 0) box.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
+  }
+
+  // Rückmeldung nach einer Antwort: zuerst in Worten, ob es stimmt, damit es
+  // nicht nur an der Farbe hängt, dann die Erklärung. Im role="status"
+  // darüber, damit ein Screenreader sie vorliest.
+  function rueckmeldungZeigen(feedback, richtig, falschSatz, erklaerung) {
+    feedback.textContent = '';
+    feedback.appendChild(neu('b', '', richtig ? 'Richtig. ' : falschSatz + ' '));
+    if (erklaerung) feedback.appendChild(document.createTextNode(erklaerung));
+    feedback.classList.remove('hidden');
+    feedback.classList.toggle('correct', richtig);
+    feedback.classList.toggle('incorrect', !richtig);
+  }
+
+  // ---------------------------------------------------------------
+  // Gemeinsame Quiz-Engine — genutzt von Fakt/Interpretation, Pseudogefühl,
+  // Bitte/Forderung und Perspektivwechsel. Neue Items lassen sich einfach
+  // als weiteres Objekt in den jeweiligen Pool einfügen.
+  // ---------------------------------------------------------------
+  function createQuizGame({ id, containerId, pool, questionCount }) {
     const container = document.getElementById(containerId);
     let questions = [];
     let currentIndex = 0;
     let score = 0;
     let answered = false;
+    let fehler = [];
+    let currentOptions = [];
+    let currentCorrectIndex = null;
 
     function shuffle(arr) {
       const a = [...arr];
@@ -1532,10 +1689,9 @@
       questions = shuffle(pool).slice(0, n);
       currentIndex = 0;
       score = 0;
+      fehler = [];
       renderQuestion();
     }
-
-    let currentCorrectIndex = null;
 
     function renderQuestion() {
       answered = false;
@@ -1543,22 +1699,18 @@
 
       // Antwort-Reihenfolge bei jeder Anzeige neu mischen, damit die richtige
       // Antwort nicht immer an derselben Position steht.
-      const order = q.options.map((_, i) => i);
-      for (let i = order.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [order[i], order[j]] = [order[j], order[i]];
-      }
-      const shuffledOptions = order.map(idx => q.options[idx]);
+      const order = shuffle(q.options.map((_, i) => i));
+      currentOptions = order.map(idx => q.options[idx]);
       currentCorrectIndex = order.indexOf(q.correct);
 
       container.innerHTML = `
         <p class="quiz-progress">Frage ${currentIndex + 1} von ${questions.length}</p>
-        <div class="quiz-progress-bar"><div class="quiz-progress-bar-fill" style="width: ${Math.round(((currentIndex + 1) / questions.length) * 100)}%"></div></div>
-        <p class="quiz-prompt">${escapeHtml(q.prompt)}</p>
+        <div class="quiz-progress-bar" aria-hidden="true"><div class="quiz-progress-bar-fill" style="width: ${Math.round(((currentIndex + 1) / questions.length) * 100)}%"></div></div>
+        <p class="quiz-prompt" tabindex="-1">${escapeHtml(q.prompt)}</p>
         <div class="quiz-options">
-          ${shuffledOptions.map((opt, i) => `<button type="button" class="quiz-option" data-i="${i}">${escapeHtml(opt)}</button>`).join('')}
+          ${currentOptions.map((opt, i) => `<button type="button" class="quiz-option" data-i="${i}">${escapeHtml(opt)}</button>`).join('')}
         </div>
-        <p class="quiz-feedback hidden"></p>
+        <div role="status"><p class="quiz-feedback hidden"></p></div>
         <button type="button" class="primary-btn quiz-next hidden">Nächste Frage</button>
       `;
       container.querySelectorAll('.quiz-option').forEach(btn => {
@@ -1570,41 +1722,34 @@
       if (answered) return;
       answered = true;
       const q = questions[currentIndex];
-      const buttons = container.querySelectorAll('.quiz-option');
-      buttons.forEach((btn, idx) => {
+      const richtig = i === currentCorrectIndex;
+      container.querySelectorAll('.quiz-option').forEach((btn, idx) => {
         btn.disabled = true;
         if (idx === currentCorrectIndex) btn.classList.add('correct');
         else if (idx === i) btn.classList.add('incorrect');
       });
-      if (i === currentCorrectIndex) score++;
+      if (richtig) score++;
+      else fehler.push({ frage: q.prompt, gewaehlt: currentOptions[i], loesung: currentOptions[currentCorrectIndex], erklaerung: q.explanation || '' });
 
-      const feedback = container.querySelector('.quiz-feedback');
-      feedback.textContent = q.explanation || '';
-      feedback.classList.remove('hidden');
-      feedback.classList.toggle('correct', i === currentCorrectIndex);
-      feedback.classList.toggle('incorrect', i !== currentCorrectIndex);
+      rueckmeldungZeigen(container.querySelector('.quiz-feedback'), richtig, 'Nicht ganz – richtig ist „' + currentOptions[currentCorrectIndex] + '“.', q.explanation);
 
       const nextBtn = container.querySelector('.quiz-next');
       nextBtn.classList.remove('hidden');
       nextBtn.textContent = currentIndex === questions.length - 1 ? 'Ergebnis anzeigen' : 'Nächste Frage';
       nextBtn.onclick = () => {
         currentIndex++;
-        if (currentIndex < questions.length) renderQuestion();
-        else renderResult();
+        if (currentIndex < questions.length) {
+          renderQuestion();
+          container.querySelector('.quiz-prompt').focus({ preventScroll: true });
+        } else {
+          spielEnde(container, { id: id, richtig: score, von: questions.length, fehler: fehler, neustart: start });
+        }
       };
+      // Der gewählte Knopf ist jetzt gesperrt und verliert den Fokus.
+      nextBtn.focus({ preventScroll: true });
     }
 
-    function renderResult() {
-      container.innerHTML = `
-        <div class="score-box">${score} von ${questions.length} richtig
-          <span>${score === questions.length ? 'Perfekt!' : 'Gut gemacht — schau dir die Erklärungen bei Bedarf nochmal an.'}</span>
-        </div>
-        <button type="button" class="ghost-btn quiz-restart" style="margin-top:16px;">Nochmal spielen</button>
-      `;
-      container.querySelector('.quiz-restart').addEventListener('click', start);
-    }
-
-    return { start, container: () => container, questionsRef: () => questions };
+    return { start };
   }
 
   // ---------------------------------------------------------------
@@ -1643,7 +1788,7 @@
     { prompt: "„Bei Mama wird sich überhaupt nicht ordentlich gekümmert.“", options: ["Fakt", "Interpretation"], correct: 1, explanation: "Pauschale Bewertung statt konkreter Beschreibung." }
   ];
 
-  const fiGame = createQuizGame({ containerId: 'fi-quiz-container', pool: FAKT_INTERPRETATION, questionCount: 15 });
+  const fiGame = createQuizGame({ id: 'fi', containerId: 'fi-quiz-container', pool: FAKT_INTERPRETATION, questionCount: 15 });
   fiGame.start();
 
   // ---------------------------------------------------------------
@@ -1719,7 +1864,7 @@
     { prompt: "„Ich bin verzweifelt.“", options: ["Echtes Gefühl", "Pseudogefühl"], correct: 0, explanation: "Echtes, unmittelbares Gefühl." }
   ];
 
-  const pgGame = createQuizGame({ containerId: 'pg-quiz-container', pool: PSEUDOGEFUEHL, questionCount: 15 });
+  const pgGame = createQuizGame({ id: 'pg', containerId: 'pg-quiz-container', pool: PSEUDOGEFUEHL, questionCount: 15 });
   pgGame.start();
 
   // ---------------------------------------------------------------
@@ -1804,8 +1949,8 @@
     { prompt: "Der andere Elternteil möchte jede Kommunikation nur noch schriftlich, nie mehr am Telefon. Welches Bedürfnis könnte dahinterstecken?", options: ["Klarheit", "Geselligkeit", "Humor", "Abwechslung"], correct: 0, explanation: "Der Wunsch nach ausschließlich schriftlicher Kommunikation kann aus dem Bedürfnis nach Klarheit und Nachvollziehbarkeit entstehen." }
   ];
 
-  const bfGame = createQuizGame({ containerId: 'bf-quiz-container', pool: BITTE_FORDERUNG, questionCount: 15 });
-  const pwGame = createQuizGame({ containerId: 'pw-quiz-container', pool: PERSPEKTIVWECHSEL, questionCount: 12 });
+  const bfGame = createQuizGame({ id: 'bf', containerId: 'bf-quiz-container', pool: BITTE_FORDERUNG, questionCount: 15 });
+  const pwGame = createQuizGame({ id: 'pw', containerId: 'pw-quiz-container', pool: PERSPEKTIVWECHSEL, questionCount: 12 });
   bfGame.start();
   pwGame.start();
 
@@ -2038,6 +2183,7 @@
 
   const FF_LABELS = { obs: "Beobachtung", feel: "Gefühl", need: "Bedürfnis", req: "Bitte" };
   const FF_ORDER = ["obs", "feel", "need", "req"];
+  const FF_IN = { obs: 'in der Beobachtung', feel: 'im Gefühl', need: 'im Bedürfnis', req: 'in der Bitte' };
 
   function shuffleArray(arr) {
     const a = [...arr];
@@ -2057,6 +2203,7 @@
     let score = 0;
     let answered = false;
     let difficulty = 'easy';
+    let fehler = [];
 
     function combinedSentence(q) {
       return q.hardSentence;
@@ -2066,8 +2213,8 @@
       answered = false;
       const q = questions[currentIndex];
       const progressHtml = `
-        <p class="quiz-progress">Satz ${currentIndex + 1} von ${questions.length}</p>
-        <div class="quiz-progress-bar"><div class="quiz-progress-bar-fill" style="width: ${Math.round(((currentIndex + 1) / questions.length) * 100)}%"></div></div>
+        <p class="quiz-progress" tabindex="-1">Satz ${currentIndex + 1} von ${questions.length}</p>
+        <div class="quiz-progress-bar" aria-hidden="true"><div class="quiz-progress-bar-fill" style="width: ${Math.round(((currentIndex + 1) / questions.length) * 100)}%"></div></div>
       `;
 
       if (difficulty === 'easy') {
@@ -2081,7 +2228,7 @@
               </button>
             `).join('')}
           </div>
-          <p class="quiz-feedback hidden"></p>
+          <div role="status"><p class="quiz-feedback hidden"></p></div>
           <button type="button" class="primary-btn quiz-next hidden">Nächster Satz</button>
         `;
         container.querySelectorAll('.ff-segment').forEach(btn => {
@@ -2095,7 +2242,7 @@
           <div class="quiz-options">
             ${FF_ORDER.map(cat => `<button type="button" class="quiz-option" data-cat="${cat}">${FF_LABELS[cat]}</button>`).join('')}
           </div>
-          <p class="quiz-feedback hidden"></p>
+          <div role="status"><p class="quiz-feedback hidden"></p></div>
           <button type="button" class="primary-btn quiz-next hidden">Nächster Satz</button>
         `;
         container.querySelectorAll('.quiz-option').forEach(btn => {
@@ -2114,35 +2261,33 @@
         if (btn.dataset.cat === q.flaw) btn.classList.add('correct');
         else if (btn.dataset.cat === chosenCat) btn.classList.add('incorrect');
       });
-      if (chosenCat === q.flaw) score++;
+      const richtig = chosenCat === q.flaw;
+      if (richtig) score++;
+      else fehler.push({ frage: q.hardSentence, gewaehlt: FF_LABELS[chosenCat], loesung: FF_LABELS[q.flaw], erklaerung: q.explanation });
 
-      const feedback = container.querySelector('.quiz-feedback');
-      feedback.textContent = q.explanation;
-      feedback.classList.remove('hidden');
-      feedback.classList.toggle('correct', chosenCat === q.flaw);
-      feedback.classList.toggle('incorrect', chosenCat !== q.flaw);
+      rueckmeldungZeigen(container.querySelector('.quiz-feedback'), richtig, 'Nicht ganz – der Fehler steckt ' + FF_IN[q.flaw] + '.', q.explanation);
 
       const nextBtn = container.querySelector('.quiz-next');
       nextBtn.classList.remove('hidden');
       nextBtn.textContent = currentIndex === questions.length - 1 ? 'Ergebnis anzeigen' : 'Nächster Satz';
       nextBtn.onclick = () => {
         currentIndex++;
-        if (currentIndex < questions.length) renderQuestion();
-        else {
-          container.innerHTML = `
-            <p class="quiz-progress">Fertig!</p>
-            <p class="quiz-prompt">${score} von ${questions.length} richtig.</p>
-            <button type="button" class="primary-btn" id="ff-restart-btn">Nochmal spielen</button>
-          `;
-          document.getElementById('ff-restart-btn').addEventListener('click', () => restart());
+        if (currentIndex < questions.length) {
+          renderQuestion();
+          container.querySelector('.quiz-progress').focus({ preventScroll: true });
+        } else {
+          spielEnde(container, { id: 'ff-' + difficulty, richtig: score, von: questions.length, fehler: fehler, neustart: restart,
+            etiketten: ['Du hast getippt auf: ', ' · Der Fehler steckt in: '] });
         }
       };
+      nextBtn.focus({ preventScroll: true });
     }
 
     function restart() {
       questions = shuffleArray(pool).slice(0, FF_PRO_RUNDE);
       currentIndex = 0;
       score = 0;
+      fehler = [];
       renderQuestion();
     }
 
@@ -2178,16 +2323,21 @@
   // ruckelt die Nadel gegen das Laden der Schrift an.
   window.addEventListener('load', () => compass.classList.add('settled'));
 
-  // Eigener Text: bis 2000 Zeichen wie bei der GFK-Brücke. Fremdnachricht
-  // bleibt bei 600 (unverändert).
+  // Beide Richtungen bis 2000 Zeichen (Fremdnachricht seit Runde 7.4, vorher
+  // 600): Schreiben vom Anwalt oder längere Nachrichten passen sonst nicht.
+  // Der Server erlaubt 2000 für beide. Ab 1200 Zeichen bei einer
+  // Fremdnachricht ein leiser Hinweis, das Wichtigste herauszugreifen.
   const MAX_EIGEN = 2000;
-  const MAX_FREMD = 600;
+  const MAX_FREMD = 2000;
+  const FREMD_HINWEIS_AB = 1200;
   let MAX_CHARS = MAX_EIGEN;
+  const langHinweis = document.getElementById('lang-hinweis');
 
   function updateCharCounter() {
     const len = textarea.value.length;
     charCounter.textContent = `${len} / ${MAX_CHARS}`;
     charCounter.classList.toggle('warn', len >= MAX_CHARS * 0.9);
+    langHinweis.hidden = !(richtung === 'fremd' && len >= FREMD_HINWEIS_AB);
   }
 
   textarea.addEventListener('input', updateCharCounter);
@@ -2209,7 +2359,7 @@
   // zweiter Versuch nur verschlimmern würde (Ratenbegrenzung) oder die sich nicht
   // von allein beheben (zu langer Text), wird nicht wiederholt.
   // Erscheint beim Laden in der Browser-Konsole.
-  console.log('GFK-Kompass Frontend, Runde 7.3 (Brücke-Prompt zum Testen), 30.09.2026');
+  console.log('GFK-Kompass Frontend, Runde 7.4 (Brücke-Prompt zum Testen), 30.09.2026');
 
   const NON_RETRYABLE_CODES = ['rate_limited', 'too_long', 'bad_request', 'auth_error'];
 
@@ -2319,13 +2469,7 @@
 
   let richtung = 'eigen';
   let gegenueberWahl = null;
-  // Betriebsart des Servers. Beim Übersetzen wirkt das Gegenüber nur in
-  // "schnell"; in "gruendlich" bekommt der lange Prompt den reinen Text.
-  // Dort wird das Feld bei "Eigener Text" ausgeblendet, statt etwas zu
-  // versprechen, das nicht passiert. Die Abfrage kostet nichts.
-  let betrieb = 'schnell';
 
-  const gegenueberBlock = document.getElementById('gegenueber-block');
   const richtungKnoepfe = document.querySelectorAll('.richtung button');
   const wahlKnoepfe = document.querySelectorAll('.wahl button');
   const gegenueberFrei = document.getElementById('gegenueber-frei');
@@ -2335,26 +2479,14 @@
   const inputHeading = document.getElementById('input-heading');
   const beispielBlock = document.querySelector('#translate-panel .examples');
 
-  // Seit Runde 7.0 übersetzt diese Seite mit dem Brücke-Prompt, und der
-  // nutzt das Gegenüber in jeder Betriebsart. Das Feld bleibt deshalb immer
-  // sichtbar.
-  function gegenueberWirkt() {
-    return true;
-  }
-
-  function gegenueberSichtbarkeit() {
-    gegenueberBlock.hidden = !gegenueberWirkt();
-  }
-
-  fetch('/api/version', { cache: 'no-store' })
-    .then(r => r.ok ? r.json() : null)
-    .then(v => {
-      if (v && typeof v.betrieb === 'string') {
-        betrieb = v.betrieb;
-        gegenueberSichtbarkeit();
-      }
-    })
-    .catch(() => {});
+  // Seit Runde 7.4 hat jeder Reiter seinen eigenen Entwurf: Text und Gegenüber.
+  // Wer zur Fremdnachricht wechselt, findet ein leeres Feld; wer zurückgeht,
+  // findet seinen eigenen Text wieder. Nur im Arbeitsspeicher der Seite,
+  // nichts davon wird gespeichert.
+  const entwurf = {
+    eigen: { text: '', wahl: null, frei: '' },
+    fremd: { text: '', wahl: null, frei: '' }
+  };
 
   function gegenueberNotizSetzen() {
     if (richtung === 'eigen' && gegenueberWahl === 'behoerde') {
@@ -2369,6 +2501,11 @@
     // das Ergebnis eines eigenen Textes in der Anzeige der Fremdnachricht.
     if (submitBtn.disabled || !RICHTUNG_TEXTE[r]) return;
     bezugSetzen(null);
+    // Entwurf des bisherigen Reiters merken, den des neuen zurückholen.
+    if (r !== richtung) {
+      entwurf[richtung] = { text: textarea.value, wahl: gegenueberWahl, frei: gegenueberFrei.value };
+    }
+    const zurueck = entwurf[r];
     richtung = r;
     const t = RICHTUNG_TEXTE[r];
     richtungKnoepfe.forEach(b => {
@@ -2376,21 +2513,22 @@
       b.classList.toggle('aktiv', an);
       b.setAttribute('aria-pressed', String(an));
     });
-    gegenueberSichtbarkeit();
     // "Großeltern, Familie" und "Öffentlichkeit" gibt es nur beim eigenen
     // Text; die Fremdnachricht behält ihre vier Knöpfe und ihre Beschriftung.
     wahlKnoepfe.forEach(b => {
       if (b.hasAttribute('data-nur-eigen')) b.hidden = (r === 'fremd');
       if (b.dataset.wer === 'behoerde') b.textContent = r === 'fremd' ? 'Behörde / Jugendamt' : 'Jugendamt, Gericht, Fachstelle';
     });
-    if (r === 'fremd' && (gegenueberWahl === 'familie' || gegenueberWahl === 'oeffentlich')) gegenueberWaehlen(null);
+    textarea.value = zurueck.text;
+    gegenueberFrei.value = zurueck.frei;
+    gegenueberWaehlen(r === 'fremd' && (zurueck.wahl === 'familie' || zurueck.wahl === 'oeffentlich') ? null : zurueck.wahl);
     MAX_CHARS = r === 'fremd' ? MAX_FREMD : MAX_EIGEN;
     textarea.maxLength = MAX_CHARS;
     updateCharCounter();
     inputHeading.textContent = t.titel;
     richtungHinweis.textContent = t.hinweis;
     textarea.placeholder = t.platzhalter;
-    submitBtn.textContent = t.knopf;
+    knopfText(submitBtn, t.knopf);
     gegenueberFrage.firstChild.nodeValue = t.frage + ' ';
     // Die Beispiele sind eigene Sätze; zu einer Fremdnachricht passen sie nicht.
     if (beispielBlock) beispielBlock.hidden = (r === 'fremd');
@@ -2426,7 +2564,7 @@
   // Was an den Server geht. Ohne Wahl wird nichts mitgeschickt, dann läuft
   // alles genau wie vorher.
   function gegenueberAngaben() {
-    if (!gegenueberWahl || !gegenueberWirkt()) return null;
+    if (!gegenueberWahl) return null;
     const a = { wer: gegenueberWahl };
     if (gegenueberWahl === 'andere') {
       const f = gegenueberFrei.value.trim();
@@ -2483,215 +2621,6 @@
     }
     setTimeout(() => copyForeignBtn.textContent = original, 1600);
   });
-
-  // ---------------------------------------------------------------
-  // Einfärbung der vier Schritte
-  // ---------------------------------------------------------------
-  // Findet die Stellen der vier Schritte im GFK-Satz, damit die Seite sie
-  // einfärben kann.
-  //
-  // Für jeden Schritt werden alle möglichen Stellen gesammelt, in drei Stufen,
-  // die strengste zuerst:
-  //
-  //   1. wortgleich, wie bisher
-  //   2. wortgleich ohne Anführungszeichen und Schlusspunkt ("Kontakt." → "Kontakt")
-  //   3. kürzeste Stelle im Satz, die die Wörter des Schritts enthält, auch in
-  //      anderer Reihenfolge ("Ich bin traurig." → "bin ich traurig")
-  //
-  // Eine Stelle zählt nur, wenn sie an einer Wortgrenze beginnt: "Ruhe" wird
-  // nie mitten in "Unruhe" eingefärbt. Stufe 3 greift nur, wenn fast alle
-  // Wörter des Schritts dastehen, die Stelle nicht viel länger ist als der
-  // Schritt und sie über kein Satzzeichen reicht, das im Schritt nicht steht.
-  //
-  // Danach werden die Stellen so verteilt, dass sich nichts überschneidet und
-  // die Reihenfolge der vier Schritte stimmt. Steht "traurig" zweimal im Satz
-  // und ist das erste schon Teil der Beobachtung, nimmt das Gefühl das zweite.
-  // Lieber gar nicht einfärben als an der falschen Stelle.
-  //
-  // Alle Stellen werden im Originalsatz gezählt, nie in einer kleingeschriebenen
-  // Kopie; so verrutscht nichts, wenn ein Buchstabe beim Kleinschreiben länger
-  // wird (etwa das türkische "İ").
-  
-  
-  // Wortzeichen: Buchstaben aller Schriften. Ältere Browser kennen \p{...}
-  // nicht; dort gelten wenigstens die lateinischen Buchstaben. Als Text gebaut,
-  // nicht als /.../, damit ein alter Browser nicht schon beim Lesen abbricht.
-  const EINF_W = (() => {
-    try { new RegExp('[\\p{L}\\p{N}]', 'u'); return { k: '[\\p{L}\\p{N}]', f: 'u' }; }
-    catch (e) { return { k: '[0-9A-Za-zªµºÀ-ÖØ-öø-ɏ]', f: '' }; }
-  })();
-  const WORTZEICHEN = new RegExp(EINF_W.k, EINF_W.f);
-  const istWortzeichen = z => z !== undefined && z !== '' && WORTZEICHEN.test(z);
-  const SATZZEICHEN = /[.,;:!?]/g;
-  
-  function alleVorkommen(satz, text) {
-    const muster = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
-    const re = new RegExp(muster, 'gi' + EINF_W.f);
-    const treffer = [];
-    let m;
-    while ((m = re.exec(satz)) !== null) {
-      if (m[0].length === 0) { re.lastIndex++; continue; }
-      treffer.push({ start: m.index, end: m.index + m[0].length });
-    }
-    return treffer;
-  }
-  
-  // Liefert die Kandidaten eines Schritts, nach Güte sortiert in Durchgänge:
-  //   0  wortgleich, ganze Wörter
-  //   1  ohne Anführungszeichen und Schlusspunkt, ganze Wörter
-  //   2  Wörter in anderer Reihenfolge
-  //   3  wortgleich, aber am Ende an ein längeres Wort angehängt
-  //      ("Verlässlichkeit" in "Verlässlichkeiten")
-  function kandidaten(satz, rohtext) {
-    const s = String(satz || '');
-    const t = String(rohtext || '').trim();
-    const liste = [];
-    if (!s || !t) return liste;
-  
-    function wortgleich(text, stufe) {
-      if (text.length < 2 && !istWortzeichen(text)) return;
-      const vornWort = istWortzeichen(text[0]);
-      const hintenWort = istWortzeichen(text[text.length - 1]);
-      for (const f of alleVorkommen(s, text)) {
-        const anfangOk = !vornWort || !istWortzeichen(s[f.start - 1]);
-        const endeOk = !hintenWort || !istWortzeichen(s[f.end]);
-        if (!anfangOk) continue;                     // nie mitten im Wort beginnen
-        liste.push({ start: f.start, end: f.end, gang: endeOk ? stufe : 3 });
-      }
-    }
-  
-    // Stufe 1 und 2
-    wortgleich(t, 0);
-    const kern = t.replace(/^[\s„“”"'‚‘’»«]+/, '').replace(/[\s„“”"'‚‘’»«.!?,;:]+$/, '');
-    if (kern && kern !== t) wortgleich(kern, 1);
-  
-    // Stufe 3
-    const wortRe = new RegExp(EINF_W.k + '+', 'g' + EINF_W.f);
-    const satzWoerter = [];
-    let m;
-    while ((m = wortRe.exec(s)) !== null) {
-      satzWoerter.push({ w: m[0].toLowerCase(), start: m.index, end: m.index + m[0].length });
-    }
-    const schrittWoerter = (t.match(wortRe) || []).map(w => w.toLowerCase());
-    if (schrittWoerter.length > 0 && satzWoerter.length > 0) {
-      const gesucht = new Map();
-      schrittWoerter.forEach(w => gesucht.set(w, (gesucht.get(w) || 0) + 1));
-      const n = schrittWoerter.length;
-      // Bei kurzen Schritten müssen alle Wörter da sein, bei langen fast alle.
-      const mindestens = n <= 3 ? n : Math.ceil(n * 0.8);
-      const hoechstLaenge = n + Math.max(2, Math.ceil(n * 0.5));
-      // Satzzeichen zwischen dem ersten und dem letzten Wort des Schritts.
-      const innen = t.slice(t.search(WORTZEICHEN));
-      const erlaubteZeichen = (innen.replace(new RegExp('[^' + EINF_W.k.slice(1) + '+$', EINF_W.f), '').match(SATZZEICHEN) || []).length;
-  
-      const fenster = [];
-      for (let a = 0; a < satzWoerter.length; a++) {
-        if (!gesucht.has(satzWoerter[a].w)) continue;   // beginnt mit einem gesuchten Wort
-        const rest = new Map(gesucht);
-        let gedeckt = 0;
-        for (let b = a; b < satzWoerter.length && b - a + 1 <= hoechstLaenge; b++) {
-          const w = satzWoerter[b].w;
-          if (rest.get(w) > 0) { rest.set(w, rest.get(w) - 1); gedeckt++; }
-          if (!gesucht.has(w) || gedeckt < mindestens) continue;  // endet mit einem gesuchten Wort
-          const zeichen = (s.slice(satzWoerter[a].start, satzWoerter[b].end).match(SATZZEICHEN) || []).length;
-          if (zeichen > erlaubteZeichen) break;          // reicht über ein fremdes Satzzeichen
-          fenster.push({ start: satzWoerter[a].start, end: satzWoerter[b].end, gedeckt, laenge: b - a + 1 });
-        }
-      }
-      fenster.sort((x, y) => y.gedeckt - x.gedeckt || x.laenge - y.laenge || x.start - y.start);
-      fenster.forEach(f => liste.push({ start: f.start, end: f.end, gang: 2 }));
-    }
-  
-    // Innerhalb eines Durchgangs bleibt die Reihenfolge erhalten: bei Stufe 1
-    // und 2 nach Stelle im Satz, bei Stufe 3 nach Güte.
-    return liste.map((k, i) => Object.assign(k, { i })).sort((x, y) => x.gang - y.gang || x.i - y.i);
-  }
-  
-  // Beste Stelle für einen einzelnen Schritt, ohne Rücksicht auf die anderen.
-  function schrittFinden(satz, text) {
-    const k = kandidaten(satz, text)[0];
-    return k ? { start: k.start, end: k.end } : null;
-  }
-  
-  // Stellen für alle Schritte zugleich, ohne Überschneidung, nach Stelle sortiert.
-  //
-  // Probiert alle Verteilungen durch (bei vier Schritten und höchstens acht
-  // Stellen je Schritt einige tausend) und nimmt die beste:
-  //   1. möglichst viele Schritte eingefärbt
-  //   2. möglichst in der Reihenfolge Beobachtung, Gefühl, Bedürfnis, Bitte;
-  //      so bekommt das Bedürfnis "Kontakt" das Wort nach "weil mir" und nicht
-  //      das in der Beobachtung, auch wenn die Beobachtung selbst nicht
-  //      gefunden wird
-  //   3. möglichst wortgleiche Stellen
-  //   4. sonst die frühere Stelle
-  // Vergleicht zwei Bewertungen Stelle für Stelle; kleiner ist besser.
-  function einfBesser(a, b) {
-    for (let n = 0; n < a.length; n++) if (a[n] !== b[n]) return a[n] < b[n];
-    return false;
-  }
-  const EINF_REIHENFOLGE = { 'Beobachtung': 0, 'Gefühl': 1, 'Bedürfnis': 2, 'Bitte': 3 };
-  
-  function schritteFinden(satz, schritte) {
-    const s = String(satz || '');
-    const liste = (Array.isArray(schritte) ? schritte : [])
-      .map((schritt, nr) => {
-        const category = schritt && schritt.category;
-        return {
-          category,
-          rang: Object.prototype.hasOwnProperty.call(EINF_REIHENFOLGE, category) ? EINF_REIHENFOLGE[category] : nr,
-          k: kandidaten(s, schritt && schritt.text).slice(0, 8)
-        };
-      })
-      .filter(x => x.k.length > 0);
-    if (liste.length === 0) return [];
-    if (liste.length > 5) return schritteFindenEinfach(liste);
-  
-    let beste = null;
-    const wahl = [];
-    const suche = i => {
-      if (i === liste.length) {
-        let gesetzt = 0, verdreht = 0, guete = 0, stelle = 0;
-        for (let a = 0; a < wahl.length; a++) {
-          if (!wahl[a]) continue;
-          gesetzt++;
-          guete += wahl[a].k.gang;
-          stelle += wahl[a].j;
-          for (let b = 0; b < wahl.length; b++) {
-            if (wahl[b] && liste[a].rang < liste[b].rang && wahl[a].k.start > wahl[b].k.start) verdreht++;
-          }
-        }
-        const wert = [-gesetzt, verdreht, guete, stelle];
-        if (!beste || einfBesser(wert, beste.wert)) beste = { wert, wahl: wahl.slice() };
-        return;
-      }
-      wahl[i] = null;
-      suche(i + 1);
-      liste[i].k.forEach((k, j) => {
-        for (let a = 0; a < i; a++) {
-          if (wahl[a] && !(k.end <= wahl[a].k.start || k.start >= wahl[a].k.end)) return;
-        }
-        wahl[i] = { k, j };
-        suche(i + 1);
-      });
-      wahl[i] = null;
-    };
-    suche(0);
-  
-    return beste.wahl
-      .map((w, i) => w && { start: w.k.start, end: w.k.end, category: liste[i].category })
-      .filter(Boolean)
-      .sort((x, y) => x.start - y.start);
-  }
-  
-  // Für den Fall, dass mehr als fünf Schritte kommen: der Reihe nach, ohne Suche.
-  function schritteFindenEinfach(liste) {
-    const vergeben = [];
-    for (const x of liste) {
-      const k = x.k.find(k => vergeben.every(v => k.end <= v.start || k.start >= v.end));
-      if (k) vergeben.push({ start: k.start, end: k.end, category: x.category });
-    }
-    return vergeben.sort((x, y) => x.start - y.start);
-  }
 
   // ---------------------------------------------------------------
   // Hilfe: Erkennung, Karte, Übersicht
@@ -3356,8 +3285,8 @@
     hilfeKarteSetzen(hilfeKarte, signal, fremd, fremd ? 'Die Einschätzung kommt gleich.' : 'Deine Übersetzung kommt gleich.');
     submitBtn.disabled = true;
     richtungKnoepfe.forEach(b => { b.disabled = true; });
-    submitBtn.textContent = t.laeuft;
-    startProgress(progressBar, progressBarFill);
+    knopfText(submitBtn, t.laeuft);
+    startProgress(LADEN.uebersetzen, LEITFRAGEN[fremd ? 'fremd' : 'eigen']);
 
     // Wer während der Anfrage zu "Selbst üben" oder zu den Spielen wechselt,
     // soll das Ergebnis nicht unter einem fremden Bereich finden.
@@ -3366,12 +3295,12 @@
     try {
       if (fremd) {
         const data = await withRetry(() => foreignToGFK(text, angaben));
-        finishProgress(progressBar, progressBarFill);
+        finishProgress(LADEN.uebersetzen);
         letzteFremd = { text: text, vorschlag: typeof data.suggestedResponse === 'string' ? data.suggestedResponse.trim() : '' };
         if (nochHier()) renderForeignResult(data);
       } else {
         const data = await withRetry(() => translateToGFK(text, angaben));
-        finishProgress(progressBar, progressBarFill);
+        finishProgress(LADEN.uebersetzen);
         if (nochHier()) {
           if (data.status === 'krise') {
             // Die KI hat eine Krise erkannt, die die Erkennung vorher nicht
@@ -3386,14 +3315,14 @@
         }
       }
     } catch (err) {
-      stopProgress(progressBar, progressBarFill);
+      stopProgress(LADEN.uebersetzen);
       errorMsg.textContent = messageForError(err);
       errorMsg.hidden = false;
     } finally {
       hilfeKommtWeg(hilfeKarte);
       submitBtn.disabled = false;
       richtungKnoepfe.forEach(b => { b.disabled = false; });
-      submitBtn.textContent = RICHTUNG_TEXTE[richtung].knopf;
+      knopfText(submitBtn, RICHTUNG_TEXTE[richtung].knopf);
     }
   });
 
@@ -3402,32 +3331,93 @@
   // als [Platzhalter] und sagt, dass sie zu ersetzen sind.
   const resultTitel = document.getElementById('result-titel');
 
-  let progressInterval = null;
+  // Ladeanzeige (seit Runde 7.4): Der Knopf füllt sich von links, darunter
+  // wechseln die vier Leitfragen. Die Antwort kommt am Stück; die Füllung
+  // folgt deshalb der Zeit (nach 5 s gut 40 %, nach 15 s etwa drei Viertel,
+  // nie über 90 %) und springt auf 100 %, sobald die Antwort da ist. Die
+  // Fragen sind eine Lernhilfe beim Warten, keine Fortschrittsanzeige. Nach
+  // 15 Sekunden ein Satz, dass es etwas dauert, und die Füllung pulsiert leise.
+  const LEITFRAGEN = {
+    eigen: [['obs', 'Beobachtung', 'Was ist wirklich passiert?'], ['feel', 'Gefühl', 'Was löst das in dir aus?'],
+            ['need', 'Bedürfnis', 'Was ist dir dabei wichtig?'], ['req', 'Bitte', 'Was wünschst du dir konkret?']],
+    fremd: [['obs', 'Beobachtung', 'Was wurde eigentlich gesagt?'], ['feel', 'Gefühl', 'Was fühlt die andere Person vielleicht?'],
+            ['need', 'Bedürfnis', 'Was könnte ihr wichtig sein?'], ['req', 'Bitte', 'Worum bittet sie eigentlich?']]
+  };
+  const LADEN = {
+    uebersetzen: { knopf: submitBtn, fill: submitBtn.querySelector('.knopf-fuellung'), text: document.getElementById('lade-text') },
+    ueben: { knopf: practiceSubmitBtn, fill: practiceSubmitBtn.querySelector('.knopf-fuellung'), text: document.getElementById('practice-lade-text') }
+  };
 
-  function startProgress(bar, fill) {
-    clearInterval(progressInterval);
-    bar.classList.add('active');
-    fill.style.width = '4%';
-    let pct = 4;
-    progressInterval = setInterval(() => {
-      pct += (90 - pct) * 0.12;
-      fill.style.width = Math.min(pct, 90) + '%';
+  function knopfText(knopf, text) {
+    knopf.querySelector('.knopf-text').textContent = text;
+  }
+
+  function ladeUhrenStoppen(l) {
+    clearInterval(l.balkenUhr);
+    clearInterval(l.frageUhr);
+    clearTimeout(l.langUhr);
+    clearTimeout(l.endUhr);
+  }
+
+  function fuellungSetzen(l, breite, sofort) {
+    if (sofort) l.fill.style.transition = 'none';
+    l.fill.style.width = breite;
+    if (sofort) { void l.fill.offsetWidth; l.fill.style.transition = ''; }
+  }
+
+  function leitfrageZeigen(l, fragen, i) {
+    l.text.textContent = '';
+    if (i < 0) {
+      l.text.textContent = 'Dauert etwas länger als sonst – gleich ist es da.';
+      return;
+    }
+    const [k, name, frage] = fragen[i];
+    l.text.appendChild(neu('b', 'cat-' + k, name));
+    l.text.appendChild(document.createTextNode(' – ' + frage));
+  }
+
+  function startProgress(l, fragen) {
+    ladeUhrenStoppen(l);
+    l.fill.classList.remove('puls');
+    fuellungSetzen(l, '0%', true);
+    l.knopf.classList.add('laedt');
+    const beginn = Date.now();
+    l.balkenUhr = setInterval(() => {
+      const sek = (Date.now() - beginn) / 1000;
+      l.fill.style.width = (90 * (1 - Math.exp(-sek / 8))).toFixed(1) + '%';
     }, 250);
+    let i = 0;
+    l.text.hidden = false;
+    leitfrageZeigen(l, fragen, i);
+    l.frageUhr = setInterval(() => { i = (i + 1) % fragen.length; leitfrageZeigen(l, fragen, i); }, 2600);
+    l.langUhr = setTimeout(() => {
+      clearInterval(l.frageUhr);
+      leitfrageZeigen(l, fragen, -1);
+      l.fill.classList.add('puls');
+    }, 15000);
   }
 
-  function finishProgress(bar, fill) {
-    clearInterval(progressInterval);
-    fill.style.width = '100%';
-    setTimeout(() => {
-      bar.classList.remove('active');
-      fill.style.width = '0%';
-    }, 350);
+  function ladeTextAus(l) {
+    ladeUhrenStoppen(l);
+    l.fill.classList.remove('puls');
+    l.text.hidden = true;
+    l.text.textContent = '';
   }
 
-  function stopProgress(bar, fill) {
-    clearInterval(progressInterval);
-    bar.classList.remove('active');
-    fill.style.width = '0%';
+  // Antwort da: kurz ganz gefüllt, dann wieder der normale Knopf.
+  function finishProgress(l) {
+    ladeTextAus(l);
+    l.fill.style.width = '100%';
+    l.endUhr = setTimeout(() => {
+      l.knopf.classList.remove('laedt');
+      fuellungSetzen(l, '0%', true);
+    }, 400);
+  }
+
+  function stopProgress(l) {
+    ladeTextAus(l);
+    l.knopf.classList.remove('laedt');
+    fuellungSetzen(l, '0%', true);
   }
 
   // ---------------------------------------------------------------
@@ -3623,7 +3613,7 @@
     letzterGfkText = data.teile.map(t => t.text).join(' ');
     platzhalterHinweis.hidden = !/\[[^\]]+\]/.test(letzterGfkText);
 
-    // Im Alltag gesagt (seit Runde 7.2)
+    // Flüssig formuliert (seit Runde 7.2; bis 7.3 hieß es "Im Alltag gesagt")
     alltagText.textContent = '';
     if (data.alltag) mitPlatzhaltern(alltagText, data.alltag);
     letzterAlltagText = data.alltag;
@@ -3835,6 +3825,27 @@
   [modeTranslateBtn, modePracticeBtn].forEach(b => b.addEventListener('click', () => { ergebnisBehalten = false; }));
   submitBtn.addEventListener('click', () => { ergebnisBehalten = false; });
 
+  // Zweiter Knopf am Ende einer Spielrunde (seit Runde 7.4): Wer aus einer
+  // Übersetzung zum Spiel kam, kommt zu ihr zurück; alle anderen landen im
+  // Eingabefeld für einen eigenen Text.
+  function weiterNachSpiel() {
+    if (ergebnisBehalten && gfkQuote.textContent) {
+      return { text: 'Zurück zu deiner Übersetzung', aktion: () => groupWerkzeugeBtn.click() };
+    }
+    return {
+      text: 'Jetzt einen eigenen Text übersetzen',
+      aktion: () => {
+        if (lastWerkzeugMode !== 'translate') setWerkzeugMode('translate');
+        groupWerkzeugeBtn.click();
+        if (richtung !== 'eigen') richtungSetzen('eigen');
+        requestAnimationFrame(() => {
+          translatePanel.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth', block: 'start' });
+          textarea.focus({ preventScroll: true });
+        });
+      }
+    };
+  }
+
   copyAlltagBtn.addEventListener('click', async () => {
     const original = 'Text kopieren';
     try {
@@ -3873,21 +3884,21 @@
     }
     hilfeKarteSetzen(hilfeKarteUeben, signal, false, 'Deine Rückmeldung kommt gleich.');
     practiceSubmitBtn.disabled = true;
-    practiceSubmitBtn.textContent = 'Wird geprüft …';
-    startProgress(practiceProgressBar, practiceProgressBarFill);
+    knopfText(practiceSubmitBtn, 'Wird geprüft …');
+    startProgress(LADEN.ueben, LEITFRAGEN.eigen);
 
     try {
       const data = await withRetry(() => getPracticeFeedback(obs, feel, need, req));
-      finishProgress(practiceProgressBar, practiceProgressBarFill);
+      finishProgress(LADEN.ueben);
       renderPracticeResult(data);
     } catch (err) {
-      stopProgress(practiceProgressBar, practiceProgressBarFill);
+      stopProgress(LADEN.ueben);
       practiceErrorMsg.textContent = messageForError(err);
       practiceErrorMsg.hidden = false;
     } finally {
       hilfeKommtWeg(hilfeKarteUeben);
       practiceSubmitBtn.disabled = false;
-      practiceSubmitBtn.textContent = 'Rückmeldung holen';
+      knopfText(practiceSubmitBtn, 'Rückmeldung holen');
     }
   });
 
