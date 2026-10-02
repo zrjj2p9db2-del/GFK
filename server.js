@@ -97,9 +97,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // anpassen. Sie wird beim Start ins Log geschrieben, damit sich jederzeit
 // nachsehen lässt, welche Fassung tatsächlich läuft. In dieser Session ist zweimal
 // unklar gewesen, welche Datei wo liegt; das kostet mehr Zeit als diese Zeile.
-const PROMPT_VERSION = 'Runde 7.4 (Brücke-Prompt: auch ein einzelner Schlag ist Gewalt), 30.09.2026';
+const PROMPT_VERSION = 'Runde 7.4 (Brücke-Prompt: einzelner Schlag ist Gewalt, Zitate in »…«), 02.10.2026';
 // Stand des Servers ohne Prompt-Änderung (Vergleichsseite, Betriebsart sonnet).
-const SERVER_STAND = 'Runde 7.4 (Schutz-Header), 30.09.2026';
+const SERVER_STAND = 'Runde 7.4 (Schutz-Header, Anführungszeichen bei der Übersetzung), 02.10.2026';
 
 // ---------------------------------------------------------------------------
 // Betriebsart — der eine Schalter für Tempo, Kosten und Gründlichkeit
@@ -729,6 +729,7 @@ Regeln für die Felder:
 - "warum" je Schritt: ein bis zwei Sätze, was aus dem Originaltext wie umgebaut wurde und warum das beim Gegenüber besser ankommt.
 - aenderungen: 1 bis 5 Einträge, die wichtigsten zuerst. "original" ist ein WÖRTLICHES, zeichengenaues Zitat aus der Eingabe (höchstens 12 Wörter, ohne Anführungszeichen), damit die Seite es markieren kann. "neu" ist die entsprechende Stelle der GFK-Fassung, kurz; "ziel" sagt, in welchen Schritt sie gewandert ist ("entfaellt", wenn die Stelle ersatzlos wegfällt). "erklaerung": ein Satz.
 - hinweise: 0 bis 2 kurze, praktische Hinweise, nur wenn sie wirklich helfen.
+- Zitierst du in einem Feld ein Wort oder eine Wendung, setze es in »…«, nie in "…" oder „…“.
 - lerntipp: ein Satz, der das typische Muster dieser Eingabe benennt und zeigt, wie die Person es beim nächsten Mal selbst umbauen kann.
 - Bei status "krise", "thema" oder "sprache": nur status und nachricht füllen, die übrigen Felder leer lassen.`;
 
@@ -1185,8 +1186,33 @@ function markenAuswerten(payload) {
 // Browser zum Absturz brächten. Statt die ganze Antwort zu verwerfen und
 // einen zweiten, bezahlten Versuch zu starten, wird nur das Nebenfeld
 // entfernt. Die Pflichtfelder prüft isValidPayload.
+// Anführungszeichen (seit Runde 7.4, 02.10.2026). Mit dem festen
+// Antwortformat beendet ein gerades " ein Feld: Schloss die KI ein Zitat
+// wie „Gehirnwäsche" mit " statt mit “, war der Rest des Satzes verloren.
+// Der Brücke-Prompt verlangt deshalb »…« für Zitate; hier wird daraus
+// wieder „…“, wie man es im Deutschen schreibt. Bleibt trotzdem irgendwo
+// ein „ offen, steht das im Protokoll, nur mit dem Feldnamen, ohne Text.
+function zitateAngleichen(wert, pfad, offen) {
+  if (typeof wert === 'string') {
+    const t = wert.replace(/»([^»«]*)«/g, '„$1“').replace(/«([^»«]*)»/g, '„$1“');
+    const auf = (t.match(/„/g) || []).length;
+    const zu = (t.match(/[“”]/g) || []).length;
+    if (auf > zu) offen.push(pfad);
+    return t;
+  }
+  if (Array.isArray(wert)) return wert.map((x, i) => zitateAngleichen(x, pfad + '[' + i + ']', offen));
+  if (wert && typeof wert === 'object') {
+    Object.keys(wert).forEach(k => { wert[k] = zitateAngleichen(wert[k], pfad ? pfad + '.' + k : k, offen); });
+    return wert;
+  }
+  return wert;
+}
+
 function bereinigen(mode, payload, prompt) {
   if (prompt === 'bruecke') {
+    const offen = [];
+    zitateAngleichen(payload, '', offen);
+    if (offen.length) console.warn(`[Anführungszeichen] Brücke: offenes „ in ${offen.join(', ')} (Satz vermutlich abgeschnitten)`);
     // Das Schema garantiert die Form; ohne Schema (Rückfall) wird hier
     // nachgeholfen, damit die Seite nichts voraussetzen muss.
     const text = x => (typeof x === 'string' ? x.trim() : '');
