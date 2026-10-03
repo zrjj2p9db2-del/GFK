@@ -82,6 +82,34 @@
   th { color:var(--ink-leise); font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; }
   td.zahl { font-variant-numeric:tabular-nums; }
 
+  /* ---- Kosten nach Bereich ---- */
+  .kopfzeile { display:flex; justify-content:space-between; align-items:flex-start; gap:4px 20px; flex-wrap:wrap; margin-bottom:14px; }
+  .kopfzeile > div:first-child { flex:1 1 280px; }
+  .kopfzeile .unter { margin-bottom:6px; }
+  .zeitraum { display:inline-flex; border:1px solid var(--linie); border-radius:6px; overflow:hidden; flex:none; }
+  .zeitraum button {
+    margin:0; border:0; border-radius:0; background:transparent; color:var(--ink-soft);
+    padding:6px 12px; font-size:13px;
+  }
+  .zeitraum button + button { border-left:1px solid var(--linie); }
+  .zeitraum button:hover { background:var(--panel); color:var(--ink); border-color:var(--linie); }
+  .zeitraum button[aria-pressed="true"] { background:var(--brand); color:#fff; }
+  .bereiche { list-style:none; margin:0 0 6px; padding:0; }
+  .bereiche li { padding:12px 0; border-top:1px solid var(--gitter); }
+  .bereiche li:first-child { border-top:0; padding-top:4px; }
+  .b-zeile, .b-neben { display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+  .b-name { font-weight:600; }
+  .b-wo { font-weight:400; color:var(--ink-soft); }
+  .b-kosten { font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .b-neben { font-size:13px; color:var(--ink-soft); margin-top:2px; }
+  .b-anteil { white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .b-spur { height:6px; background:var(--gitter); border-radius:3px; margin-top:8px; overflow:hidden; }
+  .b-fuell { height:100%; background:var(--balken); border-radius:3px; }
+  .bereiche li.rest .b-name { font-weight:400; color:var(--ink-soft); }
+  .bereiche li.rest .b-kosten { font-weight:400; color:var(--ink-soft); }
+  .bereiche li.rest .b-fuell { background:var(--ink-leise); }
+  .bereiche li.leer { color:var(--ink-soft); font-size:14px; }
+
   .miete { background:var(--flaeche); border:1px solid var(--linie); border-radius:8px; padding:18px 22px; margin-bottom:22px; }
   .miete h2 { font-size:15.5px; margin:0 0 4px; }
   .miete p { font-size:13.5px; color:var(--ink-soft); margin:0 0 12px; }
@@ -136,6 +164,21 @@
       <h2>Tageskosten der letzten 30 Tage</h2>
       <p class="unter" id="tafel-unter"></p>
       <div id="diagramm"></div>
+    </div>
+
+    <div class="tafel">
+      <div class="kopfzeile">
+        <div>
+          <h2>Kosten nach Bereich</h2>
+          <p class="unter" id="bereiche-unter"></p>
+        </div>
+        <div class="zeitraum" role="group" aria-label="Zeitraum">
+          <button type="button" data-tage="1" aria-pressed="false">Heute</button>
+          <button type="button" data-tage="7" aria-pressed="false">7 Tage</button>
+          <button type="button" data-tage="30" aria-pressed="true">30 Tage</button>
+        </div>
+      </div>
+      <ul class="bereiche" id="bereiche"></ul>
     </div>
 
     <div class="miete">
@@ -268,7 +311,8 @@
         ein: t ? t.ein : 0,
         aus: t ? t.aus : 0,
         cacheLesen: t ? t.cacheLesen : 0,
-        modi: t ? t.modi : {}
+        modi: t ? t.modi : {},
+        bereiche: t ? (t.bereiche || null) : null
       });
     }
     return reihe;
@@ -276,6 +320,146 @@
 
   function summe(reihe, feld) {
     return reihe.reduce(function (s, t) { return s + (t[feld] || 0); }, 0);
+  }
+
+  // ---- Bereiche --------------------------------------------------------
+  // Seit Runde 7.4 (03.10.2026) bucht der Server jede Anfrage zusätzlich
+  // unter einem Bereich. Ältere Tage haben das nicht; sie erscheinen als eigene Zeile
+  // "Ohne Aufteilung", statt dass hier geschätzt wird.
+  var BEREICHE = {
+    bruecke:   { name: 'Übersetzen',       wo: 'Testseite',          kurz: 'Übersetzen, Testseite' },
+    translate: { name: 'Übersetzen',       wo: 'app.html',           kurz: 'Übersetzen, app.html' },
+    pruefer:   { name: 'Rückfrage-Prüfer', wo: 'app.html',           kurz: 'Prüfer, app.html' },
+    foreign:   { name: 'Fremdnachricht',   wo: 'beide Seiten',       kurz: 'Fremdnachricht' },
+    practice:  { name: 'Selbst üben',      wo: 'beide Seiten',       kurz: 'Selbst üben' },
+    vergleich: { name: 'Vergleich',        wo: 'deine Tests',        kurz: 'Vergleich' }
+  };
+  var REIHENFOLGE = ['bruecke', 'translate', 'pruefer', 'foreign', 'practice', 'vergleich'];
+  var MODELLNAMEN = {
+    'claude-haiku-4-5-20251001': 'Haiku 4.5',
+    'claude-sonnet-5': 'Sonnet 5',
+    'claude-opus-5': 'Opus 5',
+    'claude-sonnet-4-6': 'Sonnet 4.6'
+  };
+  var zeitraum = 30;
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function modellName(id) { return MODELLNAMEN[id] || id; }
+  function bereichKurz(k) { return BEREICHE[k] ? BEREICHE[k].kurz : k; }
+  function rang(k) { var i = REIHENFOLGE.indexOf(k); return i < 0 ? 99 : i; }
+
+  // Unter einem Cent mit zwei Stellen, sonst wäre der Prüfer immer "0,0 ct".
+  function centFein(n) {
+    var c = n * 100;
+    return c.toFixed(c < 1 ? 2 : 1).replace('.', ',') + ' ct';
+  }
+  function prozent(anteil) {
+    if (anteil <= 0) return '0 %';
+    if (anteil < 0.01) return '< 1 %';
+    return Math.round(anteil * 100) + ' %';
+  }
+
+  function bereicheSammeln(reihe) {
+    var teile = {}, rest = { versuche: 0, usd: 0 };
+    reihe.forEach(function (t) {
+      var n = 0, u = 0;
+      Object.keys(t.bereiche || {}).forEach(function (k) {
+        var b = t.bereiche[k];
+        var s = teile[k] = teile[k] || { versuche: 0, usd: 0, modelle: {} };
+        s.versuche += b.versuche || 0;
+        s.usd += b.usd || 0;
+        Object.keys(b.modelle || {}).forEach(function (m) {
+          s.modelle[m] = (s.modelle[m] || 0) + b.modelle[m];
+        });
+        n += b.versuche || 0;
+        u += b.usd || 0;
+      });
+      // Was am Tag gezählt, aber keinem Bereich zugeordnet ist: Tage vor der
+      // Aufteilung und, am Tag der Umstellung, die Anfragen davor.
+      rest.versuche += Math.max(0, (t.versuche || 0) - n);
+      rest.usd += Math.max(0, (t.usd || 0) - u);
+    });
+    return { teile: teile, rest: rest };
+  }
+
+  function bereichZeile(name, wo, kosten, anteil, neben, klasse) {
+    return '<li' + (klasse ? ' class="' + klasse + '"' : '') + '>' +
+      '<div class="b-zeile"><span class="b-name">' + esc(name) +
+        (wo ? ' <span class="b-wo">· ' + esc(wo) + '</span>' : '') + '</span>' +
+        '<span class="b-kosten">' + usd(kosten) + '</span></div>' +
+      '<div class="b-neben"><span>' + neben + '</span><span class="b-anteil">' + prozent(anteil) + '</span></div>' +
+      '<div class="b-spur" aria-hidden="true"><div class="b-fuell" style="width:' +
+        (anteil > 0 ? Math.max(1, anteil * 100).toFixed(1) : 0) + '%"></div></div>' +
+      '</li>';
+  }
+
+  function bereicheZeigen() {
+    var reihe = letzteTage(30).slice(-zeitraum);
+    var g = bereicheSammeln(reihe);
+    var gesamt = summe(reihe, 'usd');
+    var anzahl = summe(reihe, 'versuche');
+    var titel = zeitraum === 1 ? 'Heute' : 'Letzte ' + zeitraum + ' Tage';
+
+    hole('bereiche-unter').textContent = titel + ': ' + usd(gesamt) + ' für ' + anzahl +
+      ' Anfrage' + (anzahl === 1 ? '' : 'n') + '. Der Balken zeigt den Anteil an den Kosten.';
+
+    var schluessel = Object.keys(g.teile).sort(function (a, b) {
+      return (g.teile[b].usd - g.teile[a].usd) || (rang(a) - rang(b));
+    });
+
+    var s = '';
+    schluessel.forEach(function (k) {
+      var d = g.teile[k];
+      var info = BEREICHE[k] || { name: k, wo: '' };
+      var modelle = Object.keys(d.modelle)
+        .sort(function (a, b) { return d.modelle[b] - d.modelle[a]; })
+        .map(modellName).join(' + ');
+      var neben = esc(modelle) + ' · ' + d.versuche + ' Anfrage' + (d.versuche === 1 ? '' : 'n') +
+        (d.versuche ? ' · ø ' + centFein(d.usd / d.versuche) : '');
+      s += bereichZeile(info.name, info.wo, d.usd, gesamt > 0 ? d.usd / gesamt : 0, neben);
+    });
+
+    if (g.rest.versuche > 0) {
+      s += bereichZeile('Ohne Aufteilung', 'ältere Zählung', g.rest.usd,
+        gesamt > 0 ? g.rest.usd / gesamt : 0,
+        g.rest.versuche + ' Anfrage' + (g.rest.versuche === 1 ? '' : 'n') +
+        ' · gezählt, bevor der Server nach Bereichen getrennt hat', 'rest');
+    }
+
+    if (!s) s = '<li class="leer">In diesem Zeitraum keine Anfragen.</li>';
+    hole('bereiche').innerHTML = s;
+
+    document.querySelectorAll('.zeitraum button').forEach(function (b) {
+      b.setAttribute('aria-pressed', Number(b.dataset.tage) === zeitraum ? 'true' : 'false');
+    });
+  }
+
+  // Welche Modelle eingestellt sind und was sie kosten, aus /api/kosten.
+  // Ältere Server liefern nur ein Modell; dann bleibt es beim alten Satz.
+  function preiseText() {
+    var m = daten.modelle;
+    if (!m) {
+      return 'Modell ' + daten.modell + ', gerechnet mit $' + daten.preise.ein +
+        ' je Million Token hinein und $' + daten.preise.aus + ' hinaus.';
+    }
+    var eingestellt = [];
+    if (m.uebersetzen_bruecke) eingestellt.push('Übersetzen auf der Testseite mit ' + modellName(m.uebersetzen_bruecke.modell));
+    if (m.uebersetzen) eingestellt.push('Übersetzen in app.html mit ' + modellName(m.uebersetzen.modell));
+    if (m.pruefer) eingestellt.push('Prüfer mit ' + modellName(m.pruefer.modell));
+    if (m.fremdnachricht) eingestellt.push('Fremdnachricht mit ' + modellName(m.fremdnachricht.modell));
+    if (m.ueben) eingestellt.push('Selbst üben mit ' + modellName(m.ueben.modell));
+    var preise = {};
+    Object.keys(m).forEach(function (k) { preise[m[k].modell] = m[k].preise; });
+    var liste = Object.keys(preise).map(function (id) {
+      return modellName(id) + ' $' + preise[id].ein + ' / $' + preise[id].aus;
+    });
+    return 'Eingestellt (Betriebsart ' + daten.betrieb + '): ' + eingestellt.join(', ') + '. ' +
+      'Jede Anfrage wird mit dem Preis des Modells gerechnet, das sie bearbeitet hat, ' +
+      'je Million Token hinein / hinaus: ' + liste.join(', ') + '.';
   }
 
   // ---- Diagramm --------------------------------------------------------
@@ -355,10 +539,16 @@
       });
       el.addEventListener('mousemove', function (ev) {
         var t = reihe[i];
+        var teile = Object.keys(t.bereiche || {})
+          .sort(function (a, b) { return (t.bereiche[b].usd - t.bereiche[a].usd) || (rang(a) - rang(b)); })
+          .map(function (k) {
+            return esc(bereichKurz(k)) + ': ' + t.bereiche[k].versuche + ' · ' + usd(t.bereiche[k].usd);
+          });
         wolke.innerHTML = '<b>' + langerTag(t.iso) + '</b><br>' +
           (t.versuche
             ? usd(t.usd) + ' &nbsp;·&nbsp; ' + cent(t.usd) + '<br>' +
-              t.versuche + ' Anfrage' + (t.versuche === 1 ? '' : 'n')
+              t.versuche + ' Anfrage' + (t.versuche === 1 ? '' : 'n') +
+              (teile.length ? '<br>' + teile.join('<br>') : '')
             : 'keine Anfragen');
         wolke.classList.add('an');
         var x = ev.clientX + 14, y = ev.clientY - 10;
@@ -415,6 +605,7 @@
       : 'In den letzten 30 Tagen wurde noch nichts gezählt.';
 
     zeichne(r30);
+    bereicheZeigen();
     tabelle(r30);
 
     var seit = new Date(daten.seit);
@@ -436,8 +627,7 @@
     } else {
       kasten.hidden = true;
     }
-    hole('preisinfo').textContent = 'Modell ' + daten.modell + ', gerechnet mit $' +
-      daten.preise.ein + ' je Million Token hinein und $' + daten.preise.aus + ' hinaus.';
+    hole('preisinfo').textContent = preiseText();
 
     mieteRechnen();
   }
@@ -506,12 +696,17 @@
   // die Zahlen als Datei auf deinem Rechner.
   hole('sichern').addEventListener('click', function () {
     var reihe = letzteTage(400).filter(function (t) { return t.versuche > 0; });
-    var zeilen = ['Tag;Anfragen;Token ein;Token aus;Aus Zwischenspeicher;Kosten USD'];
+    // Je Bereich eine Spalte mit den Kosten; leer an Tagen vor der Aufteilung.
+    var zeilen = ['Tag;Anfragen;Token ein;Token aus;Aus Zwischenspeicher;Kosten USD;' +
+      REIHENFOLGE.map(function (k) { return bereichKurz(k) + ' USD'; }).join(';')];
     reihe.forEach(function (t) {
       zeilen.push([
         t.iso, t.versuche, t.ein, t.aus, t.cacheLesen,
         t.usd.toFixed(6).replace('.', ',')
-      ].join(';'));
+      ].concat(REIHENFOLGE.map(function (k) {
+        var b = t.bereiche && t.bereiche[k];
+        return b ? b.usd.toFixed(6).replace('.', ',') : '';
+      })).join(';'));
     });
     // Mit BOM, damit Excel die Umlaute richtig liest.
     var blob = new Blob(['﻿' + zeilen.join('\n')], { type: 'text/csv;charset=utf-8' });
@@ -525,6 +720,12 @@
   hole('raus').addEventListener('click', function () {
     vergiss(SCHLUESSEL);
     location.reload();
+  });
+  document.querySelectorAll('.zeitraum button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      zeitraum = Number(b.dataset.tage);
+      if (daten) bereicheZeigen();
+    });
   });
   hole('miete-speichern').addEventListener('click', function () {
     merke(MIETSCHLUESSEL, hole('miete').value.trim());
