@@ -99,7 +99,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // unklar gewesen, welche Datei wo liegt; das kostet mehr Zeit als diese Zeile.
 const PROMPT_VERSION = 'Runde 7.4 (Brücke-Prompt: einzelner Schlag ist Gewalt, Zitate in »…«), 02.10.2026';
 // Stand des Servers ohne Prompt-Änderung (Vergleichsseite, Betriebsart sonnet).
-const SERVER_STAND = 'Runde 7.4 (Schutz-Header, Anführungszeichen bei der Übersetzung), 02.10.2026';
+const SERVER_STAND = 'Runde 7.4 (Schutz-Header, Anführungszeichen bei der Übersetzung, Kosten je Bereich), 03.10.2026';
 
 // ---------------------------------------------------------------------------
 // Betriebsart — der eine Schalter für Tempo, Kosten und Gründlichkeit
@@ -1271,10 +1271,14 @@ function isValidPayload(mode, payload, prompt) {
 // {ok: false, status, code} mit einem für das Frontend verständlichen Fehlercode.
 // variante (nur Vergleichsseite): { e: {model, effort, prompt}, buchung }
 // statt der aktiven Betriebsart; gebucht und protokolliert unter "buchung".
+// variante.bereich (seit Runde 7.4): eigener Posten auf der Kostenseite,
+// etwa "bruecke" für das Übersetzen auf der Testseite. Fehlt er, ist der
+// Bereich die Buchung.
 async function callAnthropic(mode, text, angaben, ergaenzung, variante) {
   const config = MODE_CONFIG[mode];
   const e = variante ? variante.e : AKTIV[mode];
   const buchung = variante ? variante.buchung : mode;
+  const bereich = (variante && variante.bereich) || buchung;
   let maxTokens = config.maxTokens;
   let lastFailure = { status: 502, code: 'upstream_error' };
   // Brücke-Prompt und Fremdnachricht (seit Runde 7.1): Antwortformat per
@@ -1334,7 +1338,7 @@ async function callAnthropic(mode, text, angaben, ergaenzung, variante) {
 
       if (!response.ok && response.status === 400 && mitSchema) {
         logAttempt({
-          mode: buchung, modell: e.model, attempt, status: 400, ms: Date.now() - startedAt,
+          mode: buchung, bereich, modell: e.model, attempt, status: 400, ms: Date.now() - startedAt,
           note: 'JSON-Schema abgelehnt: ' + ((data && data.error && data.error.message) || 'ohne Angabe').slice(0, 160),
           retry: true
         });
@@ -1346,7 +1350,7 @@ async function callAnthropic(mode, text, angaben, ergaenzung, variante) {
       if (!response.ok) {
         const shouldRetry = RETRYABLE_STATUS_CODES.includes(response.status) && attempt < MAX_ATTEMPTS;
         logAttempt({
-          mode: buchung, modell: e.model, attempt, status: response.status, ms: Date.now() - startedAt,
+          mode: buchung, bereich, modell: e.model, attempt, status: response.status, ms: Date.now() - startedAt,
           note: (data && data.error && data.error.type) || 'http_error',
           retry: shouldRetry
         });
@@ -1366,7 +1370,7 @@ async function callAnthropic(mode, text, angaben, ergaenzung, variante) {
       if (stopReason === 'max_tokens') {
         const shouldRetry = attempt < MAX_ATTEMPTS && maxTokens < MAX_TOKENS_CEILING;
         logAttempt({
-          mode: buchung, modell: e.model, attempt, status: 200, ms: Date.now() - startedAt,
+          mode: buchung, bereich, modell: e.model, attempt, status: 200, ms: Date.now() - startedAt,
           note: `abgeschnitten bei max_tokens=${maxTokens}`,
           usage, retry: shouldRetry
         });
@@ -1386,7 +1390,7 @@ async function callAnthropic(mode, text, angaben, ergaenzung, variante) {
       if (!isValidPayload(mode, payload, e.prompt)) {
         const shouldRetry = attempt < MAX_ATTEMPTS;
         logAttempt({
-          mode: buchung, modell: e.model, attempt, status: 200, ms: Date.now() - startedAt,
+          mode: buchung, bereich, modell: e.model, attempt, status: 200, ms: Date.now() - startedAt,
           note: payload ? 'JSON unvollständig' : 'kein gültiges JSON',
           usage, retry: shouldRetry
         });
@@ -1398,7 +1402,7 @@ async function callAnthropic(mode, text, angaben, ergaenzung, variante) {
         return { ok: false, ...lastFailure };
       }
 
-      logAttempt({ mode: buchung, modell: e.model, attempt, status: 200, ms: Date.now() - startedAt, note: 'ok', usage });
+      logAttempt({ mode: buchung, bereich, modell: e.model, attempt, status: 200, ms: Date.now() - startedAt, note: 'ok', usage });
       // Nur der kurze Prompt verlangt Markierungen; der lange nicht. Die
       // Vergleichsseite zählt nicht mit.
       if (markiert !== null && e.prompt === 'kurz' && !variante) {
@@ -1412,7 +1416,7 @@ async function callAnthropic(mode, text, angaben, ergaenzung, variante) {
       const timedOut = err.name === 'AbortError';
       const shouldRetry = attempt < MAX_ATTEMPTS;
       logAttempt({
-        mode: buchung, modell: e.model, attempt, status: 0, ms: Date.now() - startedAt,
+        mode: buchung, bereich, modell: e.model, attempt, status: 0, ms: Date.now() - startedAt,
         note: timedOut ? 'Zeitüberschreitung' : `Netzwerkfehler: ${err.message}`,
         retry: shouldRetry
       });
@@ -1505,7 +1509,7 @@ function codeForStatus(status) {
 // Eine Zeile pro Versuch. Damit lässt sich in den Clever-Cloud-Logs direkt ablesen,
 // WARUM eine Anfrage gescheitert ist, statt es aus der Fehlermeldung im Browser
 // erraten zu müssen. Es wird bewusst kein Nutzertext protokolliert.
-function logAttempt({ mode, modell, attempt, von, status, ms, note, usage, retry }) {
+function logAttempt({ mode, bereich, modell, attempt, von, status, ms, note, usage, retry }) {
   const parts = [
     `[gfk] mode=${mode}`,
     `versuch=${attempt}/${von || MAX_ATTEMPTS}`,
@@ -1526,7 +1530,7 @@ function logAttempt({ mode, modell, attempt, von, status, ms, note, usage, retry
 
   // Jeder Versuch kostet, auch ein gescheiterter — deshalb wird hier gezählt
   // und nicht erst beim Erfolg.
-  if (usage) buchen(mode, usage, m);
+  if (usage) buchen(mode, usage, m, bereich || mode);
 }
 
 // ---------------------------------------------------------------------------
@@ -1608,7 +1612,18 @@ function preisUsd(modell, usage) {
     (usage.cache_read_input_tokens || 0) * preis.ein * 0.1) / 1e6;
 }
 
-function buchen(mode, usage, modellAngabe) {
+// Bereiche (seit Runde 7.4, 03.10.2026): Jeder Tag führt zusätzlich je
+// Bereich Anfragen, Token, Kosten und Modelle, damit die Kostenseite zeigen
+// kann, was Übersetzen, Fremdnachricht und Üben jeweils kosten.
+//   bruecke    Übersetzen auf der Testseite (test/index.html)
+//   translate  Übersetzen in app.html
+//   pruefer    Prüfer der Rückfrage, nur vor einer Übersetzung in app.html
+//   foreign    Fremdnachricht, beide Seiten
+//   practice   Selbst üben, beide Seiten
+//   vergleich  deine Tests auf der Vergleichsseite
+// Tage vor dieser Fassung haben keine Aufteilung; die Seite weist sie
+// getrennt aus, statt sie zu schätzen.
+function buchen(mode, usage, modellAngabe, bereich) {
   const modell = modellAngabe || (AKTIV[mode] || {}).model || MODEL;
   const preis = PREISE[modell] || PREIS_UNBEKANNT;
 
@@ -1636,6 +1651,17 @@ function buchen(mode, usage, modellAngabe) {
   // bleibt, welcher Tag mit welchem Modell gelaufen ist.
   t.modelle = t.modelle || {};
   t.modelle[modell] = (t.modelle[modell] || 0) + 1;
+
+  const name = bereich || mode;
+  t.bereiche = t.bereiche || {};
+  const b = t.bereiche[name] = t.bereiche[name] || { versuche: 0, ein: 0, aus: 0, cacheSchreiben: 0, cacheLesen: 0, usd: 0, modelle: {} };
+  b.versuche += 1;
+  b.ein += ein;
+  b.aus += aus;
+  b.cacheSchreiben += cacheSchreiben;
+  b.cacheLesen += cacheLesen;
+  b.usd += usd;
+  b.modelle[modell] = (b.modelle[modell] || 0) + 1;
 
   speichernBald();
 }
@@ -1782,7 +1808,7 @@ app.post('/api/gfk-proxy', async (req, res) => {
   // Beim Brücke-Prompt mit Modell und Aufwand der Betriebsart, gebucht wie
   // jedes Übersetzen.
   const result = bruecke
-    ? await callAnthropic(mode, text.trim(), angaben, null, { e: BRUECKE, buchung: 'translate', bezug: bezugPruefen(body.bezug) })
+    ? await callAnthropic(mode, text.trim(), angaben, null, { e: BRUECKE, buchung: 'translate', bereich: 'bruecke', bezug: bezugPruefen(body.bezug) })
     : await callAnthropic(mode, text.trim(), angaben, ergaenzung);
 
   if (!result.ok) {
@@ -1901,6 +1927,7 @@ app.get('/api/kosten', (req, res) => {
     modelle: {
       uebersetzen: { modell: AKTIV.translate.model, preise: PREISE[AKTIV.translate.model] || PREIS_UNBEKANNT },
       uebersetzen_bruecke: { modell: BRUECKE.model, preise: PREISE[BRUECKE.model] || PREIS_UNBEKANNT },
+      fremdnachricht: { modell: AKTIV.foreign.model, preise: PREISE[AKTIV.foreign.model] || PREIS_UNBEKANNT },
       ueben:       { modell: AKTIV.practice.model,  preise: PREISE[AKTIV.practice.model]  || PREIS_UNBEKANNT },
       pruefer:     { modell: AKTIV.pruefer.model,   preise: PREISE[AKTIV.pruefer.model]   || PREIS_UNBEKANNT }
     },
